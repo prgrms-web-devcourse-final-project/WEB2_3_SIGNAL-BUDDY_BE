@@ -1,0 +1,39 @@
+spring:
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
+    url: jdbc:tc:mariadb:11.5://test
+    username: test
+    password: test
+
+  jpa:
+    hibernate:
+      ddl-auto: create
+      naming:
+        # 자바에서 카멜로 필드 작성하면 DB에 스네이크로 기록
+        physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true # 이쁘게 보기
+        dialect: org.hibernate.dialect.MariaDBDialect
+    open-in-view: false
+
+  batch:
+    jdbc:
+      initialize-schema: always
+    job:
+      enabled: false
+
+logging:
+  level:
+    org.springframework.jdbc.core.JdbcTemplate: DEBUG   # JDBC 쿼리 로그로 출력
+    org.springframework.jdbc.core.StatementCreatorUtils: TRACE
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql: TRACE
+
+schedule:
+  like-job:
+    cron: "2 0 3 * * ?" # 매일 1시 2초마다
+    lockAtMostFor: 23h  # 오류 발생 시 락을 유지하는 시간 (작업의 실행 시간보다 길게 하는 게 좋음)
+    lockAtLeastFor: 23h # 락을 유지하는 최소 시간 (스케줄러 시간보다 짧게 지정하는 게 좋음)
