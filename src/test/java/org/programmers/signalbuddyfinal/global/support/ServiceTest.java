@@ -2,8 +2,8 @@ package org.programmers.signalbuddyfinal.global.support;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.programmers.signalbuddy.global.config.DataInitializer;
-import org.programmers.signalbuddy.global.db.MariaDBTestContainer;
+import org.programmers.signalbuddyfinal.global.config.DataInitializer;
+import org.programmers.signalbuddyfinal.global.db.MariaDBTestContainer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;

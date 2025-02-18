@@ -3,7 +3,7 @@ package org.programmers.signalbuddyfinal.global.config;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.programmers.signalbuddy.global.db.RedisTestContainer;
+import org.programmers.signalbuddyfinal.global.db.RedisTestContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

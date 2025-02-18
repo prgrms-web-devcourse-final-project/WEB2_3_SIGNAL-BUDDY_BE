@@ -3,25 +3,25 @@ package org.programmers.signalbuddyfinal.domain.like.service;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.programmers.signalbuddy.domain.feedback.dto.FeedbackWriteRequest;
-import org.programmers.signalbuddy.domain.feedback.entity.Feedback;
-import org.programmers.signalbuddy.domain.feedback.repository.FeedbackRepository;
-import org.programmers.signalbuddy.domain.like.dto.LikeExistResponse;
-import org.programmers.signalbuddy.domain.like.entity.Like;
-import org.programmers.signalbuddy.domain.like.repository.LikeRepository;
-import org.programmers.signalbuddy.domain.member.entity.Member;
-import org.programmers.signalbuddy.domain.member.entity.enums.MemberRole;
-import org.programmers.signalbuddy.domain.member.entity.enums.MemberStatus;
-import org.programmers.signalbuddy.domain.member.repository.MemberRepository;
-import org.programmers.signalbuddy.global.db.RedisTestContainer;
-import org.programmers.signalbuddy.global.dto.CustomUser2Member;
-import org.programmers.signalbuddy.global.security.basic.CustomUserDetails;
-import org.programmers.signalbuddy.global.support.ServiceTest;
+import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackWriteRequest;
+import org.programmers.signalbuddyfinal.domain.feedback.entity.Feedback;
+import org.programmers.signalbuddyfinal.domain.feedback.repository.FeedbackRepository;
+import org.programmers.signalbuddyfinal.domain.like.dto.LikeExistResponse;
+import org.programmers.signalbuddyfinal.domain.like.entity.Like;
+import org.programmers.signalbuddyfinal.domain.like.repository.LikeRepository;
+import org.programmers.signalbuddyfinal.domain.member.entity.Member;
+import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
+import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
+import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
+import org.programmers.signalbuddyfinal.global.db.RedisTestContainer;
+import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
+import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
+import org.programmers.signalbuddyfinal.global.support.ServiceTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.programmers.signalbuddy.domain.like.service.LikeService.getLikeKeyPrefix;
+import static org.programmers.signalbuddyfinal.domain.like.service.LikeService.getLikeKeyPrefix;
 
 class LikeServiceTest extends ServiceTest implements RedisTestContainer {
 

@@ -1,6 +1,6 @@
 package org.programmers.signalbuddyfinal.global.db;
 
-import org.programmers.signalbuddy.global.config.RedisConfig;
+import org.programmers.signalbuddyfinal.global.config.RedisConfig;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;

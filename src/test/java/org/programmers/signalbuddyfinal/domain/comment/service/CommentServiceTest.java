@@ -1,24 +1,27 @@
 package org.programmers.signalbuddyfinal.domain.comment.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.programmers.signalbuddy.domain.comment.dto.CommentRequest;
-import org.programmers.signalbuddy.domain.comment.entity.Comment;
-import org.programmers.signalbuddy.domain.comment.exception.CommentErrorCode;
-import org.programmers.signalbuddy.domain.comment.repository.CommentRepository;
-import org.programmers.signalbuddy.domain.feedback.dto.FeedbackWriteRequest;
-import org.programmers.signalbuddy.domain.feedback.entity.Feedback;
-import org.programmers.signalbuddy.domain.feedback.entity.enums.AnswerStatus;
-import org.programmers.signalbuddy.domain.feedback.repository.FeedbackRepository;
-import org.programmers.signalbuddy.domain.member.entity.Member;
-import org.programmers.signalbuddy.domain.member.entity.enums.MemberRole;
-import org.programmers.signalbuddy.domain.member.entity.enums.MemberStatus;
-import org.programmers.signalbuddy.domain.member.repository.MemberRepository;
-import org.programmers.signalbuddy.global.dto.CustomUser2Member;
-import org.programmers.signalbuddy.global.exception.BusinessException;
-import org.programmers.signalbuddy.global.security.basic.CustomUserDetails;
-import org.programmers.signalbuddy.global.support.ServiceTest;
+import org.programmers.signalbuddyfinal.domain.comment.dto.CommentRequest;
+import org.programmers.signalbuddyfinal.domain.comment.entity.Comment;
+import org.programmers.signalbuddyfinal.domain.comment.exception.CommentErrorCode;
+import org.programmers.signalbuddyfinal.domain.comment.repository.CommentRepository;
+import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackWriteRequest;
+import org.programmers.signalbuddyfinal.domain.feedback.entity.Feedback;
+import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.AnswerStatus;
+import org.programmers.signalbuddyfinal.domain.feedback.repository.FeedbackRepository;
+import org.programmers.signalbuddyfinal.domain.member.entity.Member;
+import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
+import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
+import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
+import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
+import org.programmers.signalbuddyfinal.global.exception.BusinessException;
+import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
+import org.programmers.signalbuddyfinal.global.support.ServiceTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
