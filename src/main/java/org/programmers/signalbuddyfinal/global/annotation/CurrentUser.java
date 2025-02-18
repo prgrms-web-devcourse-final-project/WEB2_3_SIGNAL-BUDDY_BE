@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
 
 @Target({ElementType.PARAMETER, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@AuthenticationPrincipal(expression = "#this == 'anonymous' ? null:new org.programmers.signalbuddy.global.dto.CustomUser2Member(#this)")
+@AuthenticationPrincipal(expression = "#this == 'anonymous' ? null:new org.programmers.signalbuddyfinal.global.dto.CustomUser2Member(#this)")
 public @interface CurrentUser {
 
 }
