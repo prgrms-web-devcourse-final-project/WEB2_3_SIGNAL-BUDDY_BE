@@ -2,10 +2,10 @@ package org.programmers.signalbuddyfinal.global.exception.advice;
 
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
-import org.programmers.signalbuddy.global.exception.BusinessException;
-import org.programmers.signalbuddy.global.exception.ErrorCode;
-import org.programmers.signalbuddy.global.exception.GlobalErrorCode;
-import org.programmers.signalbuddy.global.exception.advice.dto.ErrorResponse;
+import org.programmers.signalbuddyfinal.global.exception.BusinessException;
+import org.programmers.signalbuddyfinal.global.exception.ErrorCode;
+import org.programmers.signalbuddyfinal.global.exception.GlobalErrorCode;
+import org.programmers.signalbuddyfinal.global.exception.advice.dto.ErrorResponse;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

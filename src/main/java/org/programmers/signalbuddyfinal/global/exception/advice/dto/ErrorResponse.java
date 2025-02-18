@@ -2,7 +2,7 @@ package org.programmers.signalbuddyfinal.global.exception.advice.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.programmers.signalbuddy.global.exception.ErrorCode;
+import org.programmers.signalbuddyfinal.global.exception.ErrorCode;
 
 @Getter
 @AllArgsConstructor

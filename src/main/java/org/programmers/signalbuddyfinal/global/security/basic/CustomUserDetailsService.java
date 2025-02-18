@@ -2,11 +2,11 @@ package org.programmers.signalbuddyfinal.global.security.basic;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.programmers.signalbuddy.domain.member.entity.Member;
-import org.programmers.signalbuddy.domain.member.entity.enums.MemberStatus;
-import org.programmers.signalbuddy.domain.member.exception.MemberErrorCode;
-import org.programmers.signalbuddy.domain.member.repository.MemberRepository;
-import org.programmers.signalbuddy.global.exception.BusinessException;
+import org.programmers.signalbuddyfinal.domain.member.entity.Member;
+import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
+import org.programmers.signalbuddyfinal.domain.member.exception.MemberErrorCode;
+import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
+import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
