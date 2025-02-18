@@ -39,7 +39,7 @@ public class QBookmark extends EntityPathBase<Bookmark> {
 
     public final StringPath name = createString("name");
 
-    public final NumberPath<Integer> order = createNumber("order", Integer.class);
+    public final NumberPath<Integer> sequence = createNumber("sequence", Integer.class);
 
     //inherited
     public final DateTimePath<java.time.LocalDateTime> updatedAt = _super.updatedAt;

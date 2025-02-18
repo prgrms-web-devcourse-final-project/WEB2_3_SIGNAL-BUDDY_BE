@@ -29,7 +29,7 @@ public class Bookmark extends BaseTimeEntity {
     private String name;
 
     @Column
-    private int order;
+    private int sequence;
 
     @Column
     private LocalDateTime deletedAt; // 삭제일
