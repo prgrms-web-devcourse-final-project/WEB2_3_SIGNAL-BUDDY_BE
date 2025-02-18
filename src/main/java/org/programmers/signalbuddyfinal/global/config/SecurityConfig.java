@@ -40,17 +40,12 @@ public class SecurityConfig {
             .authorizeHttpRequests((auth) -> auth
                 // 문서화 api
                 .requestMatchers("/",
-                    "/swagger-ui/**",
-                    "/api-docs/**",
-                    "/swagger-resources/**",
-                    "/css/**",
-                    "/js/**",
-                    "/images/**",
+                    "/docs/**",
                     "/ws/**",
                     "/actuator/health",
                     "/webjars/**").permitAll()
                     // 로그인, 회원가입
-                    .requestMatchers("/members/login", "admins/login", "/api/members/join",
+                    .requestMatchers("/members/login", "/admins/login", "/api/members/join",
                         "/api/admins/join", "/members/signup", "/api/members/files/**").permitAll()
                     // 북마크
                     .requestMatchers("/api/bookmarks/**", "/bookmarks/**").hasRole("USER")
