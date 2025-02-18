@@ -18,6 +18,7 @@ import java.util.List;
 
 import static org.programmers.signalbuddyfinal.domain.member.entity.QMember.member;
 
+///  test
 @Repository
 @RequiredArgsConstructor
 public class CustomMemberRepositoryImpl implements CustomMemberRepository {
