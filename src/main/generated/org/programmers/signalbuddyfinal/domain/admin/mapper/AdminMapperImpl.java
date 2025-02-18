@@ -9,7 +9,7 @@ import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-02-18T12:42:00+0900",
+    date = "2025-02-18T12:47:10+0900",
     comments = "version: 1.6.3, compiler: IncrementalProcessingEnvironment from gradle-language-java-8.12.1.jar, environment: Java 17.0.12 (Azul Systems, Inc.)"
 )
 public class AdminMapperImpl implements AdminMapper {

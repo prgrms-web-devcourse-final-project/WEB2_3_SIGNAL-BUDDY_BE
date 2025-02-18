@@ -35,3 +35,13 @@ out/
 
 ### VS Code ###
 .vscode/
+
+
+### Mac ###
+.DS_Store
+
+### application*.yml ###
+src/main/resources/*.yml
+
+### generated ###
+src/main/generated/
