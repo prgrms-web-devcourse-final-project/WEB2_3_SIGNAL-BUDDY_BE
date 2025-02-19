@@ -9,7 +9,7 @@ import org.locationtech.jts.geom.Point;
 @Entity(name = "traffic_signals")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class trafficSignal {
+public class TrafficSignal {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,7 +22,7 @@ public class trafficSignal {
     private String district;
 
     @Column(nullable = false)
-    private String signal_type;
+    private String signalType;
 
     @Column(nullable = false)
     private String address;
