@@ -45,3 +45,6 @@ src/main/resources/*.yml
 
 ### generated ###
 src/main/generated/
+
+### Swagger ###
+src/main/resources/static/docs/

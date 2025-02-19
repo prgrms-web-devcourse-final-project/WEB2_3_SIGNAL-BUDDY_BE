@@ -1,7 +1,12 @@
+import org.hidetake.gradle.swagger.generator.GenerateSwaggerUI
+
 plugins {
     id 'java'
     id 'org.springframework.boot' version '3.4.0'
     id 'io.spring.dependency-management' version '1.1.6'
+    id 'jacoco'
+    id 'com.epages.restdocs-api-spec' version '0.19.2'  // openAPI 플러그인 추가
+    id 'org.hidetake.swagger.generator' version '2.19.2'    // swaggerUI 플러그인 추가
 }
 
 group = 'org.programmers'
@@ -53,9 +58,6 @@ dependencies {
     testImplementation "org.testcontainers:mariadb:1.19.7"
     testImplementation 'org.springframework.security:spring-security-test'
 
-    // Swagger
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
-
     // Hibernate-spatial
     implementation 'org.hibernate:hibernate-spatial:6.6.3.Final'
 
@@ -93,19 +95,105 @@ dependencies {
     implementation ("org.springframework.boot:spring-boot-starter-actuator")
     runtimeOnly ("io.micrometer:micrometer-registry-prometheus")
 
-    // Boot
-    implementation 'org.springframework.boot:spring-boot-devtools'
-
     // Amazon S3
     implementation 'software.amazon.awssdk:s3:2.30.3'
 
     // Monitoring
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // Swagger + REST Docs
+    testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
+    testImplementation 'com.epages:restdocs-api-spec-mockmvc:0.19.4'
+    swaggerUI 'org.webjars:swagger-ui:3.52.5'
+}
+
+// JaCoCo 버전 설정
+jacoco {
+    toolVersion = '0.8.12'
+}
+
+// QClass 패턴
+def QDomains = []
+for (qPattern in '*.QA'..'*.QZ') { // qPattern = '*.QA', '*.QB', ... '*.QZ'
+    QDomains.add(qPattern + '*')
+}
+
+// MapStruct 패턴
+def MapStruct = [
+        "*.*Mapper*"
+]
+
+// 측정 안하고 싶은 패턴
+def jacocoExcludePatterns = [
+        "*.*Application*",
+        "*.*Config*",
+        "*.*Exception*",
+        "*.*ErrorCode*",
+        "*.*Request*",
+        "*.*Response*",
+        "*.*Interceptor*",
+        "*.*Filter*",
+        "*.*Handler*",
+        "*.*Resolver*",
+        "*.dto.*",
+        "*.entity.*",
+        "*.test.*",
+        "*.resources.*"
+]
+
+// 코드 커버리지 기준 설정
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            // Rule 활성화
+            enabled = true
+
+            // 클래스 단위로 체크
+            element = 'CLASS'
+
+            // 라인 커버리지 기준
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.00  // 커버리지 기준 20% 이상
+            }
+
+            // 브랜치 커버리지 기
+            limit {
+                counter = 'BRANCH'
+                value = 'COVEREDRATIO'
+                minimum = 0.00  // 커버리지 기준 20% 이상
+            }
+
+            excludes = jacocoExcludePatterns + QDomains + MapStruct
+        }
+    }
+}
+
+def jacocoDir = layout.buildDirectory.dir("reports/")
+
+// 결과 리포트 설정
+jacocoTestReport {
+    dependsOn test	// 테스트가 수행되어야만 리포트를 생성할 수 있도록 설정
+
+    reports {
+        // 원하는 리포트를 켜고 끌 수 있습니다.
+        html.required.set(true)
+        xml.required.set(true)
+        csv.required.set(false)
+
+        // 리포트 생성 위치
+        html.destination jacocoDir.get().file("jacoco/index.html").asFile
+        xml.destination jacocoDir.get().file("jacoco/index.xml").asFile
+    }
+
+    finalizedBy jacocoTestCoverageVerification
 }
 
 tasks.named('test') {
     systemProperty('spring.profiles.active', 'test')
     useJUnitPlatform()
+    finalizedBy 'jacocoTestReport'
 }
 
 /* deploy 서브 모듈에 있는 config 파일들을 resources로 복사 */
@@ -133,4 +221,60 @@ sourceSets {
 // gradle clean 시에 QClass 디렉토리 삭제
 clean {
     delete file(generated)
+}
+
+swaggerSources {
+    sample {
+        setInputFile(file("${buildDir}/api-spec/openapi3.yaml"))
+    }
+}
+
+// openapi 작업 추가
+openapi3 {
+    servers = [
+            {
+                url = "http://localhost:8080"
+                description = "Local Server"
+            },
+            {
+                url = "http://52.79.71.9"
+                description = "Develop Server"
+            }
+    ]
+    title = "API 문서"
+    description = "RestDocsWithSwagger Docs"
+    version = "0.0.1"
+    format = "yaml"
+}
+
+// openapi3가 먼저 실행 - doFrist를 통한 Header 설정
+tasks.withType(GenerateSwaggerUI) {
+    dependsOn 'openapi3'
+    doFirst {
+        def swaggerUIFile = file("${openapi3.outputDirectory}/openapi3.yaml")
+
+        def securitySchemesContent =  "  securitySchemes:\n" +  \
+                                      "    bearerAuth:\n" +  \
+                                      "      type: http\n" +  \
+                                      "      scheme: bearer\n" +  \
+                                      "      bearerFormat: JWT\n" +  \
+                                      "      name: Authorization\n" +  \
+                                      "      in: header\n" + \
+                                      "      description: \"Use 'your-access-token' as the value of the Authorization header\"\n" + \
+                                      "security:\n" +
+                "  - bearerAuth: []  # Apply the security scheme here"
+
+        swaggerUIFile.append securitySchemesContent
+    }
+}
+
+tasks.register('copyDocument', Copy) {
+    dependsOn generateSwaggerUISample
+
+    from file("build/swagger-ui-sample/")
+    into file("src/main/resources/static/docs")
+}
+
+bootJar {
+    dependsOn copyDocument   // 문서 작성 후에 .jar 생성
 }
