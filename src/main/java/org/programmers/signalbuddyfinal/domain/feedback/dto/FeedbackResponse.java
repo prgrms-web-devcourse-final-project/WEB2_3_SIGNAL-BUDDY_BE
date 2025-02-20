@@ -19,6 +19,7 @@ public class FeedbackResponse {
     private String subject;
     private String content;
     private Long likeCount;
+    private Boolean secret;
     private AnswerStatus answerStatus;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
