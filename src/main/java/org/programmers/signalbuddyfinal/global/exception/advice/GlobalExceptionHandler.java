@@ -27,7 +27,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidException(MethodArgumentNotValidException e) {
         logError(e);
-        int code = GlobalErrorCode.BAD_REQUEST.getCode();
+        String code = GlobalErrorCode.BAD_REQUEST.getCode();
         String message = e.getBindingResult().getFieldErrors().get(0).getDefaultMessage();
         ErrorResponse errorResponse = new ErrorResponse(code, message);
         return ResponseEntity.badRequest().body(errorResponse);
@@ -36,7 +36,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ErrorResponse> handleValidException(ConstraintViolationException e) {
         logError(e);
-        int code = GlobalErrorCode.BAD_REQUEST.getCode();
+        String code = GlobalErrorCode.BAD_REQUEST.getCode();
         String message = e.getMessage();
         ErrorResponse errorResponse = new ErrorResponse(code, message);
         return ResponseEntity.badRequest().body(errorResponse);
