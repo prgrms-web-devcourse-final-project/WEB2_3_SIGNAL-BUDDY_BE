@@ -41,6 +41,7 @@ jobs:
           export CR_PAT=${{ secrets.SIGNAL_BUDDY_TOKEN }}
           echo $CR_PAT | docker login ghcr.io -u ${{ secrets.GIT_ID }} --password-stdin
 
+
       - name: 도커 이미지 생성
         run: |
           TAG=$(git rev-parse --short HEAD)
