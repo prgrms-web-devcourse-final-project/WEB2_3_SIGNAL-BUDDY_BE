@@ -277,7 +277,10 @@ tasks.register('copyDocument', Copy) {
 }
 
 bootJar {
-    dependsOn copyDocument   // 문서 작성 후에 .jar 생성
+    dependsOn copyDocument
+    from("src/main/resources/static/docs") {
+        into "static/docs" // JAR 내부에서 접근할 경로
+    }
 }
 
 // SonarQube 설정
