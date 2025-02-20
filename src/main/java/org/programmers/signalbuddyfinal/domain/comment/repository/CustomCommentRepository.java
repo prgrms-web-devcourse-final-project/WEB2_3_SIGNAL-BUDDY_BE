@@ -6,5 +6,5 @@ import org.springframework.data.domain.Pageable;
 
 public interface CustomCommentRepository {
 
-    Page<CommentResponse> findAllByFeedbackIdAndActiveMembers(Long feedbackId, Pageable pageable);
+    Page<CommentResponse> findAllByFeedbackId(Long feedbackId, Pageable pageable);
 }

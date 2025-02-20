@@ -94,7 +94,7 @@ public class FeedbackService {
             throw new BusinessException(FeedbackErrorCode.FEEDBACK_ELIMINATOR_NOT_AUTHORIZED);
         }
 
-        commentRepository.deleteAllByFeedbackId(feedbackId);
+        commentRepository.softDeleteAllByFeedbackId(feedbackId);
         likeRepository.deleteAllByFeedbackId(feedbackId);
         feedbackRepository.deleteById(feedbackId);
     }

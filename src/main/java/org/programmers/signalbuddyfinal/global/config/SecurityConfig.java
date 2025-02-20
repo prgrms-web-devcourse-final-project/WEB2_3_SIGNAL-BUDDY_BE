@@ -50,7 +50,7 @@ public class SecurityConfig {
                     // 북마크
                     .requestMatchers("/api/bookmarks/**", "/bookmarks/**").hasRole("USER")
                     // 댓글
-                    .requestMatchers(HttpMethod.GET, "/api/comments").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/feedbacks/{feedbackId}/comments").permitAll()
                     // 교차로
                     .requestMatchers("/api/crossroads/save").hasRole("ADMIN")
                     .requestMatchers(HttpMethod.GET,"/api/crossroads/**").permitAll()
