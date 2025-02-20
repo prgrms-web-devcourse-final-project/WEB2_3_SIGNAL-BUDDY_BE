@@ -48,7 +48,7 @@ public class Member extends BaseTimeEntity {
         return !user.getMemberId().equals(member.getMemberId());
     }
 
-    public void updateMember(MemberUpdateRequest request, String encodedPassword, String profileImageUrl) {
+    public void updateMember(MemberUpdateRequest request, String encodedPassword) {
         if (request.getEmail() != null) {
             this.email = request.getEmail();
         }
@@ -58,9 +58,10 @@ public class Member extends BaseTimeEntity {
         if (request.getNickname() != null) {
             this.nickname = request.getNickname();
         }
-        if (profileImageUrl != null) {
-            this.profileImageUrl = profileImageUrl;
-        }
+    }
+
+    public void saveProfileImage(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
     }
 
     public void softDelete() {

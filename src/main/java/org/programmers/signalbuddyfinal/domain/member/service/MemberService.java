@@ -40,10 +40,14 @@ public class MemberService {
     private String defaultProfileImagePath;
 
     public MemberResponse getMember(Long id) {
-        return memberRepository.findById(id)
-            .filter(m -> m.getMemberStatus() == MemberStatus.ACTIVITY)
-            .map(MemberMapper.INSTANCE::toDto)
+        final Member member = memberRepository.findById(id)
             .orElseThrow(() -> new BusinessException(MemberErrorCode.NOT_FOUND_MEMBER));
+
+        if (member.getMemberStatus() == MemberStatus.WITHDRAWAL) {
+            throw new BusinessException(MemberErrorCode.WITHDRAWN_MEMBER);
+        }
+
+        return MemberMapper.INSTANCE.toDto(member);
     }
 
     @Transactional
@@ -52,13 +56,18 @@ public class MemberService {
         final Member member = findMemberById(id);
         final String encodedPassword = encodedPassword(memberUpdateRequest.getPassword());
 
-        final String saveProfileImage = saveProfileImageIfPresent(
-            memberUpdateRequest.getImageFile());
-
-        member.updateMember(memberUpdateRequest, encodedPassword, saveProfileImage);
+        member.updateMember(memberUpdateRequest, encodedPassword);
         log.info("Member updated: {}", member);
-        updateSecurityContext(member, request);
+//        updateSecurityContext(member, request); // TODO : JWT 구현 완료 후 수정
         return MemberMapper.INSTANCE.toDto(member);
+    }
+
+    @Transactional
+    public String saveProfileImage(Long id, MultipartFile file) {
+        final Member member = findMemberById(id);
+        final String profileImage = saveProfileImageIfPresent(file);
+        member.saveProfileImage(profileImage);
+        return profileImage;
     }
 
     @Transactional
@@ -89,23 +98,22 @@ public class MemberService {
         return MemberMapper.INSTANCE.toDto(joinMember);
     }
 
-    public Resource getProfileImage(String filename) {
+    @Transactional(readOnly = true)
+    public Resource getProfileImage(Long id) {
+        final Member member = findMemberById(id);
+        final String profileImage = member.getProfileImageUrl();
         try {
-            if (filename.isEmpty()) {
+            if (profileImage.isEmpty()) {
                 return new ClassPathResource(defaultProfileImagePath);
             }
-            return awsFileService.getProfileImage(filename);
+            return awsFileService.getProfileImage(profileImage);
         } catch (BusinessException e) {
             return new ClassPathResource(defaultProfileImagePath);
         }
     }
 
-    public String saveProfileImage(MultipartFile profileImage) {
-        return awsFileService.saveProfileImage(profileImage);
-    }
-
-    public boolean verifyPassword(String password, CustomUser2Member user) {
-        final Member member = findMemberById(user.getMemberId());
+    public boolean verifyPassword(String password, Long id) {
+        final Member member = findMemberById(id);
 
         return bCryptPasswordEncoder.matches(password, member.getPassword());
     }
@@ -119,7 +127,7 @@ public class MemberService {
         if (imageFile == null) {
             return null;
         }
-        return saveProfileImage(imageFile);
+        return awsFileService.saveProfileImage(imageFile);
     }
 
     private String encodedPassword(String password) {
@@ -131,22 +139,14 @@ public class MemberService {
 
     private void updateSecurityContext(Member member, HttpServletRequest request) {
         // CustomUserDetails 생성
-        final CustomUserDetails userDetails = new CustomUserDetails(
-            member.getMemberId(),
-            member.getEmail(),
-            member.getPassword(),
-            member.getProfileImageUrl(),
-            member.getNickname(),
-            member.getRole(),
-            member.getMemberStatus()
-        );
+        final CustomUserDetails userDetails = new CustomUserDetails(member.getMemberId(),
+            member.getEmail(), member.getPassword(), member.getProfileImageUrl(),
+            member.getNickname(), member.getRole(), member.getMemberStatus());
 
         // Authentication 객체 생성
-        final Authentication authentication = new UsernamePasswordAuthenticationToken(
-            userDetails,
+        final Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails,
             null, // 비밀번호는 이미 인증되었으므로 null
-            userDetails.getAuthorities()
-        );
+            userDetails.getAuthorities());
 
         // SecurityContext 생성 및 Authentication 설정
         final SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
