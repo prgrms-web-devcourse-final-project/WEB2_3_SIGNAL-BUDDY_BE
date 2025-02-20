@@ -4,9 +4,10 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.4.0'
     id 'io.spring.dependency-management' version '1.1.6'
-    id 'jacoco'
-    id 'com.epages.restdocs-api-spec' version '0.19.2'  // openAPI 플러그인 추가
-    id 'org.hidetake.swagger.generator' version '2.19.2'    // swaggerUI 플러그인 추가
+    id 'jacoco' // JaCoCo 플러그인
+    id 'com.epages.restdocs-api-spec' version '0.19.2'  // openAPI 플러그인
+    id 'org.hidetake.swagger.generator' version '2.19.2'    // swaggerUI 플러그인
+    id 'org.sonarqube' version '6.0.1.5171' // SonarQube 플러그인
 }
 
 group = 'org.programmers'
@@ -277,4 +278,20 @@ tasks.register('copyDocument', Copy) {
 
 bootJar {
     dependsOn copyDocument   // 문서 작성 후에 .jar 생성
+}
+
+// SonarQube 설정
+sonar {
+    properties {
+        property "sonar.projectKey", "prgrms-web-devcourse-final-project_WEB2_3_SIGNAL-BUDDY_BE"
+        property "sonar.organization", "prgrms-web-devcourse-final-project"
+        property "sonar.host.url", "https://sonarcloud.io"
+        property 'sonar.sources', 'src'
+        property 'sonar.language', 'java'
+        property 'sonar.sourceEncoding', 'UTF-8'
+        property 'sonar.test.exclusions', jacocoExcludePatterns.join(',')
+        property 'sonar.test.inclusions', '**/*Test.java'
+        property 'sonar.java.coveragePlugin', 'jacoco'
+        property 'sonar.coverage.jacoco.xmlReportPaths', jacocoDir.get().file("jacoco/index.xml").asFile
+    }
 }

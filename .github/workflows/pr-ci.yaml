@@ -29,22 +29,32 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
-      - name: Gradle 종속성 캐시
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
       - name: Gradle 명령 실행 권한 부여
         run: chmod +x ./gradlew
         shell: bash
 
-      - name: Gradle로 프로젝트 Build
+      - name: SonarQube 캐싱
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: Gradle 종속성 캐싱
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
+          restore-keys: ${{ runner.os }}-gradle
+
+      - name: Gradle Build
         run: ./gradlew build
+
+      - name: SonarCloud 분석
+        env:
+          GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: ./gradlew sonar --info --stacktrace
 
       - name: 테스트 결과를 PR 코멘트로 출력
         uses: EnricoMi/publish-unit-test-result-action@v2
