@@ -3,6 +3,7 @@ name: PR 시 CI 테스트 자동화
 on:
   pull_request:
     branches:
+      - develop
       - main
 
 jobs:
