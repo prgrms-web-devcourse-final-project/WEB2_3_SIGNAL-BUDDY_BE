@@ -1,4 +1,4 @@
-name: develop 브랜치 배포 자동화
+name: develop 브랜치 도커 이미지 생성
 
 on:
   push:
@@ -39,7 +39,7 @@ jobs:
       - name: GitHub Container Registry 로그인
         run: |
           export CR_PAT=${{ secrets.SIGNAL_BUDDY_TOKEN }}
-          echo CR_PAT | docker login ghcr.io -u ${{ secrets.GIT_ID }} --password-stdin
+          echo $CR_PAT | docker login ghcr.io -u ${{ secrets.GIT_ID }} --password-stdin
 
       - name: 도커 이미지 생성
         run: |
