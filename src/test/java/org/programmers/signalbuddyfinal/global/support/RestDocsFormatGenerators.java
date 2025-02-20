@@ -1,8 +1,10 @@
 package org.programmers.signalbuddyfinal.global.support;
 
+import static com.epages.restdocs.apispec.Schema.schema;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.restdocs.snippet.Attributes.key;
 
+import com.epages.restdocs.apispec.Schema;
 import org.springframework.restdocs.payload.FieldDescriptor;
 import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.restdocs.snippet.Attributes;
@@ -18,7 +20,7 @@ public final class RestDocsFormatGenerators {
             .description("응답 상태");
         commonDocs[1] = fieldWithPath("message").type(JsonFieldType.NULL)
             .description("응답 메시지");
-        commonDocs[2] = fieldWithPath("data").type(JsonFieldType.OBJECT)
+        commonDocs[2] = fieldWithPath("data").type(JsonFieldType.VARIES)
             .description("응답 데이터");
         return commonDocs;
     }
@@ -55,4 +57,6 @@ public final class RestDocsFormatGenerators {
     public static Attributes.Attribute pageFormat() {
         return  key("format").value("0부터 시작");
     }
+
+    public static Schema commonResponse = schema("CommonResponse");
 }
