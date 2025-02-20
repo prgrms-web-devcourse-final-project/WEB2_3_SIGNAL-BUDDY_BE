@@ -1,4 +1,4 @@
-package org.programmers.signalbuddyfinal.domain.crossroad.exception;
+package org.programmers.signalbuddyfinal.domain.recentpath.exception;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -8,10 +8,9 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public enum CrossroadErrorCode implements ErrorCode {
+public enum RecentPathErrorCode implements ErrorCode {
 
-    CROSSROAD_API_REQUEST_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "03000", "교차로 API 요청이 실패했습니다."),
-    ALREADY_EXIST_CROSSROAD(HttpStatus.CONFLICT, "03001", "이미 존재하는 교차로입니다.");
+    NOT_FOUND_RECENT_PATH(HttpStatus.NOT_FOUND, "10000", "해당 경로가 존재하지 않습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

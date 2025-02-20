@@ -10,11 +10,11 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public enum CommentErrorCode implements ErrorCode {
 
-    NOT_FOUND_COMMENT(HttpStatus.NOT_FOUND, 20000, "해당 댓글은 찾을 수 없습니다."),
-    COMMENT_MODIFIER_NOT_AUTHORIZED(HttpStatus.FORBIDDEN, 20001, "해당 댓글의 작성자와 일치하지 않습니다."),
-    COMMENT_ELIMINATOR_NOT_AUTHORIZED(HttpStatus.FORBIDDEN, 20002, "해당 댓글의 작성자와 일치하지 않습니다.");
+    NOT_FOUND_COMMENT(HttpStatus.NOT_FOUND, "02000", "해당 댓글은 찾을 수 없습니다."),
+    COMMENT_MODIFIER_NOT_AUTHORIZED(HttpStatus.FORBIDDEN, "02001", "해당 댓글의 작성자와 일치하지 않습니다."),
+    COMMENT_ELIMINATOR_NOT_AUTHORIZED(HttpStatus.FORBIDDEN, "02002", "해당 댓글의 작성자와 일치하지 않습니다.");
 
-    private HttpStatus httpStatus;
-    private int code;
-    private String message;
+    private final HttpStatus httpStatus;
+    private final String code;
+    private final String message;
 }
