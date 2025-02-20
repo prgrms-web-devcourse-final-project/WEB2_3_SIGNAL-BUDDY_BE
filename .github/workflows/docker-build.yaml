@@ -49,10 +49,3 @@ jobs:
           docker build -t test -f submodule/docker/Dockerfile .
           docker tag test $DOCKER_IMAGE
           docker push $DOCKER_IMAGE
-
-      - name: Jenkins Webhook 호출
-        run: |
-          curl -X POST ${{ secrets.JENKINS_WEBHOOK_URL }} \
-            -H "Content-Type: application/json" \
-            -H "User-Agent: GitHub-Hookshot/56ca054" \
-            -d '{"ref": "refs/heads/develop"}'
