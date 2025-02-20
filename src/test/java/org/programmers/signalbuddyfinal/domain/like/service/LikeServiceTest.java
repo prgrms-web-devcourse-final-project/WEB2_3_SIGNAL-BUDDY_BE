@@ -1,10 +1,16 @@
 package org.programmers.signalbuddyfinal.domain.like.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.programmers.signalbuddyfinal.domain.like.service.LikeService.getLikeKeyPrefix;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackWriteRequest;
+import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadApiResponse;
+import org.programmers.signalbuddyfinal.domain.crossroad.entity.Crossroad;
+import org.programmers.signalbuddyfinal.domain.crossroad.repository.CrossroadRepository;
 import org.programmers.signalbuddyfinal.domain.feedback.entity.Feedback;
+import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.FeedbackCategory;
 import org.programmers.signalbuddyfinal.domain.feedback.repository.FeedbackRepository;
 import org.programmers.signalbuddyfinal.domain.like.dto.LikeExistResponse;
 import org.programmers.signalbuddyfinal.domain.like.entity.Like;
@@ -20,9 +26,6 @@ import org.programmers.signalbuddyfinal.global.support.ServiceTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.programmers.signalbuddyfinal.domain.like.service.LikeService.getLikeKeyPrefix;
-
 class LikeServiceTest extends ServiceTest implements RedisTestContainer {
 
     @Autowired
@@ -33,6 +36,9 @@ class LikeServiceTest extends ServiceTest implements RedisTestContainer {
 
     @Autowired
     private MemberRepository memberRepository;
+
+    @Autowired
+    private CrossroadRepository crossroadRepository;
 
     @Autowired
     private LikeRepository likeRepository;
@@ -53,16 +59,25 @@ class LikeServiceTest extends ServiceTest implements RedisTestContainer {
             .memberStatus(MemberStatus.ACTIVITY)
             .profileImageUrl("https://test-image.com/test-123131")
             .build();
-
         member = memberRepository.save(member);
+
+        Crossroad crossroad = new Crossroad(CrossroadApiResponse.builder()
+            .crossroadApiId("13214").name("00사거리")
+            .lat(37.12222).lng(127.12132)
+            .build());
+        crossroad = crossroadRepository.save(crossroad);
 
         String subject = "test subject";
         String content = "test content";
-        FeedbackWriteRequest request = new FeedbackWriteRequest(subject, content);
-        feedback = feedbackRepository.save(Feedback.create(request, member));
+        Feedback entity = Feedback.create()
+            .subject(subject).content(content).secret(Boolean.FALSE)
+            .category(FeedbackCategory.ETC)
+            .member(member).crossroad(crossroad)
+            .build();
+        feedback = feedbackRepository.save(entity);
     }
 
-    @DisplayName("좋아요 추가 성공")
+    @DisplayName("좋아요 추가를 성공한다.")
     @Test
     void addLike() {
         // given
@@ -81,7 +96,7 @@ class LikeServiceTest extends ServiceTest implements RedisTestContainer {
             + feedback.getFeedbackId() + ":" + member.getMemberId());
     }
 
-    @DisplayName("좋아요 취소 성공")
+    @DisplayName("좋아요 취소를 성공한다.")
     @Test
     void deleteLike() {
         // given
@@ -101,7 +116,7 @@ class LikeServiceTest extends ServiceTest implements RedisTestContainer {
             + feedback.getFeedbackId() + ":" + member.getMemberId());
     }
 
-    @DisplayName("해당 좋아요가 존재할 때")
+    @DisplayName("해당 좋아요가 존재한다.")
     @Test
     void existsLikeTrue() {
         // given
@@ -118,7 +133,7 @@ class LikeServiceTest extends ServiceTest implements RedisTestContainer {
         assertThat(actual.getStatus()).isTrue();
     }
 
-    @DisplayName("해당 좋아요가 존재하지 않을 때")
+    @DisplayName("해당 좋아요가 존재하지 않는다.")
     @Test
     void existsLikeFalse() {
         // given
