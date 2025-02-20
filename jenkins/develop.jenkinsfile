@@ -23,6 +23,8 @@ pipeline {
             steps {
                 sshagent (credentials: ['SIGNAL_BUDDY_SSH']) {
                     sh '''
+                        sleep 400
+
                         ssh -o StrictHostKeyChecking=no ${API_SERVER_USER}@${SIGNAL_BUDDY_IP} "docker login ghcr.io -u ${GITHUB_ID} --password ${SIGNAL_BUDDY_TOKEN}"
 
                         ssh -t ${API_SERVER_USER}@${SIGNAL_BUDDY_IP} "docker pull ${DOCKER_IMAGE}"
