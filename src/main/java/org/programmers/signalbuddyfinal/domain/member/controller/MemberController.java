@@ -8,6 +8,7 @@ import org.programmers.signalbuddyfinal.domain.feedback.service.FeedbackService;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberUpdateRequest;
 import org.programmers.signalbuddyfinal.domain.member.service.MemberService;
+import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -84,9 +85,9 @@ public class MemberController {
     }
 
     @GetMapping("{id}/feedbacks")
-    public ResponseEntity<ApiResponse<Page<FeedbackResponse>>> getFeedbacks(@PathVariable Long id,
+    public ResponseEntity<ApiResponse<PageResponse<FeedbackResponse>>> getFeedbacks(@PathVariable Long id,
         @PageableDefault(page = 0, size = 10) Pageable pageable) {
-        final Page<FeedbackResponse> feedbacks = feedbackService.findPagedFeedbacksByMember(id,
+        final PageResponse<FeedbackResponse> feedbacks = feedbackService.findPagedExcludingMember(id,
             pageable);
         return ResponseEntity.ok(ApiResponse.createSuccess(feedbacks));
     }

@@ -10,6 +10,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.commonResponse;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.commonResponseFormat;
+import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.pageResponseFormat;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessRequest;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessResponse;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.prettyPrint;
@@ -41,6 +42,7 @@ import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.programmers.signalbuddyfinal.domain.member.service.MemberService;
 import org.programmers.signalbuddyfinal.global.anotation.WithMockCustomUser;
 import org.programmers.signalbuddyfinal.global.config.WebConfig;
+import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.programmers.signalbuddyfinal.global.support.ControllerTest;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -278,8 +280,9 @@ class MemberControllerTest extends ControllerTest {
         final Page<FeedbackResponse> feedbackPage = new PageImpl<>(feedbackList,
             PageRequest.of(0, 10), feedbackList.size());
 
-        given(feedbackService.findPagedFeedbacksByMember(eq(memberId),
-            any(Pageable.class))).willReturn(feedbackPage);
+        given(
+            feedbackService.findPagedExcludingMember(eq(memberId), any(Pageable.class))).willReturn(
+            new PageResponse<>(feedbackPage));
 
         final ResultActions result = mockMvc.perform(
             get("/api/members/{id}/feedbacks", memberId).param("page", "0").param("size", "10"));
@@ -294,34 +297,22 @@ class MemberControllerTest extends ControllerTest {
                             parameterWithName("size").optional()
                                 .description("한 페이지당 항목 수 (기본 값: 10)"))
                         .responseSchema(schema("PagedFeedbackResponse")).responseFields(
-                            ArrayUtils.addAll(commonResponseFormat(),
-                                fieldWithPath("data.content").type(JsonFieldType.ARRAY)
-                                    .description("피드백 리스트"),
-                                fieldWithPath("data.content[].feedbackId").type(JsonFieldType.NUMBER)
-                                    .description("피드백 ID"),
-                                fieldWithPath("data.content[].subject").type(JsonFieldType.STRING)
+                            ArrayUtils.addAll(pageResponseFormat(),
+                                fieldWithPath("data.searchResults[].feedbackId").type(
+                                    JsonFieldType.NUMBER).description("피드백 ID"),
+                                fieldWithPath("data.searchResults[].subject").type(JsonFieldType.STRING)
                                     .description("피드백 제목"),
-                                fieldWithPath("data.content[].content").type(JsonFieldType.STRING)
+                                fieldWithPath("data.searchResults[].content").type(JsonFieldType.STRING)
                                     .description("피드백 내용"),
-                                fieldWithPath("data.content[].likeCount").type(JsonFieldType.NUMBER)
-                                    .description("피드백 좋아요 수"),
-                                fieldWithPath("data.content[].secret").type(JsonFieldType.BOOLEAN)
+                                fieldWithPath("data.searchResults[].likeCount").type(
+                                    JsonFieldType.NUMBER).description("피드백 좋아요 수"),
+                                fieldWithPath("data.searchResults[].secret").type(JsonFieldType.BOOLEAN)
                                     .description("피드백 비밀글 여부"),
-                                fieldWithPath("data.content[].answerStatus").type(JsonFieldType.STRING)
-                                    .description("피드백 상태 (BEFORE, COMPLETION)"),
-                                fieldWithPath("data.content[].createdAt").type(JsonFieldType.STRING)
-                                    .description("피드백 작성 날짜"),
-                                fieldWithPath("data.content[].updatedAt").type(JsonFieldType.STRING)
-                                    .description("피드백 수정 날짜"),
-                                fieldWithPath("data.page").type(JsonFieldType.OBJECT)
-                                    .description("페이지 정보"),
-                                fieldWithPath("data.page.size").type(JsonFieldType.NUMBER)
-                                    .description("한 페이지당 항목 수"),
-                                fieldWithPath("data.page.number").type(JsonFieldType.NUMBER)
-                                    .description("조회할 페이지"),
-                                fieldWithPath("data.page.totalElements").type(JsonFieldType.NUMBER)
-                                    .description("전체 피드백 수"),
-                                fieldWithPath("data.page.totalPages").type(JsonFieldType.NUMBER)
-                                    .description("전체 페이지 수"))).build())));
+                                fieldWithPath("data.searchResults[].answerStatus").type(
+                                    JsonFieldType.STRING).description("피드백 상태 (BEFORE, COMPLETION)"),
+                                fieldWithPath("data.searchResults[].createdAt").type(
+                                    JsonFieldType.STRING).description("피드백 작성 날짜"),
+                                fieldWithPath("data.searchResults[].updatedAt").type(
+                                    JsonFieldType.STRING).description("피드백 수정 날짜"))).build())));
     }
 }

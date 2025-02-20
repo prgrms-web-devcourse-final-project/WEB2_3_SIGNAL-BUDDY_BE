@@ -16,9 +16,9 @@ import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
+import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.programmers.signalbuddyfinal.global.support.ServiceTest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 class FeedbackServiceTest extends ServiceTest {
@@ -44,6 +44,8 @@ class FeedbackServiceTest extends ServiceTest {
 
         saveFeedback("test subject", "test content", member, crossroad);
         saveFeedback("test subject2", "test content2", member, crossroad);
+        saveFeedback("test subject3", "test content3", member, crossroad);
+        saveSoftDeleteFeedback("test subject4", "test content4", member, crossroad);
     }
 
     private Member saveMember(String email, String nickname) {
@@ -65,19 +67,27 @@ class FeedbackServiceTest extends ServiceTest {
                 .category(FeedbackCategory.ETC).member(member).crossroad(crossroad).build());
     }
 
+    private void saveSoftDeleteFeedback(String subject, String content, Member member,
+        Crossroad crossroad) {
+        final Feedback feedback = Feedback.create().subject(subject).content(content)
+            .secret(Boolean.FALSE).category(FeedbackCategory.ETC).member(member)
+            .crossroad(crossroad).build();
+        feedback.delete();
+        feedbackRepository.save(feedback);
+    }
+
     @DisplayName("사용자가 작성한 피드백 목록 조회")
     @Test
     void getFeedbacksByMember() {
         // feedbackNoMemberDto
-        final Page<FeedbackResponse> feedbacks = feedbackService.findPagedFeedbacksByMember(
+        final PageResponse<FeedbackResponse> feedbacks = feedbackService.findPagedExcludingMember(
             member.getMemberId(), Pageable.ofSize(10));
 
         assertThat(feedbacks).isNotNull();
-        assertThat(feedbacks.getTotalElements()).isEqualTo(2);
-        assertThat(feedbacks.getTotalPages()).isEqualTo(1);
+        assertThat(feedbacks.getTotalElements()).isEqualTo(3);
 
-        // member 필드가 null인지 확인
-        assertThat(feedbacks.getContent()).isNotEmpty()
-            .allSatisfy(feedback -> assertThat(feedback.getMember()).isNull());
+        // Member 조회 결과가 없어야 함.
+        assertThat(feedbacks.getSearchResults()).isNotEmpty().allSatisfy(
+            feedback -> assertThat(feedback.getMember()).isNull());
     }
 }

@@ -46,10 +46,10 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
 
     @Override
     public Page<FeedbackResponse> findAllByActiveMembers(Pageable pageable, Long answerStatus) {
-        BooleanExpression answerStatusCondition = answerStatusCondition(answerStatus);
+        final BooleanExpression answerStatusCondition = answerStatusCondition(answerStatus);
 
-        List<FeedbackResponse> results = jpaQueryFactory.select(feedbackResponseDto).from(feedback)
-            .join(member).on(feedback.member.eq(member)).fetchJoin()
+        final List<FeedbackResponse> results = jpaQueryFactory.select(feedbackResponseDto)
+            .from(feedback).join(member).on(feedback.member.eq(member)).fetchJoin()
             .where(member.memberStatus.eq(MemberStatus.ACTIVITY).and(answerStatusCondition))
             .offset(pageable.getOffset()).limit(pageable.getPageSize())
             .orderBy(new OrderSpecifier<>(Order.DESC, feedback.createdAt)).fetch();
@@ -64,10 +64,11 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
     }
 
     @Override
-    public Page<FeedbackResponse> findPagedByMember(Long memberId, Pageable pageable) {
+    public Page<FeedbackResponse> findPagedExcludingMember(Long memberId, Pageable pageable) {
         final List<FeedbackResponse> responses = jpaQueryFactory.select(feedbackNoMemberDto)
             .from(feedback).join(member)
             .on(feedback.member.eq(member).and(member.memberId.eq(memberId)))
+            .where(feedback.deletedAt.isNull())
             .offset(pageable.getOffset()).limit(pageable.getPageSize())
             .orderBy(new OrderSpecifier<>(Order.DESC, feedback.createdAt)).fetch();
         final Long count = jpaQueryFactory.select(feedback.count()).from(feedback).join(member)
@@ -79,11 +80,11 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
     public Page<FeedbackResponse> findAll(Pageable pageable, LocalDate startDate, LocalDate endDate,
         Long answerStatus) {
 
-        BooleanExpression betweenDates = betweenDates(feedback.createdAt, startDate, endDate);
-        BooleanExpression answerStatusCondition = answerStatusCondition(answerStatus);
+        final BooleanExpression betweenDates = betweenDates(feedback.createdAt, startDate, endDate);
+        final BooleanExpression answerStatusCondition = answerStatusCondition(answerStatus);
 
-        List<FeedbackResponse> results = jpaQueryFactory.select(feedbackResponseDto).from(feedback)
-            .join(member).on(feedback.member.eq(member)).fetchJoin()
+        final List<FeedbackResponse> results = jpaQueryFactory.select(feedbackResponseDto)
+            .from(feedback).join(member).on(feedback.member.eq(member)).fetchJoin()
             .where(betweenDates.and(answerStatusCondition(answerStatus)))
             .offset(pageable.getOffset()).limit(pageable.getPageSize())
             .orderBy(getOrderSpecifiers(pageable, feedback.getType(), "feedback")).fetch();
@@ -97,15 +98,14 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
     }
 
     private BooleanExpression answerStatusCondition(Long answerStatus) {
-        BooleanExpression predicate = null;
-
-        if (answerStatus == 0) {    // 답변 전
-            predicate = feedback.answerStatus.eq(AnswerStatus.BEFORE);
-        }
-        if (answerStatus == 1) { // 답변 완료
-            predicate = feedback.answerStatus.eq(AnswerStatus.COMPLETION);
+        if (answerStatus == null) {
+            return Expressions.TRUE;
         }
 
-        return predicate != null ? predicate : Expressions.TRUE;
+        return switch (answerStatus.intValue()) {
+            case 0 -> feedback.answerStatus.eq(AnswerStatus.BEFORE);
+            case 1 -> feedback.answerStatus.eq(AnswerStatus.COMPLETION);
+            default -> Expressions.TRUE;
+        };
     }
 }

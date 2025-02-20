@@ -10,7 +10,7 @@ public interface CustomFeedbackRepository {
 
     Page<FeedbackResponse> findAllByActiveMembers(Pageable pageable, Long answerStatus);
 
-    Page<FeedbackResponse> findPagedByMember(Long memberId, Pageable pageable);
+    Page<FeedbackResponse> findPagedExcludingMember(Long memberId, Pageable pageable);
 
     Page<FeedbackResponse> findAll(Pageable pageable, LocalDate startDate, LocalDate endDate, Long answerStatus);
 }
