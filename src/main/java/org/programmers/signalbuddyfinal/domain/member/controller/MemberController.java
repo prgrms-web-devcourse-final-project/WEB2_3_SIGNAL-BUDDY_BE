@@ -3,6 +3,8 @@ package org.programmers.signalbuddyfinal.domain.member.controller;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.programmers.signalbuddyfinal.domain.bookmark.dto.BookmarkResponse;
+import org.programmers.signalbuddyfinal.domain.bookmark.service.BookmarkService;
 import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackResponse;
 import org.programmers.signalbuddyfinal.domain.feedback.service.FeedbackService;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
@@ -14,7 +16,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.data.web.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,6 +37,7 @@ public class MemberController {
 
     private final MemberService memberService;
     private final FeedbackService feedbackService;
+    private final BookmarkService bookmarkService;
 
     @GetMapping("{id}")
     public ResponseEntity<ApiResponse<MemberResponse>> findById(@PathVariable Long id) {
@@ -90,5 +92,13 @@ public class MemberController {
         final PageResponse<FeedbackResponse> feedbacks = feedbackService.findPagedExcludingMember(id,
             pageable);
         return ResponseEntity.ok(ApiResponse.createSuccess(feedbacks));
+    }
+
+    @GetMapping("{id}/bookmarks")
+    public ResponseEntity<ApiResponse<PageResponse<BookmarkResponse>>> getBookmarks(@PathVariable Long id,
+        @PageableDefault(page = 0, size = 10) Pageable pageable) {
+        final PageResponse<BookmarkResponse> bookmarks = bookmarkService.findPagedBookmarks(pageable,
+            id);
+        return ResponseEntity.ok(ApiResponse.createSuccess(bookmarks));
     }
 }

@@ -15,6 +15,7 @@ import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.exception.MemberErrorCode;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
+import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -32,8 +33,10 @@ public class BookmarkService {
     private final GeometryFactory geometryFactory;
     private final MemberRepository memberRepository;
 
-    public Page<BookmarkResponse> findPagedBookmarks(Pageable pageable, Long memberId) {
-        return bookmarkRepository.findPagedByMember(pageable, memberId);
+    public PageResponse<BookmarkResponse> findPagedBookmarks(Pageable pageable, Long memberId) {
+        final Page<BookmarkResponse> page = bookmarkRepository.findPagedByMember(pageable,
+            memberId);
+        return new PageResponse<>(page);
     }
 
     public BookmarkResponse createBookmark(BookmarkRequest createRequest, CustomUser2Member user) {

@@ -32,6 +32,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.programmers.signalbuddyfinal.domain.bookmark.dto.BookmarkResponse;
+import org.programmers.signalbuddyfinal.domain.bookmark.service.BookmarkService;
 import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackResponse;
 import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.AnswerStatus;
 import org.programmers.signalbuddyfinal.domain.feedback.service.FeedbackService;
@@ -73,6 +75,9 @@ class MemberControllerTest extends ControllerTest {
 
     @MockitoBean
     private FeedbackService feedbackService;
+
+    @MockitoBean
+    private BookmarkService bookmarkService;
 
     @DisplayName("ID로 유저 조회")
     @Test
@@ -314,5 +319,53 @@ class MemberControllerTest extends ControllerTest {
                                     JsonFieldType.STRING).description("피드백 작성 날짜"),
                                 fieldWithPath("data.searchResults[].updatedAt").type(
                                     JsonFieldType.STRING).description("피드백 수정 날짜"))).build())));
+    }
+
+    @DisplayName("나의 장소 목록 조회")
+    @Test
+    void getBookmarks() throws Exception {
+        final Long memberId = 1L;
+        final List<BookmarkResponse> bookmarks = List.of(
+            BookmarkResponse.builder().bookmarkId(1L).lat(37.501).lng(127.001)
+                .address("서울특별시 강남구 테헤란로 123").name("강남역").build(),
+
+            BookmarkResponse.builder().bookmarkId(2L).lat(37.566).lng(126.978)
+                .address("서울특별시 중구 을지로 1가").name("서울시청").build(),
+
+            BookmarkResponse.builder().bookmarkId(3L).lat(35.179).lng(129.075)
+                .address("부산광역시 해운대구 해운대로 200").name("해운대 해수욕장").build(),
+
+            BookmarkResponse.builder().bookmarkId(4L).lat(37.497).lng(127.027)
+                .address("서울특별시 강남구 역삼동").name("역삼역").build());
+        final Page<BookmarkResponse> page = new PageImpl<>(bookmarks, PageRequest.of(0, 10),
+            bookmarks.size());
+
+        given(bookmarkService.findPagedBookmarks(any(Pageable.class), eq(memberId))).willReturn(
+            new PageResponse<>(page));
+
+        final ResultActions result = mockMvc.perform(
+            get("/api/members/{id}/bookmarks", memberId).param("page", "0").param("size", "10"));
+
+        result.andExpect(status().isOk()).andDo(
+            document("나의 장소 목록 조회", preprocessRequest(prettyPrint()),
+                preprocessResponse(prettyPrint()), resource(
+                    ResourceSnippetParameters.builder().tag(tag).summary("나의 장소 목록 조회")
+                        .pathParameters(parameterWithName("id").description("유저 ID"))
+                        .queryParameters(parameterWithName("page").optional()
+                                .description("조회할 페이지 번호 (기본 값: 0)"),
+                            parameterWithName("size").optional()
+                                .description("한 페이지당 항목 수 (기본 값: 10)"))
+                        .responseSchema(schema("PagedBookmarkResponse")).responseFields(
+                            ArrayUtils.addAll(pageResponseFormat(),
+                                fieldWithPath("data.searchResults[].bookmarkId").type(
+                                    JsonFieldType.NUMBER).description("북마크 ID"),
+                                fieldWithPath("data.searchResults[].lat").type(JsonFieldType.NUMBER)
+                                    .description("위도"),
+                                fieldWithPath("data.searchResults[].lng").type(JsonFieldType.NUMBER)
+                                    .description("경도"),
+                                fieldWithPath("data.searchResults[].address").type(JsonFieldType.STRING)
+                                    .description("주소"),
+                                fieldWithPath("data.searchResults[].name").type(JsonFieldType.STRING)
+                                    .description("별칭 (예: 우리집, 회사)"))).build())));
     }
 }
