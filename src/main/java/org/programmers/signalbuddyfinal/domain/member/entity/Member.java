@@ -39,8 +39,8 @@ public class Member extends BaseTimeEntity {
     private MemberStatus memberStatus;
 
     // 관리자인지 확인
-    public static boolean isAdmin(Member member) {
-        return MemberRole.ADMIN.equals(member.getRole());
+    public boolean isAdmin() {
+        return MemberRole.ADMIN.equals(this.getRole());
     }
 
     // 요청자와 작성자가 다른 경우
