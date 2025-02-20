@@ -8,7 +8,6 @@ import static com.epages.restdocs.apispec.Schema.schema;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.mock;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.commonResponse;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.commonResponseFormat;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessRequest;
@@ -28,18 +27,29 @@ import com.epages.restdocs.apispec.ResourceSnippetParameters;
 import com.epages.restdocs.apispec.SimpleType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
+import java.time.LocalDateTime;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackResponse;
+import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.AnswerStatus;
+import org.programmers.signalbuddyfinal.domain.feedback.service.FeedbackService;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberUpdateRequest;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.programmers.signalbuddyfinal.domain.member.service.MemberService;
 import org.programmers.signalbuddyfinal.global.anotation.WithMockCustomUser;
+import org.programmers.signalbuddyfinal.global.config.WebConfig;
 import org.programmers.signalbuddyfinal.global.support.ControllerTest;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -51,12 +61,16 @@ import org.springframework.web.multipart.MultipartFile;
 import org.testcontainers.shaded.org.apache.commons.lang3.ArrayUtils;
 
 @WebMvcTest(MemberController.class)
+@Import(WebConfig.class) // @EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO) 적용
 class MemberControllerTest extends ControllerTest {
 
     private final String tag = "Member API";
 
     @MockitoBean
     private MemberService memberService;
+
+    @MockitoBean
+    private FeedbackService feedbackService;
 
     @DisplayName("ID로 유저 조회")
     @Test
@@ -182,29 +196,17 @@ class MemberControllerTest extends ControllerTest {
 
         given(memberService.getProfileImage(memberId)).willReturn(imageResource);
 
-        ResultActions result = mockMvc.perform(
-            get("/api/members/{id}/profile-image", memberId)
-        );
+        ResultActions result = mockMvc.perform(get("/api/members/{id}/profile-image", memberId));
 
         result.andExpect(status().isOk()).andDo(
-            document(
-                "유저 프로필 이미지 조회",
-                preprocessRequest(prettyPrint()),
-                preprocessResponse(prettyPrint()),
-                resource(
-                    ResourceSnippetParameters.builder()
-                        .tag(tag)
-                        .summary("유저 프로필 이미지 조회")
+            document("유저 프로필 이미지 조회", preprocessRequest(prettyPrint()),
+                preprocessResponse(prettyPrint()), resource(
+                    ResourceSnippetParameters.builder().tag(tag).summary("유저 프로필 이미지 조회")
                         .pathParameters(
-                            parameterWithName("id").type(SimpleType.NUMBER).description("유저 ID")
-                        )
+                            parameterWithName("id").type(SimpleType.NUMBER).description("유저 ID"))
                         .responseHeaders(
-                            headerWithName(HttpHeaders.CONTENT_TYPE).description("응답 콘텐츠 타입")
-                        )
-                        .build()
-                )
-            )
-        );
+                            headerWithName(HttpHeaders.CONTENT_TYPE).description("응답 콘텐츠 타입"))
+                        .build())));
     }
 
     @DisplayName("유저 탈퇴")
@@ -259,5 +261,67 @@ class MemberControllerTest extends ControllerTest {
                         .formParameters(parameterWithName("password").type(SimpleType.STRING)
                             .description("현재 비밀번호")).responseSchema(commonResponse)
                         .responseFields(commonResponseFormat()).build())));
+    }
+
+    @DisplayName("본인이 쓴 피드백 목록 조회")
+    @Test
+    void getFeedbacks() throws Exception {
+        final Long memberId = 1L;
+        final List<FeedbackResponse> feedbackList = List.of(
+            FeedbackResponse.builder().feedbackId(1L).subject("좋은 피드백").content("이 기능이 매우 유용했습니다!")
+                .likeCount(2L).secret(Boolean.TRUE).answerStatus(AnswerStatus.BEFORE)
+                .createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now()).build(),
+            FeedbackResponse.builder().feedbackId(2L).subject("개선 요청").content("이 부분을 좀 더 개선해 주세요.")
+                .likeCount(2L).secret(Boolean.FALSE).answerStatus(AnswerStatus.COMPLETION)
+                .createdAt(LocalDateTime.now().minusDays(1))
+                .updatedAt(LocalDateTime.now().minusDays(1)).build());
+        final Page<FeedbackResponse> feedbackPage = new PageImpl<>(feedbackList,
+            PageRequest.of(0, 10), feedbackList.size());
+
+        given(feedbackService.findPagedFeedbacksByMember(eq(memberId),
+            any(Pageable.class))).willReturn(feedbackPage);
+
+        final ResultActions result = mockMvc.perform(
+            get("/api/members/{id}/feedbacks", memberId).param("page", "0").param("size", "10"));
+
+        result.andExpect(status().isOk()).andDo(
+            document("유저의 피드백 목록 조회", preprocessRequest(prettyPrint()),
+                preprocessResponse(prettyPrint()), resource(
+                    ResourceSnippetParameters.builder().tag(tag).summary("유저의 피드백 목록 조회")
+                        .pathParameters(parameterWithName("id").description("유저 ID"))
+                        .queryParameters(parameterWithName("page").optional()
+                                .description("조회할 페이지 번호 (기본 값: 0)"),
+                            parameterWithName("size").optional()
+                                .description("한 페이지당 항목 수 (기본 값: 10)"))
+                        .responseSchema(schema("PagedFeedbackResponse")).responseFields(
+                            ArrayUtils.addAll(commonResponseFormat(),
+                                fieldWithPath("data.content").type(JsonFieldType.ARRAY)
+                                    .description("피드백 리스트"),
+                                fieldWithPath("data.content[].feedbackId").type(JsonFieldType.NUMBER)
+                                    .description("피드백 ID"),
+                                fieldWithPath("data.content[].subject").type(JsonFieldType.STRING)
+                                    .description("피드백 제목"),
+                                fieldWithPath("data.content[].content").type(JsonFieldType.STRING)
+                                    .description("피드백 내용"),
+                                fieldWithPath("data.content[].likeCount").type(JsonFieldType.NUMBER)
+                                    .description("피드백 좋아요 수"),
+                                fieldWithPath("data.content[].secret").type(JsonFieldType.BOOLEAN)
+                                    .description("피드백 비밀글 여부"),
+                                fieldWithPath("data.content[].answerStatus").type(JsonFieldType.STRING)
+                                    .description("피드백 상태 (BEFORE, COMPLETION)"),
+                                fieldWithPath("data.content[].createdAt").type(JsonFieldType.STRING)
+                                    .description("피드백 작성 날짜"),
+                                fieldWithPath("data.content[].updatedAt").type(JsonFieldType.STRING)
+                                    .description("피드백 수정 날짜"),
+                                fieldWithPath("data.page").type(JsonFieldType.OBJECT)
+                                    .description("페이지 정보"),
+                                fieldWithPath("data.page.size").type(JsonFieldType.NUMBER)
+                                    .description("한 페이지당 항목 수"),
+                                fieldWithPath("data.page.number").type(JsonFieldType.NUMBER)
+                                    .description("조회할 페이지"),
+                                fieldWithPath("data.page.totalElements").type(JsonFieldType.NUMBER)
+                                    .description("전체 피드백 수"),
+                                fieldWithPath("data.page.totalPages").type(JsonFieldType.NUMBER)
+                                    .description("전체 페이지 수"))).build())));
     }
 }
