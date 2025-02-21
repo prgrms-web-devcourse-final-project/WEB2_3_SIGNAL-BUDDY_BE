@@ -1,6 +1,7 @@
 package org.programmers.signalbuddyfinal.domain.bookmark.entity;
 
 import jakarta.persistence.*;
+import java.util.Objects;
 import lombok.*;
 import org.locationtech.jts.geom.Point;
 import org.programmers.signalbuddyfinal.domain.basetime.BaseTimeEntity;
@@ -66,5 +67,13 @@ public class Bookmark extends BaseTimeEntity {
         if (name != null) {
             this.name = name;
         }
+    }
+
+    public void updateSequence(int sequence) {
+        this.sequence = sequence;
+    }
+
+    public boolean isNotOwnedBy(Member member) {
+        return member == null || !Objects.equals(this.member.getMemberId(), member.getMemberId());
     }
 }

@@ -24,7 +24,7 @@ import static org.programmers.signalbuddyfinal.domain.member.entity.QMember.memb
 public class BookmarkRepositoryCustomImpl implements BookmarkRepositoryCustom {
 
     private static final QBean<BookmarkResponse> pageBookmarkDto = Projections.fields(
-        BookmarkResponse.class, bookmark.bookmarkId, bookmark.address, bookmark.name,
+        BookmarkResponse.class, bookmark.bookmarkId, bookmark.address, bookmark.name, bookmark.sequence,
         Expressions.numberTemplate(Double.class, "ST_X({0})", bookmark.coordinate).as("lng"),
         Expressions.numberTemplate(Double.class, "ST_Y({0})", bookmark.coordinate).as("lat"));
 
@@ -39,6 +39,7 @@ public class BookmarkRepositoryCustomImpl implements BookmarkRepositoryCustom {
         final List<BookmarkResponse> responses = queryFactory.select(pageBookmarkDto).from(bookmark)
             .join(member)
             .on(bookmark.member.eq(member).and(member.memberId.eq(memberId)))
+            .where(bookmark.deletedAt.isNull())
             .offset(pageable.getOffset()).limit(pageable.getPageSize())
             .orderBy(new OrderSpecifier<>(Order.ASC, bookmark.bookmarkId)).fetch();
 

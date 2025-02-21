@@ -19,4 +19,6 @@ public class BookmarkResponse {
     private String address;
 
     private String name;
+
+    private int sequence;
 }
