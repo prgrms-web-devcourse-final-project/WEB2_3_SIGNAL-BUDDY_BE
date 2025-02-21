@@ -2,6 +2,7 @@ package org.programmers.signalbuddyfinal.domain.recentpath.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,6 +33,12 @@ class RecentPathServiceTest extends ServiceTest {
             .role(MemberRole.USER).nickname("bookmarkTest").memberStatus(MemberStatus.ACTIVITY)
             .profileImageUrl("https://book-test-image.com/test-123131").build();
         member = memberRepository.save(member);
+
+        for (int i = 1; i <= 10; i++) {
+            RecentPathRequest request = RecentPathRequest.builder()
+                .lat(37.12345).lng(127.12345).name("Name " + i).build();
+            recentPathService.saveRecentPath(member.getMemberId(), request);
+        }
     }
 
     @DisplayName("최근 경로 저장")
@@ -45,5 +52,16 @@ class RecentPathServiceTest extends ServiceTest {
 
         assertThat(response).isNotNull();
         assertThat(response.getLastAccessedAt()).isNotNull();
+    }
+
+    @DisplayName("최근 경로 목록 조회")
+    @Test
+    void getRecentPathList() {
+        final List<RecentPathResponse> recentPathList = recentPathService.getRecentPathList(
+            member.getMemberId());
+
+        assertThat(recentPathList).isNotEmpty().allSatisfy(recentPathResponse -> {
+            assertThat(recentPathResponse.getLastAccessedAt()).isNotNull();
+        });
     }
 }
