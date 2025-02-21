@@ -1,9 +1,13 @@
 package org.programmers.signalbuddyfinal.domain.member.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.programmers.signalbuddyfinal.domain.bookmark.dto.BookmarkRequest;
 import org.programmers.signalbuddyfinal.domain.bookmark.dto.BookmarkResponse;
+import org.programmers.signalbuddyfinal.domain.bookmark.dto.BookmarkSequenceUpdateRequest;
 import org.programmers.signalbuddyfinal.domain.bookmark.service.BookmarkService;
 import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackResponse;
 import org.programmers.signalbuddyfinal.domain.feedback.service.FeedbackService;
@@ -13,9 +17,9 @@ import org.programmers.signalbuddyfinal.domain.member.service.MemberService;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
 import org.springframework.core.io.Resource;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -87,18 +91,57 @@ public class MemberController {
     }
 
     @GetMapping("{id}/feedbacks")
-    public ResponseEntity<ApiResponse<PageResponse<FeedbackResponse>>> getFeedbacks(@PathVariable Long id,
-        @PageableDefault(page = 0, size = 10) Pageable pageable) {
-        final PageResponse<FeedbackResponse> feedbacks = feedbackService.findPagedExcludingMember(id,
-            pageable);
+    public ResponseEntity<ApiResponse<PageResponse<FeedbackResponse>>> getFeedbacks(
+        @PathVariable Long id, @PageableDefault(page = 0, size = 10) Pageable pageable) {
+        final PageResponse<FeedbackResponse> feedbacks = feedbackService.findPagedExcludingMember(
+            id, pageable);
         return ResponseEntity.ok(ApiResponse.createSuccess(feedbacks));
     }
 
     @GetMapping("{id}/bookmarks")
-    public ResponseEntity<ApiResponse<PageResponse<BookmarkResponse>>> getBookmarks(@PathVariable Long id,
-        @PageableDefault(page = 0, size = 10) Pageable pageable) {
-        final PageResponse<BookmarkResponse> bookmarks = bookmarkService.findPagedBookmarks(pageable,
-            id);
+    public ResponseEntity<ApiResponse<PageResponse<BookmarkResponse>>> getBookmarks(
+        @PathVariable Long id, @PageableDefault(page = 0, size = 10) Pageable pageable) {
+        final PageResponse<BookmarkResponse> bookmarks = bookmarkService.findPagedBookmarks(
+            pageable, id);
         return ResponseEntity.ok(ApiResponse.createSuccess(bookmarks));
+    }
+
+    @PostMapping("{id}/bookmarks")
+    public ResponseEntity<ApiResponse<BookmarkResponse>> saveBookmark(@PathVariable Long id,
+        @RequestBody @Valid BookmarkRequest bookmarkRequest) {
+        final BookmarkResponse saved = bookmarkService.createBookmark(bookmarkRequest, id);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.createSuccess(saved));
+    }
+
+    @GetMapping("{id}/bookmarks/{bookmarkId}")
+    public ResponseEntity<ApiResponse<BookmarkResponse>> getBookmark(@PathVariable Long id,
+        @PathVariable Long bookmarkId) {
+        final BookmarkResponse bookmark = bookmarkService.getBookmark(id, bookmarkId);
+        return ResponseEntity.ok(ApiResponse.createSuccess(bookmark));
+    }
+
+    @PatchMapping("{id}/bookmarks/{bookmarkId}")
+    public ResponseEntity<ApiResponse<BookmarkResponse>> updateBookmark(@PathVariable Long id,
+        @PathVariable Long bookmarkId,
+        @RequestBody @Valid BookmarkRequest bookmarkRequest) {
+        final BookmarkResponse updated = bookmarkService.updateBookmark(bookmarkRequest,
+            bookmarkId, id);
+        return ResponseEntity.ok(ApiResponse.createSuccess(updated));
+    }
+
+    @DeleteMapping("{id}/bookmarks")
+    public ResponseEntity<ApiResponse<Object>> deleteBookmark(@PathVariable Long id,
+        @RequestParam List<Long> bookmarkIds) {
+        bookmarkService.deleteBookmark(bookmarkIds, id);
+        return ResponseEntity.ok(ApiResponse.createSuccessWithNoData());
+    }
+
+    @PatchMapping("{id}/bookmarks/sequence/reorder")
+    public ResponseEntity<ApiResponse<List<BookmarkResponse>>> updateBookmarkSequences(
+        @PathVariable Long id,
+        @RequestBody @Valid List<BookmarkSequenceUpdateRequest> requests) {
+        final List<BookmarkResponse> updated = bookmarkService.updateBookmarkSequences(id,
+            requests);
+        return ResponseEntity.ok(ApiResponse.createSuccess(updated));
     }
 }
