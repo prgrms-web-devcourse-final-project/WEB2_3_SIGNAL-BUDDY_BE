@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import org.locationtech.jts.geom.Point;
 import org.programmers.signalbuddyfinal.domain.crossroad.entity.Crossroad;
-import org.programmers.signalbuddyfinal.domain.crossroad.service.PointUtil;
+import org.programmers.signalbuddyfinal.global.util.PointUtil;
 
 @Getter
 @Builder
