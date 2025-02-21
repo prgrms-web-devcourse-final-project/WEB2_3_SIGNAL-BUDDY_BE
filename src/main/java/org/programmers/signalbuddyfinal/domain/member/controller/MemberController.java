@@ -61,9 +61,9 @@ public class MemberController {
     }
 
     @DeleteMapping("{id}")
-    public ResponseEntity<ApiResponse<MemberResponse>> deleteMember(@PathVariable Long id) {
-        final MemberResponse deleted = memberService.deleteMember(id);
-        return ResponseEntity.ok(ApiResponse.createSuccess(deleted));
+    public ResponseEntity<ApiResponse<Object>> deleteMember(@PathVariable Long id) {
+        memberService.deleteMember(id);
+        return ResponseEntity.ok(ApiResponse.createSuccessWithNoData());
     }
 
     @PostMapping("{id}/verify-password")
