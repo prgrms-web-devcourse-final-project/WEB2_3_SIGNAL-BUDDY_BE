@@ -107,8 +107,8 @@ class MemberServiceTest {
         final MemberStatus expected = MemberStatus.WITHDRAWAL;
         when(memberRepository.findById(id)).thenReturn(Optional.of(member));
 
-        final MemberStatus actual = memberService.deleteMember(id).getMemberStatus();
-        assertThat(actual).isEqualTo(expected);
+        memberService.deleteMember(id);
+        assertThat(member.getMemberStatus()).isEqualTo(expected);
         verify(memberRepository, times(1)).findById(id);
     }
 
