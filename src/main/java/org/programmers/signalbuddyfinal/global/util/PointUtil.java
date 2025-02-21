@@ -1,4 +1,4 @@
-package org.programmers.signalbuddyfinal.domain.crossroad.service;
+package org.programmers.signalbuddyfinal.global.util;
 
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
