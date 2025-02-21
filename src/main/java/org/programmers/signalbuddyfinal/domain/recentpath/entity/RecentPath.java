@@ -72,4 +72,8 @@ public class RecentPath extends BaseTimeEntity {
     public void unlinkBookmark() {
         this.bookmark = null;
     }
+
+    public void linkBookmark(Bookmark bookmark) {
+        this.bookmark = bookmark;
+    }
 }

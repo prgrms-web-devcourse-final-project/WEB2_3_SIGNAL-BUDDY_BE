@@ -2,17 +2,16 @@ package org.programmers.signalbuddyfinal.domain.recentpath.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
+import org.programmers.signalbuddyfinal.domain.bookmark.entity.Bookmark;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
@@ -23,11 +22,12 @@ import org.programmers.signalbuddyfinal.domain.recentpath.entity.RecentPath;
 import org.programmers.signalbuddyfinal.domain.recentpath.repository.RecentPathRepository;
 import org.programmers.signalbuddyfinal.global.support.ServiceTest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 
 @Transactional
 class RecentPathServiceTest extends ServiceTest {
+
+    private final GeometryFactory geometryFactory = new GeometryFactory();
 
     @Autowired
     private RecentPathService recentPathService;
@@ -35,7 +35,7 @@ class RecentPathServiceTest extends ServiceTest {
     @Autowired
     private MemberRepository memberRepository;
 
-    @MockitoBean
+    @Autowired
     private RecentPathRepository recentPathRepository;
 
     private Member member;
@@ -48,8 +48,8 @@ class RecentPathServiceTest extends ServiceTest {
         member = memberRepository.save(member);
 
         for (int i = 1; i <= 10; i++) {
-            RecentPathRequest request = RecentPathRequest.builder()
-                .lat(37.12345).lng(127.12345).name("Name " + i).build();
+            RecentPathRequest request = RecentPathRequest.builder().lat(37.12345).lng(127.12345)
+                .name("Name " + i).build();
             recentPathService.saveRecentPath(member.getMemberId(), request);
         }
     }
@@ -57,8 +57,8 @@ class RecentPathServiceTest extends ServiceTest {
     @DisplayName("최근 경로 저장")
     @Test
     void saveRecentPath() {
-        final RecentPathRequest request = RecentPathRequest.builder()
-            .lat(37.12345).lng(127.12345).name("오징어집").build();
+        final RecentPathRequest request = RecentPathRequest.builder().lat(37.12345).lng(127.12345)
+            .name("오징어집").build();
 
         final RecentPathResponse response = recentPathService.saveRecentPath(member.getMemberId(),
             request);
@@ -81,7 +81,8 @@ class RecentPathServiceTest extends ServiceTest {
     @DisplayName("최근 경로 방문 시간 갱신")
     @Test
     void updateRecentPathTime() {
-        LocalDateTime now = LocalDateTime.now().minusSeconds(1);;
+        LocalDateTime now = LocalDateTime.now().minusSeconds(1);
+        ;
         final RecentPathResponse response = recentPathService.updateRecentPathTime(1L);
         assertThat(response).isNotNull();
         assertThat(response.getLastAccessedAt()).isNotNull();
@@ -91,15 +92,21 @@ class RecentPathServiceTest extends ServiceTest {
     @DisplayName("최근 경로와 북마크 연관관계 해제")
     @Test
     void unlinkBookmark() {
-        RecentPath realRecentPath = new RecentPath("테스트 경로", mock(Point.class), member);
-        RecentPath recentPath = spy(realRecentPath);
-        when(recentPathRepository.findById(1L)).thenReturn(Optional.of(recentPath));
+        // Given
+        Point point = geometryFactory.createPoint(new Coordinate(127.12345, 37.12345));
+        RecentPath recentPath = RecentPath.builder().name("테스트 경로").endPoint(point).member(member)
+            .build();
+        recentPath = recentPathRepository.save(recentPath);
+
+        recentPath.linkBookmark(mock(Bookmark.class));
 
         // When
-        recentPathService.unlinkBookmark(1L);
+        recentPathService.unlinkBookmark(recentPath.getRecentPathId());
 
         // Then
-        verify(recentPath).unlinkBookmark();
-        assertThat(recentPath.getBookmark()).isNull();
+        RecentPath updatedRecentPath = recentPathRepository.findById(recentPath.getRecentPathId())
+            .orElseThrow(() -> new RuntimeException("최근 경로가 존재하지 않음"));
+
+        assertThat(updatedRecentPath.getBookmark()).isNull();
     }
 }
