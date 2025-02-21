@@ -13,9 +13,9 @@ import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
-public class QueryCrossroadRepositoryImpl implements QueryCrossroadRepository {
+public class CustomCrossroadRepositoryImpl implements CustomCrossroadRepository {
 
-    private final QCrossroad qCrossroad = QCrossroad.crossroad;
+    private static final QCrossroad qCrossroad = QCrossroad.crossroad;
 
     private final JPAQueryFactory jqf;
 
