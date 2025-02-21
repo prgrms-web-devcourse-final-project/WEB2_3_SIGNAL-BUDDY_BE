@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @Slf4j
 @RestControllerAdvice
@@ -22,6 +23,17 @@ public class GlobalExceptionHandler {
         logError(e);
         ErrorCode error = e.getErrorCode();
         return ResponseEntity.status(error.getHttpStatus()).body(new ErrorResponse(error));
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatchException(
+        MethodArgumentTypeMismatchException e
+    ) {
+        logError(e);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(new ErrorResponse(
+                    GlobalErrorCode.BAD_REQUEST.getCode(), "잘못된 형식으로 요청했습니다."
+            ));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -44,7 +56,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(InvalidDataAccessApiUsageException.class)
     public ResponseEntity<ErrorResponse> handleInvalidDataAccessApiUsage(
-        InvalidDataAccessApiUsageException e) {
+        InvalidDataAccessApiUsageException e
+    ) {
         logError(e);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
             .body(new ErrorResponse(GlobalErrorCode.BAD_REQUEST));
