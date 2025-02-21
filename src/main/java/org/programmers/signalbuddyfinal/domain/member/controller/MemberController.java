@@ -14,6 +14,9 @@ import org.programmers.signalbuddyfinal.domain.feedback.service.FeedbackService;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberUpdateRequest;
 import org.programmers.signalbuddyfinal.domain.member.service.MemberService;
+import org.programmers.signalbuddyfinal.domain.recentpath.dto.RecentPathRequest;
+import org.programmers.signalbuddyfinal.domain.recentpath.dto.RecentPathResponse;
+import org.programmers.signalbuddyfinal.domain.recentpath.service.RecentPathService;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
 import org.springframework.core.io.Resource;
@@ -42,6 +45,7 @@ public class MemberController {
     private final MemberService memberService;
     private final FeedbackService feedbackService;
     private final BookmarkService bookmarkService;
+    private final RecentPathService recentPathService;
 
     @GetMapping("{id}")
     public ResponseEntity<ApiResponse<MemberResponse>> findById(@PathVariable Long id) {
@@ -122,10 +126,9 @@ public class MemberController {
 
     @PatchMapping("{id}/bookmarks/{bookmarkId}")
     public ResponseEntity<ApiResponse<BookmarkResponse>> updateBookmark(@PathVariable Long id,
-        @PathVariable Long bookmarkId,
-        @RequestBody @Valid BookmarkRequest bookmarkRequest) {
-        final BookmarkResponse updated = bookmarkService.updateBookmark(bookmarkRequest,
-            bookmarkId, id);
+        @PathVariable Long bookmarkId, @RequestBody @Valid BookmarkRequest bookmarkRequest) {
+        final BookmarkResponse updated = bookmarkService.updateBookmark(bookmarkRequest, bookmarkId,
+            id);
         return ResponseEntity.ok(ApiResponse.createSuccess(updated));
     }
 
@@ -138,10 +141,16 @@ public class MemberController {
 
     @PatchMapping("{id}/bookmarks/sequence/reorder")
     public ResponseEntity<ApiResponse<List<BookmarkResponse>>> updateBookmarkSequences(
-        @PathVariable Long id,
-        @RequestBody @Valid List<BookmarkSequenceUpdateRequest> requests) {
+        @PathVariable Long id, @RequestBody @Valid List<BookmarkSequenceUpdateRequest> requests) {
         final List<BookmarkResponse> updated = bookmarkService.updateBookmarkSequences(id,
             requests);
         return ResponseEntity.ok(ApiResponse.createSuccess(updated));
+    }
+
+    @PostMapping("{id}/recent-path")
+    public ResponseEntity<ApiResponse<RecentPathResponse>> saveRecentPath(@PathVariable Long id,
+        @RequestBody RecentPathRequest request) {
+        final RecentPathResponse response = recentPathService.saveRecentPath(id, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.createSuccess(response));
     }
 }

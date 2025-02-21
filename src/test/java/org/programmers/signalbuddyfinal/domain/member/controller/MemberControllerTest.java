@@ -45,6 +45,9 @@ import org.programmers.signalbuddyfinal.domain.member.dto.MemberUpdateRequest;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.programmers.signalbuddyfinal.domain.member.service.MemberService;
+import org.programmers.signalbuddyfinal.domain.recentpath.dto.RecentPathRequest;
+import org.programmers.signalbuddyfinal.domain.recentpath.dto.RecentPathResponse;
+import org.programmers.signalbuddyfinal.domain.recentpath.service.RecentPathService;
 import org.programmers.signalbuddyfinal.global.anotation.WithMockCustomUser;
 import org.programmers.signalbuddyfinal.global.config.WebConfig;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
@@ -81,6 +84,9 @@ class MemberControllerTest extends ControllerTest {
 
     @MockitoBean
     private BookmarkService bookmarkService;
+
+    @MockitoBean
+    private RecentPathService recentPathService;
 
     @DisplayName("ID로 유저 조회")
     @Test
@@ -493,12 +499,12 @@ class MemberControllerTest extends ControllerTest {
         result.andExpect(status().isOk()).andDo(
             document("나의 장소 삭제", preprocessRequest(prettyPrint()),
                 preprocessResponse(prettyPrint()), resource(
-                    ResourceSnippetParameters.builder().tag(tag)
-                        .summary("나의 장소 삭제")
-                        .pathParameters(
+                    ResourceSnippetParameters.builder().tag(tag).summary("나의 장소 삭제").pathParameters(
                             parameterWithName("id").type(SimpleType.NUMBER).description("유저 ID"))
                         .formParameters(parameterWithName("bookmarkIds").type(SimpleType.NUMBER)
-                            .description("삭제할 북마크 ID 배열 (예: /api/members/1/bookmarks?bookmarkIds=1,2,3)")).build())));
+                            .description(
+                                "삭제할 북마크 ID 배열 (예: /api/members/1/bookmarks?bookmarkIds=1,2,3)"))
+                        .build())));
     }
 
     @DisplayName("나의 장소 순서 변경")
@@ -542,5 +548,43 @@ class MemberControllerTest extends ControllerTest {
                                     .description("별칭"),
                                 fieldWithPath("data[].sequence").type(JsonFieldType.NUMBER)
                                     .description("조회 순서"))).build())));
+    }
+
+    @DisplayName("최근 경로 저장")
+    @Test
+    void saveRecentPath() throws Exception {
+        final Long memberId = 1L;
+        final RecentPathRequest request = RecentPathRequest.builder().lat(37.501).lng(127.001)
+            .name("Recent Path").build();
+        final RecentPathResponse response = RecentPathResponse.builder().recentPathId(1L)
+            .lat(37.501).lng(127.001).name("Recent Path").lastAccessedAt(LocalDateTime.now())
+            .build();
+
+        given(recentPathService.saveRecentPath(eq(memberId),
+            any(RecentPathRequest.class))).willReturn(response);
+
+        final ResultActions result = mockMvc.perform(
+            post("/api/members/{id}/recent-path", memberId).contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)));
+
+        result.andExpect(status().isCreated()).andDo(
+            document("최근 경로 저장", preprocessRequest(prettyPrint()),
+                preprocessResponse(prettyPrint()), resource(
+                    ResourceSnippetParameters.builder().tag(tag).summary("최근 경로 저장").pathParameters(
+                            parameterWithName("id").type(SimpleType.NUMBER).description("유저 ID"))
+                        .requestSchema(schema("RecentPathRequest"))
+                        .requestFields(fieldWithPath("name").description("최근 경로 이름"),
+                            fieldWithPath("lat").description("위도"),
+                            fieldWithPath("lng").description("경도"))
+                        .responseSchema(schema("RecentPathResponse")).responseFields(
+                            ArrayUtils.addAll(commonResponseFormat(),
+                                fieldWithPath("data.recentPathId").type(JsonFieldType.NUMBER)
+                                    .description("최근 경로 ID"),
+                                fieldWithPath("data.lat").type(JsonFieldType.NUMBER).description("위도"),
+                                fieldWithPath("data.lng").type(JsonFieldType.NUMBER).description("경도"),
+                                fieldWithPath("data.name").type(JsonFieldType.STRING)
+                                    .description("최근 경로 이름"),
+                                fieldWithPath("data.lastAccessedAt").type(JsonFieldType.STRING)
+                                    .description("최근 방문 시각"))).build())));
     }
 }
