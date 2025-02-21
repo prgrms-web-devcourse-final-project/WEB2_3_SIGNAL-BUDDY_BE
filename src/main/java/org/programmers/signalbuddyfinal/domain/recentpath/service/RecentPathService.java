@@ -1,5 +1,6 @@
 package org.programmers.signalbuddyfinal.domain.recentpath.service;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -14,6 +15,7 @@ import org.programmers.signalbuddyfinal.domain.recentpath.exception.RecentPathEr
 import org.programmers.signalbuddyfinal.domain.recentpath.mapper.RecentPathMapper;
 import org.programmers.signalbuddyfinal.domain.recentpath.repository.RecentPathRepository;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
+import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,5 +53,14 @@ public class RecentPathService {
             throw new BusinessException(RecentPathErrorCode.INVALID_COORDINATES);
         }
         return geometryFactory.createPoint(new Coordinate(lng, lat));
+    }
+
+    @Transactional
+    public RecentPathResponse updateRecentPathTime(Long id) {
+        final RecentPath recentPath = recentPathRepository.findById(id)
+            .orElseThrow(() -> new BusinessException(RecentPathErrorCode.NOT_FOUND_RECENT_PATH));
+
+        recentPath.updateLastAccessedTime();
+        return RecentPathMapper.INSTANCE.toDto(recentPath);
     }
 }
