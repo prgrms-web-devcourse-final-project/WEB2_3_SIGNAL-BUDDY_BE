@@ -1,4 +1,4 @@
-package org.programmers.signalbuddyfinal.domain.member.service;
+package org.programmers.signalbuddyfinal.global.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,14 +29,11 @@ public class AwsFileService {
 
     private final S3Client s3Client;
 
-    @Value("${cloud.aws.s3.folder}")
+    @Value("${cloud.aws.s3.folder.member}")
     private String profileImageDir;
 
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
-
-    @Value("${default.profile.image.path}")
-    private String defaultProfileImagePath;
 
     /**
      * S3에서 프로필 이미지를 가져옵니다.
