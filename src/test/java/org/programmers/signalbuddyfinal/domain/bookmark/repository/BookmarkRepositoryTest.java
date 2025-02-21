@@ -83,7 +83,7 @@ class BookmarkRepositoryTest extends RepositoryTest {
     @Test
     void getBookmarkBySequences() {
         final List<Integer> sequences = List.of(1, 3, 5, 9);
-        final List<Bookmark> bookmarks = bookmarkRepository.findAllBySequenceIn(sequences);
+        final List<Bookmark> bookmarks = bookmarkRepository.findAllBySequenceInAndMemberMemberId(sequences, member.getMemberId());
 
         assertThat(bookmarks).isNotEmpty().allSatisfy(bookmark -> {
             assertThat(bookmark.getMember()).isEqualTo(member);

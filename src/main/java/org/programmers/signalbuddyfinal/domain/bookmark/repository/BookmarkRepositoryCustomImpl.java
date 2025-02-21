@@ -41,7 +41,7 @@ public class BookmarkRepositoryCustomImpl implements BookmarkRepositoryCustom {
             .on(bookmark.member.eq(member).and(member.memberId.eq(memberId)))
             .where(bookmark.deletedAt.isNull())
             .offset(pageable.getOffset()).limit(pageable.getPageSize())
-            .orderBy(new OrderSpecifier<>(Order.ASC, bookmark.bookmarkId)).fetch();
+            .orderBy(new OrderSpecifier<>(Order.ASC, bookmark.sequence)).fetch();
 
         final Long count = queryFactory.select(bookmark.count()).from(bookmark).join(member)
             .on(bookmark.member.eq(member).and(member.memberId.eq(memberId)))
