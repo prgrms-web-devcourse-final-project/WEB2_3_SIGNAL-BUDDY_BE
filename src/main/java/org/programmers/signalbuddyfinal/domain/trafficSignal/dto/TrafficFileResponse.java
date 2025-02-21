@@ -1,10 +1,8 @@
 package org.programmers.signalbuddyfinal.domain.trafficSignal.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import org.locationtech.jts.geom.Point;
-import org.programmers.signalbuddyfinal.domain.trafficSignal.entity.TrafficSignal;
 import org.programmers.signalbuddyfinal.global.util.PointUtil;
 
 @Getter
@@ -12,7 +10,7 @@ import org.programmers.signalbuddyfinal.global.util.PointUtil;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class TrafficApiResponse {
+public class TrafficFileResponse {
 
     private Long serialNumber;
     private String district;
