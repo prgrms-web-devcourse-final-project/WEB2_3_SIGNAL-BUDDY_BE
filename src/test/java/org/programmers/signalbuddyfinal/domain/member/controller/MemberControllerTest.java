@@ -8,6 +8,7 @@ import static com.epages.restdocs.apispec.Schema.schema;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doNothing;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.commonResponse;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.commonResponseFormat;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.pageResponseFormat;
@@ -32,6 +33,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.programmers.signalbuddyfinal.domain.bookmark.dto.BookmarkRequest;
+import org.programmers.signalbuddyfinal.domain.bookmark.dto.BookmarkResponse;
+import org.programmers.signalbuddyfinal.domain.bookmark.dto.BookmarkSequenceUpdateRequest;
+import org.programmers.signalbuddyfinal.domain.bookmark.service.BookmarkService;
 import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackResponse;
 import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.AnswerStatus;
 import org.programmers.signalbuddyfinal.domain.feedback.service.FeedbackService;
@@ -40,6 +45,9 @@ import org.programmers.signalbuddyfinal.domain.member.dto.MemberUpdateRequest;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.programmers.signalbuddyfinal.domain.member.service.MemberService;
+import org.programmers.signalbuddyfinal.domain.recentpath.dto.RecentPathRequest;
+import org.programmers.signalbuddyfinal.domain.recentpath.dto.RecentPathResponse;
+import org.programmers.signalbuddyfinal.domain.recentpath.service.RecentPathService;
 import org.programmers.signalbuddyfinal.global.anotation.WithMockCustomUser;
 import org.programmers.signalbuddyfinal.global.config.WebConfig;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
@@ -73,6 +81,12 @@ class MemberControllerTest extends ControllerTest {
 
     @MockitoBean
     private FeedbackService feedbackService;
+
+    @MockitoBean
+    private BookmarkService bookmarkService;
+
+    @MockitoBean
+    private RecentPathService recentPathService;
 
     @DisplayName("ID로 유저 조회")
     @Test
@@ -215,11 +229,9 @@ class MemberControllerTest extends ControllerTest {
     @Test
     void deleteMember() throws Exception {
         final Long memberId = 1L;
-        final MemberResponse memberResponse = MemberResponse.builder().memberId(memberId)
-            .memberStatus(MemberStatus.WITHDRAWAL).role(MemberRole.USER).email("test@example.com")
-            .nickname("Test").build();
 
-        given(memberService.deleteMember(memberId)).willReturn(memberResponse);
+        doNothing().when(memberService).deleteMember(memberId);
+
         ResultActions result = mockMvc.perform(delete("/api/members/{id}", memberId));
 
         result.andExpect(status().isOk()).andDo(
@@ -227,20 +239,7 @@ class MemberControllerTest extends ControllerTest {
                 resource(ResourceSnippetParameters.builder().tag(tag).summary("유저 탈퇴")
                     .pathParameters(
                         parameterWithName("id").type(SimpleType.NUMBER).description("유저 ID"))
-                    .responseSchema(schema("MemberResponse")).responseFields(
-                        ArrayUtils.addAll(commonResponseFormat(),
-                            fieldWithPath("data.memberId").type(JsonFieldType.NUMBER)
-                                .description("유저 ID"),
-                            fieldWithPath("data.email").type(JsonFieldType.STRING)
-                                .description("유저 이메일"),
-                            fieldWithPath("data.nickname").type(JsonFieldType.STRING)
-                                .description("유저 닉네임"),
-                            fieldWithPath("data.profileImageUrl").type(JsonFieldType.STRING)
-                                .optional().description("프로필 이미지 URL"),
-                            fieldWithPath("data.role").type(JsonFieldType.STRING)
-                                .description("유저 역할"),
-                            fieldWithPath("data.memberStatus").type(JsonFieldType.STRING)
-                                .description("유저 상태"))).build())));
+                    .build())));
     }
 
     @DisplayName("비밀번호 확인")
@@ -314,5 +313,320 @@ class MemberControllerTest extends ControllerTest {
                                     JsonFieldType.STRING).description("피드백 작성 날짜"),
                                 fieldWithPath("data.searchResults[].updatedAt").type(
                                     JsonFieldType.STRING).description("피드백 수정 날짜"))).build())));
+    }
+
+    @DisplayName("나의 장소 목록 조회")
+    @Test
+    void getBookmarks() throws Exception {
+        final Long memberId = 1L;
+        final List<BookmarkResponse> bookmarks = List.of(
+            BookmarkResponse.builder().bookmarkId(1L).lat(37.501).lng(127.001)
+                .address("서울특별시 강남구 테헤란로 123").name("강남역").build(),
+
+            BookmarkResponse.builder().bookmarkId(2L).lat(37.566).lng(126.978)
+                .address("서울특별시 중구 을지로 1가").name("서울시청").build(),
+
+            BookmarkResponse.builder().bookmarkId(3L).lat(35.179).lng(129.075)
+                .address("부산광역시 해운대구 해운대로 200").name("해운대 해수욕장").build(),
+
+            BookmarkResponse.builder().bookmarkId(4L).lat(37.497).lng(127.027)
+                .address("서울특별시 강남구 역삼동").name("역삼역").build());
+        final Page<BookmarkResponse> page = new PageImpl<>(bookmarks, PageRequest.of(0, 10),
+            bookmarks.size());
+
+        given(bookmarkService.findPagedBookmarks(any(Pageable.class), eq(memberId))).willReturn(
+            new PageResponse<>(page));
+
+        final ResultActions result = mockMvc.perform(
+            get("/api/members/{id}/bookmarks", memberId).param("page", "0").param("size", "10"));
+
+        result.andExpect(status().isOk()).andDo(
+            document("나의 장소 목록 조회", preprocessRequest(prettyPrint()),
+                preprocessResponse(prettyPrint()), resource(
+                    ResourceSnippetParameters.builder().tag(tag).summary("나의 장소 목록 조회")
+                        .pathParameters(parameterWithName("id").description("유저 ID"))
+                        .queryParameters(parameterWithName("page").optional()
+                                .description("조회할 페이지 번호 (기본 값: 0)"),
+                            parameterWithName("size").optional()
+                                .description("한 페이지당 항목 수 (기본 값: 10)"))
+                        .responseSchema(schema("PagedBookmarkResponse")).responseFields(
+                            ArrayUtils.addAll(pageResponseFormat(),
+                                fieldWithPath("data.searchResults[].bookmarkId").type(
+                                    JsonFieldType.NUMBER).description("북마크 ID"),
+                                fieldWithPath("data.searchResults[].lat").type(JsonFieldType.NUMBER)
+                                    .description("위도"),
+                                fieldWithPath("data.searchResults[].lng").type(JsonFieldType.NUMBER)
+                                    .description("경도"),
+                                fieldWithPath("data.searchResults[].address").type(JsonFieldType.STRING)
+                                    .description("주소"),
+                                fieldWithPath("data.searchResults[].name").type(JsonFieldType.STRING)
+                                    .description("별칭 (예: 우리집, 회사)"),
+                                fieldWithPath("data.searchResults[].sequence").type(
+                                    JsonFieldType.NUMBER).description("순서"))).build())));
+    }
+
+    @DisplayName("나의 장소 상세 조회")
+    @Test
+    void getBookmark() throws Exception {
+        final Long memberId = 1L;
+        final Long bookmarkId = 1L;
+        final BookmarkResponse response = BookmarkResponse.builder().bookmarkId(1L).lat(37.501)
+            .lng(127.001).address("서울특별시 강남구 테헤란로 123").name("강남역").build();
+
+        given(bookmarkService.getBookmark(memberId, bookmarkId)).willReturn(response);
+
+        final ResultActions result = mockMvc.perform(
+            get("/api/members/{id}/bookmarks/{bookmarkId}", memberId, bookmarkId));
+
+        result.andExpect(status().isOk()).andDo(
+            document("나의 장소 상세 조회", preprocessRequest(prettyPrint()),
+                preprocessResponse(prettyPrint()), resource(
+                    ResourceSnippetParameters.builder().tag(tag).summary("나의 장소 상세 조회")
+                        .pathParameters(
+                            parameterWithName("id").type(SimpleType.NUMBER).description("유저 ID"),
+                            parameterWithName("bookmarkId").type(SimpleType.NUMBER)
+                                .description("북마크 ID")).responseSchema(schema("BookmarkResponse"))
+                        .responseFields(ArrayUtils.addAll(commonResponseFormat(),
+                            fieldWithPath("data.bookmarkId").type(JsonFieldType.NUMBER)
+                                .description("북마크 ID"),
+                            fieldWithPath("data.lat").type(JsonFieldType.NUMBER).description("위도"),
+                            fieldWithPath("data.lng").type(JsonFieldType.NUMBER).description("경도"),
+                            fieldWithPath("data.address").type(JsonFieldType.STRING)
+                                .description("주소"),
+                            fieldWithPath("data.name").type(JsonFieldType.STRING).description("별칭"),
+                            fieldWithPath("data.sequence").type(JsonFieldType.NUMBER)
+                                .description("조회 순서"))).build())));
+    }
+
+    @DisplayName("나의 장소 저장")
+    @Test
+    void saveBookmark() throws Exception {
+        final Long memberId = 1L;
+
+        final BookmarkRequest request = BookmarkRequest.builder().lat(37.501).lng(127.001)
+            .address("서울특별시 강남구 테헤란로 123").name("강남역").build();
+
+        final BookmarkResponse response = BookmarkResponse.builder().bookmarkId(1L).lat(37.501)
+            .lng(127.001).address("서울특별시 강남구 테헤란로 123").name("강남역").sequence(1).build();
+
+        given(bookmarkService.createBookmark(any(BookmarkRequest.class), eq(memberId))).willReturn(
+            response);
+
+        final ResultActions result = mockMvc.perform(
+            post("/api/members/{id}/bookmarks", memberId).contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)));
+
+        result.andExpect(status().isCreated()).andDo(
+            document("나의 장소 저장", preprocessRequest(prettyPrint()),
+                preprocessResponse(prettyPrint()), resource(
+                    ResourceSnippetParameters.builder().tag(tag).summary("나의 장소 저장").pathParameters(
+                            parameterWithName("id").type(SimpleType.NUMBER).description("유저 ID"))
+                        .requestSchema(schema("BookmarkCreateRequest")).requestFields(
+                            fieldWithPath("lat").type(JsonFieldType.NUMBER).description("위도"),
+                            fieldWithPath("lng").type(JsonFieldType.NUMBER).description("경도"),
+                            fieldWithPath("address").type(JsonFieldType.STRING).description("주소"),
+                            fieldWithPath("name").type(JsonFieldType.STRING).description("이름"))
+                        .responseSchema(schema("BookmarkResponse")).responseFields(
+                            ArrayUtils.addAll(commonResponseFormat(),
+                                fieldWithPath("data.bookmarkId").type(JsonFieldType.NUMBER)
+                                    .description("북마크 ID"),
+                                fieldWithPath("data.lat").type(JsonFieldType.NUMBER).description("위도"),
+                                fieldWithPath("data.lng").type(JsonFieldType.NUMBER).description("경도"),
+                                fieldWithPath("data.address").type(JsonFieldType.STRING)
+                                    .description("주소"),
+                                fieldWithPath("data.name").type(JsonFieldType.STRING).description("별칭"),
+                                fieldWithPath("data.sequence").type(JsonFieldType.NUMBER)
+                                    .description("조회 순서"))).build())));
+    }
+
+    @DisplayName("나의 장소 수정")
+    @Test
+    void updateBookmark() throws Exception {
+        final Long memberId = 1L;
+        final Long bookmarkId = 1L;
+
+        final BookmarkRequest request = BookmarkRequest.builder().lat(37.501).lng(127.001)
+            .address("수정된 주소").name("수정된 별칭").build();
+
+        final BookmarkResponse response = BookmarkResponse.builder().bookmarkId(1L).lat(37.501)
+            .lng(127.001).address("수정된 주소").name("수정된 별칭").sequence(1).build();
+
+        given(bookmarkService.updateBookmark(any(BookmarkRequest.class), eq(bookmarkId),
+            eq(memberId))).willReturn(response);
+
+        final ResultActions result = mockMvc.perform(
+            patch("/api/members/{id}/bookmarks/{bookmarkId}", memberId, bookmarkId).contentType(
+                MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(request)));
+
+        result.andExpect(status().isOk()).andDo(
+            document("나의 장소 수정", preprocessRequest(prettyPrint()),
+                preprocessResponse(prettyPrint()), resource(
+                    ResourceSnippetParameters.builder().tag(tag).summary("나의 장소 수정").pathParameters(
+                            parameterWithName("id").type(SimpleType.NUMBER).description("유저 ID"),
+                            parameterWithName("bookmarkId").type(SimpleType.NUMBER)
+                                .description("북마크 ID")).requestSchema(schema("BookmarkUpdateRequest"))
+                        .requestFields(
+                            fieldWithPath("lat").type(JsonFieldType.NUMBER).description("위도"),
+                            fieldWithPath("lng").type(JsonFieldType.NUMBER).description("경도"),
+                            fieldWithPath("address").type(JsonFieldType.STRING).description("주소"),
+                            fieldWithPath("name").type(JsonFieldType.STRING).description("이름"))
+                        .responseSchema(schema("BookmarkResponse")).responseFields(
+                            ArrayUtils.addAll(commonResponseFormat(),
+                                fieldWithPath("data.bookmarkId").type(JsonFieldType.NUMBER)
+                                    .description("북마크 ID"),
+                                fieldWithPath("data.lat").type(JsonFieldType.NUMBER).description("위도"),
+                                fieldWithPath("data.lng").type(JsonFieldType.NUMBER).description("경도"),
+                                fieldWithPath("data.address").type(JsonFieldType.STRING)
+                                    .description("주소"),
+                                fieldWithPath("data.name").type(JsonFieldType.STRING).description("별칭"),
+                                fieldWithPath("data.sequence").type(JsonFieldType.NUMBER)
+                                    .description("조회 순서"))).build())));
+    }
+
+    @DisplayName("나의 장소 삭제")
+    @Test
+    void deleteBookmark() throws Exception {
+        final Long memberId = 1L;
+        final List<Long> bookmarkIds = List.of(1L, 2L, 3L);
+
+        doNothing().when(bookmarkService).deleteBookmark(bookmarkIds, memberId);
+
+        final ResultActions result = mockMvc.perform(
+            delete("/api/members/{id}/bookmarks", memberId).param("bookmarkIds",
+                bookmarkIds.stream().map(String::valueOf).toArray(String[]::new)));
+        // DELETE /bookmarks?bookmarkIds=1,2,3
+
+        result.andExpect(status().isOk()).andDo(
+            document("나의 장소 삭제", preprocessRequest(prettyPrint()),
+                preprocessResponse(prettyPrint()), resource(
+                    ResourceSnippetParameters.builder().tag(tag).summary("나의 장소 삭제").pathParameters(
+                            parameterWithName("id").type(SimpleType.NUMBER).description("유저 ID"))
+                        .formParameters(parameterWithName("bookmarkIds").type(SimpleType.NUMBER)
+                            .description(
+                                "삭제할 북마크 ID 배열 (예: /api/members/1/bookmarks?bookmarkIds=1,2,3)"))
+                        .build())));
+    }
+
+    @DisplayName("나의 장소 순서 변경")
+    @Test
+    void updateBookmarkSequence() throws Exception {
+        final Long memberId = 1L;
+        final List<BookmarkSequenceUpdateRequest> requests = List.of(
+            new BookmarkSequenceUpdateRequest(1L, 3), new BookmarkSequenceUpdateRequest(2L, 5),
+            new BookmarkSequenceUpdateRequest(3L, 9));
+
+        final List<BookmarkResponse> responses = List.of(
+            BookmarkResponse.builder().bookmarkId(1L).lat(37.501).lng(127.001).address("수정된 주소1")
+                .name("수정된 별칭1").sequence(3).build(),
+            BookmarkResponse.builder().bookmarkId(2L).lat(37.501).lng(127.001).address("수정된 주소2")
+                .name("수정된 별칭2").sequence(5).build(),
+            BookmarkResponse.builder().bookmarkId(3L).lat(37.501).lng(127.001).address("수정된 주소3")
+                .name("수정된 별칭3").sequence(9).build());
+
+        given(bookmarkService.updateBookmarkSequences(memberId, requests)).willReturn(responses);
+        final ResultActions result = mockMvc.perform(
+            patch("/api/members/{id}/bookmarks/sequence/reorder", memberId).contentType(
+                MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(requests)));
+
+        result.andExpect(status().isOk()).andDo(
+            document("나의 장소 순서 변경", preprocessRequest(prettyPrint()),
+                preprocessResponse(prettyPrint()), resource(
+                    ResourceSnippetParameters.builder().tag(tag).summary("나의 장소 순서 변경")
+                        .pathParameters(
+                            parameterWithName("id").type(SimpleType.NUMBER).description("유저 ID"))
+                        .responseSchema(schema("BookmarkResponseList")).responseFields(
+                            ArrayUtils.addAll(commonResponseFormat(),
+                                fieldWithPath("data[].bookmarkId").type(JsonFieldType.NUMBER)
+                                    .description("북마크 ID"),
+                                fieldWithPath("data[].lat").type(JsonFieldType.NUMBER)
+                                    .description("위도"),
+                                fieldWithPath("data[].lng").type(JsonFieldType.NUMBER)
+                                    .description("경도"),
+                                fieldWithPath("data[].address").type(JsonFieldType.STRING)
+                                    .description("주소"),
+                                fieldWithPath("data[].name").type(JsonFieldType.STRING)
+                                    .description("별칭"),
+                                fieldWithPath("data[].sequence").type(JsonFieldType.NUMBER)
+                                    .description("조회 순서"))).build())));
+    }
+
+    @DisplayName("최근 경로 저장")
+    @Test
+    void saveRecentPath() throws Exception {
+        final Long memberId = 1L;
+        final RecentPathRequest request = RecentPathRequest.builder().lat(37.501).lng(127.001)
+            .name("Recent Path").build();
+        final RecentPathResponse response = RecentPathResponse.builder().recentPathId(1L)
+            .lat(37.501).lng(127.001).name("Recent Path").lastAccessedAt(LocalDateTime.now())
+            .isBookmarked(false).build();
+
+        given(recentPathService.saveRecentPath(eq(memberId),
+            any(RecentPathRequest.class))).willReturn(response);
+
+        final ResultActions result = mockMvc.perform(
+            post("/api/members/{id}/recent-path", memberId).contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)));
+
+        result.andExpect(status().isCreated()).andDo(
+            document("최근 경로 저장", preprocessRequest(prettyPrint()),
+                preprocessResponse(prettyPrint()), resource(
+                    ResourceSnippetParameters.builder().tag(tag).summary("최근 경로 저장").pathParameters(
+                            parameterWithName("id").type(SimpleType.NUMBER).description("유저 ID"))
+                        .requestSchema(schema("RecentPathRequest"))
+                        .requestFields(fieldWithPath("name").description("최근 경로 이름"),
+                            fieldWithPath("lat").description("위도"),
+                            fieldWithPath("lng").description("경도"))
+                        .responseSchema(schema("RecentPathResponse")).responseFields(
+                            ArrayUtils.addAll(commonResponseFormat(),
+                                fieldWithPath("data.recentPathId").type(JsonFieldType.NUMBER)
+                                    .description("최근 경로 ID"),
+                                fieldWithPath("data.lat").type(JsonFieldType.NUMBER).description("위도"),
+                                fieldWithPath("data.lng").type(JsonFieldType.NUMBER).description("경도"),
+                                fieldWithPath("data.name").type(JsonFieldType.STRING)
+                                    .description("최근 경로 이름"),
+                                fieldWithPath("data.lastAccessedAt").type(JsonFieldType.STRING)
+                                    .description("최근 방문 시각"),
+                                fieldWithPath("data.bookmarked").type(JsonFieldType.BOOLEAN)
+                                    .description("나의 목적지와의 연관관계 여부"))).build())));
+    }
+
+    @DisplayName("최근 경로 목록 조회")
+    @Test
+    void getRecentPathList() throws Exception {
+        final Long memberId = 1L;
+
+        final List<RecentPathResponse> list = List.of(
+            RecentPathResponse.builder().recentPathId(1L).lat(37.501).lng(127.001)
+                .name("Recent Path").lastAccessedAt(LocalDateTime.now()).isBookmarked(false).build(),
+            RecentPathResponse.builder().recentPathId(2L).lat(37.501).lng(127.001)
+                .name("Recent Path").lastAccessedAt(LocalDateTime.now()).isBookmarked(false).build(),
+            RecentPathResponse.builder().recentPathId(3L).lat(37.501).lng(127.001)
+                .name("Recent Path").lastAccessedAt(LocalDateTime.now()).isBookmarked(false).build());
+
+        given(recentPathService.getRecentPathList(memberId)).willReturn(list);
+
+        final ResultActions result = mockMvc.perform(
+            get("/api/members/{id}/recent-path", memberId));
+
+        result.andExpect(status().isOk()).andDo(
+            document("최근 경로 목록 조회 (최대 10개)", preprocessRequest(prettyPrint()),
+                preprocessResponse(prettyPrint()), resource(
+                    ResourceSnippetParameters.builder().tag(tag).summary("최근 경로 목록 조회 (최대 10개)")
+                        .pathParameters(
+                            parameterWithName("id").type(SimpleType.NUMBER).description("유저 ID"))
+                        .responseSchema(schema("RecentPathResponse")).responseFields(
+                            ArrayUtils.addAll(commonResponseFormat(),
+                                fieldWithPath("data[].recentPathId").type(JsonFieldType.NUMBER)
+                                    .description("최근 경로 ID"),
+                                fieldWithPath("data[].lat").type(JsonFieldType.NUMBER)
+                                    .description("위도"),
+                                fieldWithPath("data[].lng").type(JsonFieldType.NUMBER)
+                                    .description("경도"),
+                                fieldWithPath("data[].name").type(JsonFieldType.STRING)
+                                    .description("최근 경로 이름"),
+                                fieldWithPath("data[].lastAccessedAt").type(JsonFieldType.STRING)
+                                    .description("최근 방문 시각"),
+                                fieldWithPath("data[].bookmarked").type(JsonFieldType.BOOLEAN)
+                                    .description("나의 목적지와의 연관관계 여부"))).build())));
     }
 }
