@@ -558,7 +558,7 @@ class MemberControllerTest extends ControllerTest {
             .name("Recent Path").build();
         final RecentPathResponse response = RecentPathResponse.builder().recentPathId(1L)
             .lat(37.501).lng(127.001).name("Recent Path").lastAccessedAt(LocalDateTime.now())
-            .build();
+            .isBookmarked(false).build();
 
         given(recentPathService.saveRecentPath(eq(memberId),
             any(RecentPathRequest.class))).willReturn(response);
@@ -585,7 +585,9 @@ class MemberControllerTest extends ControllerTest {
                                 fieldWithPath("data.name").type(JsonFieldType.STRING)
                                     .description("최근 경로 이름"),
                                 fieldWithPath("data.lastAccessedAt").type(JsonFieldType.STRING)
-                                    .description("최근 방문 시각"))).build())));
+                                    .description("최근 방문 시각"),
+                                fieldWithPath("data.bookmarked").type(JsonFieldType.BOOLEAN)
+                                    .description("나의 목적지와의 연관관계 여부"))).build())));
     }
 
     @DisplayName("최근 경로 목록 조회")
@@ -595,11 +597,11 @@ class MemberControllerTest extends ControllerTest {
 
         final List<RecentPathResponse> list = List.of(
             RecentPathResponse.builder().recentPathId(1L).lat(37.501).lng(127.001)
-                .name("Recent Path").lastAccessedAt(LocalDateTime.now()).build(),
+                .name("Recent Path").lastAccessedAt(LocalDateTime.now()).isBookmarked(false).build(),
             RecentPathResponse.builder().recentPathId(2L).lat(37.501).lng(127.001)
-                .name("Recent Path").lastAccessedAt(LocalDateTime.now()).build(),
+                .name("Recent Path").lastAccessedAt(LocalDateTime.now()).isBookmarked(false).build(),
             RecentPathResponse.builder().recentPathId(3L).lat(37.501).lng(127.001)
-                .name("Recent Path").lastAccessedAt(LocalDateTime.now()).build());
+                .name("Recent Path").lastAccessedAt(LocalDateTime.now()).isBookmarked(false).build());
 
         given(recentPathService.getRecentPathList(memberId)).willReturn(list);
 
@@ -623,6 +625,8 @@ class MemberControllerTest extends ControllerTest {
                                 fieldWithPath("data[].name").type(JsonFieldType.STRING)
                                     .description("최근 경로 이름"),
                                 fieldWithPath("data[].lastAccessedAt").type(JsonFieldType.STRING)
-                                    .description("최근 방문 시각"))).build())));
+                                    .description("최근 방문 시각"),
+                                fieldWithPath("data[].bookmarked").type(JsonFieldType.BOOLEAN)
+                                    .description("나의 목적지와의 연관관계 여부"))).build())));
     }
 }

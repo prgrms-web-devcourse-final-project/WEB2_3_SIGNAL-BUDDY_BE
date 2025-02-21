@@ -63,4 +63,12 @@ public class RecentPathService {
         recentPath.updateLastAccessedTime();
         return RecentPathMapper.INSTANCE.toDto(recentPath);
     }
+
+    @Transactional
+    public void unlinkBookmark(Long id) {
+        final RecentPath recentPath = recentPathRepository.findById(id)
+            .orElseThrow(() -> new BusinessException(RecentPathErrorCode.NOT_FOUND_RECENT_PATH));
+
+        recentPath.unlinkBookmark();
+    }
 }

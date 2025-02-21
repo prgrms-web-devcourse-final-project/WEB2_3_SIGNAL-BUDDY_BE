@@ -19,6 +19,7 @@ public interface RecentPathMapper {
 
     @Mapping(target = "lng", expression = "java(getLng(recentPath.getEndPoint()))")
     @Mapping(target = "lat", expression = "java(getLat(recentPath.getEndPoint()))")
+    @Mapping(target = "isBookmarked", expression = "java(isBookmarked(recentPath))")
     RecentPathResponse toDto(RecentPath recentPath);
 
     default double getLng(Point point) {
@@ -27,5 +28,9 @@ public interface RecentPathMapper {
 
     default double getLat(Point point) {
         return point.getY();
+    }
+
+    default boolean isBookmarked(RecentPath recentPath) {
+        return recentPath.getBookmark() != null; // Bookmark가 존재하면 true
     }
 }

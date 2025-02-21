@@ -1,5 +1,6 @@
 package org.programmers.signalbuddyfinal.domain.recentpath.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -49,6 +50,7 @@ public class RecentPath extends BaseTimeEntity {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "bookmark_id", nullable = true)
+    @JsonIgnore
     private Bookmark bookmark;
 
     @Builder
@@ -65,5 +67,9 @@ public class RecentPath extends BaseTimeEntity {
 
     public void updateLastAccessedTime() {
         this.lastAccessedAt = LocalDateTime.now();
+    }
+
+    public void unlinkBookmark() {
+        this.bookmark = null;
     }
 }

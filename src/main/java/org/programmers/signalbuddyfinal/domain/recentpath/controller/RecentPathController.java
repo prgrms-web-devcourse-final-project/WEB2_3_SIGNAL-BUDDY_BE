@@ -5,6 +5,7 @@ import org.programmers.signalbuddyfinal.domain.recentpath.dto.RecentPathResponse
 import org.programmers.signalbuddyfinal.domain.recentpath.service.RecentPathService;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,4 +25,9 @@ public class RecentPathController {
         return ResponseEntity.ok(ApiResponse.createSuccess(response));
     }
 
+    @DeleteMapping("{id}/bookmarks")
+    public ResponseEntity<ApiResponse<Object>> unlinkBookmark(@PathVariable Long id) {
+        recentPathService.unlinkBookmark(id);
+        return ResponseEntity.ok(ApiResponse.createSuccessWithNoData());
+    }
 }

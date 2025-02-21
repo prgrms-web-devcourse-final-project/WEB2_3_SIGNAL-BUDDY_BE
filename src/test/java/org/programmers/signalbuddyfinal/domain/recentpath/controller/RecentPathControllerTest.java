@@ -5,11 +5,13 @@ import static com.epages.restdocs.apispec.ResourceDocumentation.parameterWithNam
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
 import static com.epages.restdocs.apispec.Schema.schema;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doNothing;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.commonResponseFormat;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessRequest;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessResponse;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.prettyPrint;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -42,7 +44,7 @@ class RecentPathControllerTest extends ControllerTest {
 
         final RecentPathResponse response = RecentPathResponse.builder().recentPathId(1L)
             .lat(37.501).lng(127.001).name("Recent Path").lastAccessedAt(LocalDateTime.now())
-            .build();
+            .isBookmarked(false).build();
 
         given(recentPathService.updateRecentPathTime(recentPathId)).willReturn(response);
 
@@ -58,13 +60,32 @@ class RecentPathControllerTest extends ControllerTest {
                             ArrayUtils.addAll(commonResponseFormat(),
                                 fieldWithPath("data.recentPathId").type(JsonFieldType.NUMBER)
                                     .description("최근 경로 ID"),
-                                fieldWithPath("data.lat").type(JsonFieldType.NUMBER)
-                                    .description("위도"),
-                                fieldWithPath("data.lng").type(JsonFieldType.NUMBER)
-                                    .description("경도"),
+                                fieldWithPath("data.lat").type(JsonFieldType.NUMBER).description("위도"),
+                                fieldWithPath("data.lng").type(JsonFieldType.NUMBER).description("경도"),
                                 fieldWithPath("data.name").type(JsonFieldType.STRING)
                                     .description("최근 경로 이름"),
                                 fieldWithPath("data.lastAccessedAt").type(JsonFieldType.STRING)
-                                    .description("최근 방문 시각"))).build())));
+                                    .description("최근 방문 시각"),
+                                fieldWithPath("data.bookmarked").type(JsonFieldType.BOOLEAN)
+                                    .description("나의 목적지와의 연관관계 여부"))).build())));
+    }
+
+    @DisplayName("최근 경로와 북마크 연관 관계 제거")
+    @Test
+    void unlinkBookmark() throws Exception {
+        final Long recentPathId = 1L;
+
+        doNothing().when(recentPathService).unlinkBookmark(recentPathId);
+
+        final ResultActions result = mockMvc.perform(
+            delete("/api/recent-path/{id}/bookmarks", recentPathId));
+
+        result.andExpect(status().isOk()).andDo(
+            document("최근 경로와 북마크 연관 관계 제거", preprocessRequest(prettyPrint()),
+                preprocessResponse(prettyPrint()), resource(
+                    ResourceSnippetParameters.builder().tag(tag).summary("최근 경로와 북마크 연관 관계 제거")
+                        .pathParameters(
+                            parameterWithName("id").type(SimpleType.NUMBER).description("최근 경로 ID"))
+                        .build())));
     }
 }

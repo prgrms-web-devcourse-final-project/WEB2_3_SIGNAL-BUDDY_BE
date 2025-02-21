@@ -25,5 +25,7 @@ public class RecentPathResponse {
 
     private double lat;
 
+    private boolean isBookmarked;
+
     private LocalDateTime lastAccessedAt;
 }
