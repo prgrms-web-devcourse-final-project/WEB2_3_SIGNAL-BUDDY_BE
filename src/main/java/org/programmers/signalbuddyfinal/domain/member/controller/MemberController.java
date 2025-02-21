@@ -153,4 +153,12 @@ public class MemberController {
         final RecentPathResponse response = recentPathService.saveRecentPath(id, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.createSuccess(response));
     }
+
+    @GetMapping("{id}/recent-path")
+    public ResponseEntity<ApiResponse<List<RecentPathResponse>>> getRecentPathList(
+        @PathVariable Long id) {
+        final List<RecentPathResponse> recentPathList = recentPathService.getRecentPathList(id);
+        return ResponseEntity.ok(ApiResponse.createSuccess(recentPathList));
+    }
+
 }

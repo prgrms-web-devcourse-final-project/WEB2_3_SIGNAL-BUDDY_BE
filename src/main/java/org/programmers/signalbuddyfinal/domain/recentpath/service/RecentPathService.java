@@ -36,6 +36,16 @@ public class RecentPathService {
         return RecentPathMapper.INSTANCE.toDto(save);
     }
 
+    @Transactional(readOnly = true)
+    public List<RecentPathResponse> getRecentPathList(Long memberId) {
+        final Member member = memberRepository.findById(memberId)
+            .orElseThrow(() -> new BusinessException(MemberErrorCode.NOT_FOUND_MEMBER));
+
+        final List<RecentPath> list = recentPathRepository.findAllByMemberOrderByLastAccessedAtDesc(
+            member, Limit.of(10));
+        return list.stream().map(RecentPathMapper.INSTANCE::toDto).toList();
+    }
+
     private Point toPoint(double lng, double lat) {
         if (lng < -180 || lng > 180 || lat < -90 || lat > 90) {
             throw new BusinessException(RecentPathErrorCode.INVALID_COORDINATES);

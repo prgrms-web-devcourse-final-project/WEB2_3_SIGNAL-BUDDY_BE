@@ -587,4 +587,42 @@ class MemberControllerTest extends ControllerTest {
                                 fieldWithPath("data.lastAccessedAt").type(JsonFieldType.STRING)
                                     .description("최근 방문 시각"))).build())));
     }
+
+    @DisplayName("최근 경로 목록 조회")
+    @Test
+    void getRecentPathList() throws Exception {
+        final Long memberId = 1L;
+
+        final List<RecentPathResponse> list = List.of(
+            RecentPathResponse.builder().recentPathId(1L).lat(37.501).lng(127.001)
+                .name("Recent Path").lastAccessedAt(LocalDateTime.now()).build(),
+            RecentPathResponse.builder().recentPathId(2L).lat(37.501).lng(127.001)
+                .name("Recent Path").lastAccessedAt(LocalDateTime.now()).build(),
+            RecentPathResponse.builder().recentPathId(3L).lat(37.501).lng(127.001)
+                .name("Recent Path").lastAccessedAt(LocalDateTime.now()).build());
+
+        given(recentPathService.getRecentPathList(memberId)).willReturn(list);
+
+        final ResultActions result = mockMvc.perform(
+            get("/api/members/{id}/recent-path", memberId));
+
+        result.andExpect(status().isOk()).andDo(
+            document("최근 경로 목록 조회 (최대 10개)", preprocessRequest(prettyPrint()),
+                preprocessResponse(prettyPrint()), resource(
+                    ResourceSnippetParameters.builder().tag(tag).summary("최근 경로 목록 조회 (최대 10개)")
+                        .pathParameters(
+                            parameterWithName("id").type(SimpleType.NUMBER).description("유저 ID"))
+                        .responseSchema(schema("RecentPathResponse")).responseFields(
+                            ArrayUtils.addAll(commonResponseFormat(),
+                                fieldWithPath("data[].recentPathId").type(JsonFieldType.NUMBER)
+                                    .description("최근 경로 ID"),
+                                fieldWithPath("data[].lat").type(JsonFieldType.NUMBER)
+                                    .description("위도"),
+                                fieldWithPath("data[].lng").type(JsonFieldType.NUMBER)
+                                    .description("경도"),
+                                fieldWithPath("data[].name").type(JsonFieldType.STRING)
+                                    .description("최근 경로 이름"),
+                                fieldWithPath("data[].lastAccessedAt").type(JsonFieldType.STRING)
+                                    .description("최근 방문 시각"))).build())));
+    }
 }
