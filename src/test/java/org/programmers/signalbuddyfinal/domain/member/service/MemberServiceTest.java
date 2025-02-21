@@ -1,13 +1,12 @@
 package org.programmers.signalbuddyfinal.domain.member.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,12 +24,6 @@ import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepositor
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.mock.web.MockMultipartFile;
-
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class MemberServiceTest {
@@ -74,12 +67,10 @@ class MemberServiceTest {
     @DisplayName("계정 수정 테스트")
     void updateMember() {
         final MemberUpdateRequest updateRequest = MemberUpdateRequest.builder()
-            .email("test2@example.com").nickname("TestUser2")
-            .password("password123").build();
+            .email("test2@example.com").nickname("TestUser2").password("password123").build();
 
         final MemberResponse expectedResponse = MemberResponse.builder().memberId(id)
-            .email("test2@example.com").nickname("TestUser2")
-            .memberStatus(MemberStatus.ACTIVITY)
+            .email("test2@example.com").nickname("TestUser2").memberStatus(MemberStatus.ACTIVITY)
             .role(MemberRole.USER).build();
 
         // MockHttpServletRequest와 MockHttpSession 생성
