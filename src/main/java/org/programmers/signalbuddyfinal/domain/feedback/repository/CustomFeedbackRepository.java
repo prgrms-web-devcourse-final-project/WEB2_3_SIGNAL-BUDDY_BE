@@ -13,7 +13,7 @@ public interface CustomFeedbackRepository {
     Page<FeedbackResponse> findAllByActiveMembers(
         Pageable pageable,
         AnswerStatus answerStatus, Set<FeedbackCategory> categories,
-        Long crossroadId
+        Long crossroadId, String keyword
     );
 
     Page<FeedbackResponse> findPagedExcludingMember(Long memberId, Pageable pageable);

@@ -41,10 +41,12 @@ public class FeedbackService {
     public PageResponse<FeedbackResponse> searchFeedbackList(
         Pageable pageable,
         AnswerStatus answerStatus, Set<FeedbackCategory> categories,
-        Long crossroadId
+        Long crossroadId, String keyword
     ) {
         return new PageResponse<>(
-            feedbackRepository.findAllByActiveMembers(pageable, answerStatus, categories, crossroadId)
+            feedbackRepository.findAllByActiveMembers(
+                pageable, answerStatus, categories, crossroadId, keyword
+            )
         );
     }
 

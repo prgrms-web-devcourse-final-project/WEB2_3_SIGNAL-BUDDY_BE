@@ -1,5 +1,6 @@
 package org.programmers.signalbuddyfinal.domain.feedback.repository;
 
+import static com.querydsl.core.types.dsl.Expressions.numberTemplate;
 import static org.programmers.signalbuddyfinal.domain.feedback.entity.QFeedback.feedback;
 import static org.programmers.signalbuddyfinal.domain.member.entity.QMember.member;
 import static org.programmers.signalbuddyfinal.global.util.QueryDSLUtil.betweenDates;
@@ -11,6 +12,7 @@ import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.QBean;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.StringPath;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDate;
 import java.util.List;
@@ -54,12 +56,13 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
     public Page<FeedbackResponse> findAllByActiveMembers(
         Pageable pageable,
         AnswerStatus answerStatus, Set<FeedbackCategory> categories,
-        Long crossroadId
+        Long crossroadId, String keyword
     ) {
         BooleanExpression activityMember = member.memberStatus.eq(MemberStatus.ACTIVITY);
         BooleanExpression answerStatusCondition = answerStatusCondition(answerStatus);
         BooleanExpression feedbackCategoriesCondition = feedbackCategoriesCondition(categories);
         BooleanExpression crossroadIdCondition = crossroadIdCondition(crossroadId);
+        BooleanExpression fulltextSearch = fulltextSearch(keyword, feedback.subject, feedback.content);
 
         List<FeedbackResponse> results = jpaQueryFactory
             .select(feedbackResponseDto)
@@ -70,6 +73,7 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
                     .and(answerStatusCondition)
                     .and(feedbackCategoriesCondition)
                     .and(crossroadIdCondition)
+                    .and(fulltextSearch)
                     .and(isNotDeletedFeedback)
             )
             .offset(pageable.getOffset()).limit(pageable.getPageSize())
@@ -86,6 +90,7 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
                         .and(answerStatusCondition)
                         .and(feedbackCategoriesCondition)
                         .and(crossroadIdCondition)
+                        .and(fulltextSearch)
                         .and(isNotDeletedFeedback)
                 ).fetchOne()
         ).orElse(0L);
@@ -160,5 +165,17 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
             }
         }
         return expression;
+    }
+
+    private BooleanExpression fulltextSearch(String keyword, StringPath target1, StringPath target2) {
+        if (keyword == null || keyword.isBlank()) {
+            return Expressions.TRUE;
+        }
+
+        String formattedSearchWord = "\"" + keyword + "\"";
+        return numberTemplate(
+            Double.class, "function('match2_against', {0}, {1}, {2})",
+            target1, target2, formattedSearchWord
+        ).gt(0);
     }
 }
