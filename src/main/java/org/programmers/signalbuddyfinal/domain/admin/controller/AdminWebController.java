@@ -2,7 +2,7 @@ package org.programmers.signalbuddyfinal.domain.admin.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.programmers.signalbuddyfinal.domain.admin.dto.AdminMemberResponse;
+import org.programmers.signalbuddyfinal.domain.admin.dto.AdminMemberDetailResponse;
 import org.programmers.signalbuddyfinal.domain.admin.dto.WithdrawalMemberResponse;
 import org.programmers.signalbuddyfinal.domain.admin.service.AdminService;
 import org.springframework.data.domain.Page;
@@ -30,7 +30,7 @@ public class AdminWebController {
 
     @GetMapping("members/list")
     public ModelAndView getAllMembers(@PageableDefault(page = 0, size = 10, sort = "email") Pageable pageable, ModelAndView mv) {
-        Page<AdminMemberResponse> members = adminService.getAllMembers(pageable);
+        Page<AdminMemberDetailResponse> members = adminService.getAllMembers(pageable);
         mv.setViewName("admin/list");
         mv.addObject("members", members);
         return mv;
@@ -38,7 +38,7 @@ public class AdminWebController {
 
     @GetMapping("members-detail/{id}")
     public ModelAndView getMember(@PathVariable Long id, ModelAndView mv) {
-        final AdminMemberResponse member = adminService.getMember(id);
+        final AdminMemberDetailResponse member = adminService.getMember(id);
         mv.setViewName("admin/detail");
         mv.addObject("m", member);
         return mv;

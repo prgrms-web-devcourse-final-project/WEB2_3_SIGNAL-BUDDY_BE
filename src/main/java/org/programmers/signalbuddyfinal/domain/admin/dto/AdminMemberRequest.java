@@ -12,7 +12,7 @@ import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 @NoArgsConstructor
 @Builder
 @AllArgsConstructor
-public class AdminMemberResponse {
+public class AdminMemberRequest {
 
     private Long memberId;
 
@@ -24,7 +24,7 @@ public class AdminMemberResponse {
 
     private MemberRole role;
 
-    private MemberStatus status;
+    private MemberStatus memberStatus;
 
     private LocalDateTime createdAt;
 
