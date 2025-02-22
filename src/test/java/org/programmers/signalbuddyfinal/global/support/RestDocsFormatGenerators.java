@@ -125,5 +125,7 @@ public final class RestDocsFormatGenerators {
         );
     }
 
-    public static Schema commonResponse = schema("CommonResponse");
+    public static final Schema commonResponse = schema("CommonResponse");
+
+    private RestDocsFormatGenerators() {}
 }
