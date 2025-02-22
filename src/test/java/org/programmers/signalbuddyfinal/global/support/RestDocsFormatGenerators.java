@@ -2,14 +2,12 @@ package org.programmers.signalbuddyfinal.global.support;
 
 import static com.epages.restdocs.apispec.Schema.schema;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
-import static org.springframework.restdocs.snippet.Attributes.key;
 
 import com.epages.restdocs.apispec.Schema;
 import java.util.Arrays;
 import java.util.stream.Stream;
 import org.springframework.restdocs.payload.FieldDescriptor;
 import org.springframework.restdocs.payload.JsonFieldType;
-import org.springframework.restdocs.snippet.Attributes;
 
 /**
  * 요청 값의 양식을 설정
@@ -58,30 +56,6 @@ public final class RestDocsFormatGenerators {
         // commonDocs, pageDocs 두 배열 합치기
         return Stream.concat(Arrays.stream(commonDocs), Arrays.stream(pageDocs))
             .toArray(FieldDescriptor[]::new);
-    }
-
-    public static Attributes.Attribute phoneNumberFormat() {
-        return key("format").value("000-0000-0000");
-    }
-
-    public static Attributes.Attribute emailFormat() {
-        return key("format").value("example-email@example.com");
-    }
-
-    public static Attributes.Attribute imageUrlFormat() {
-        return key("format").value("https://example-image-url.com");
-    }
-
-    public static Attributes.Attribute tokenFormat() {
-        return key("format").value("Bearer YOUR_TOKEN");
-    }
-
-    public static Attributes.Attribute encodingFormat() {
-        return key("format").value("URL 인코딩 필수");
-    }
-
-    public static Attributes.Attribute pageFormat() {
-        return  key("format").value("0부터 시작");
     }
 
     public static Schema commonResponse = schema("CommonResponse");
