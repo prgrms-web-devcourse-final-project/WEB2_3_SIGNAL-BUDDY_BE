@@ -110,9 +110,15 @@ public final class RestDocsFormatGenerators {
         return "Bearer Your_Token";
     }
 
-    public static MockMultipartFile getMockImageFile() {
+    /**
+     * 해당 formName에 첨부할 Mock Image MultipartFile 반환
+     *
+     * @param formName Multipart Form Field Name
+     * @return MockMultipartFile
+     */
+    public static MockMultipartFile getMockImageFile(String formName) {
         return new MockMultipartFile(
-            "random image name",
+            formName,
             "image.jpg",
             MediaType.IMAGE_JPEG_VALUE,
             "image".getBytes()

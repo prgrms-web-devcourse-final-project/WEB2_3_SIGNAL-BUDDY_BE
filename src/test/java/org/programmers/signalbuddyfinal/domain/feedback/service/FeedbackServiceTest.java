@@ -56,6 +56,7 @@ class FeedbackServiceTest extends ServiceTest {
 
     private Member member;
     private Crossroad crossroad;
+    private final String imageFormName = "imageFile";
 
     @BeforeEach
     void setup() {
@@ -79,7 +80,7 @@ class FeedbackServiceTest extends ServiceTest {
             .subject(subject).content(content).secret(Boolean.FALSE)
             .category(FeedbackCategory.ETC).crossroadId(crossroadId)
             .build();
-        MockMultipartFile imageFile = getMockImageFile();
+        MockMultipartFile imageFile = getMockImageFile(imageFormName);
         CustomUser2Member user = getCurrentMember(member.getMemberId(), MemberRole.USER);
 
         // When
@@ -221,7 +222,7 @@ class FeedbackServiceTest extends ServiceTest {
             .subject(feedback.getSubject()).content(updatedContent).secret(Boolean.FALSE)
             .category(updatedCategory).crossroadId(crossroad.getCrossroadId())
             .build();
-        MockMultipartFile updatedImageFile = getMockImageFile();
+        MockMultipartFile updatedImageFile = getMockImageFile(imageFormName);
         CustomUser2Member user = getCurrentMember(member.getMemberId(), MemberRole.USER);
 
         // When
