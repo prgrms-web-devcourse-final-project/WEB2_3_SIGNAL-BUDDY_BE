@@ -37,7 +37,7 @@ public class SecurityConfig {
 
         // 인가 설정
         http
-            .authorizeHttpRequests((auth) -> auth
+            .authorizeHttpRequests(auth -> auth
                 // 문서화 api
                 .requestMatchers("/",
                     "/docs/**",
@@ -55,7 +55,7 @@ public class SecurityConfig {
                     .requestMatchers("/api/crossroads/save").hasRole("ADMIN")
                     .requestMatchers(HttpMethod.GET,"/api/crossroads/**").permitAll()
                     // 피드백
-                    .requestMatchers(HttpMethod.GET, "/api/feedbacks", "/feedbacks/**").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/feedbacks/**").permitAll()
                     // 회원
                     .requestMatchers("/api/admins/**", "/admins/members/**").hasRole("ADMIN")
                     .requestMatchers("/api/members/**", "/members/**").hasRole("USER")
@@ -66,7 +66,7 @@ public class SecurityConfig {
 
         // 기본 로그인 관련 설정
         http
-            .formLogin((auth) -> auth
+            .formLogin(auth -> auth
                 .loginPage("/members/login")
                 .loginProcessingUrl("/login")
                 .successHandler(customAuthenticationSuccessHandler())
@@ -75,7 +75,7 @@ public class SecurityConfig {
 
         // 소셜 로그인 관련 설정
         http
-            .oauth2Login((oauth) -> oauth
+            .oauth2Login(oauth -> oauth
                 .loginPage("/login")
                 .userInfoEndpoint(userInfoEndpointConfig ->
                     userInfoEndpointConfig.userService(customOAuth2UserService))
@@ -84,7 +84,7 @@ public class SecurityConfig {
 
         // 로그아웃 관련 설정
         http
-            .logout((auth) -> auth
+            .logout(auth -> auth
                 .logoutUrl("/logout")
                 .logoutSuccessUrl("/members/login")
                 .deleteCookies("JSESSIONID")
