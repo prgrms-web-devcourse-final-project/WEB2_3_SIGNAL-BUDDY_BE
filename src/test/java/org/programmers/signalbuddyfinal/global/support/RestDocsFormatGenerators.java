@@ -10,6 +10,8 @@ import com.epages.restdocs.apispec.SimpleType;
 import java.util.Arrays;
 import java.util.stream.Stream;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.restdocs.payload.FieldDescriptor;
 import org.springframework.restdocs.payload.JsonFieldType;
 
@@ -106,6 +108,15 @@ public final class RestDocsFormatGenerators {
 
     public static String getTokenExample() {
         return "Bearer Your_Token";
+    }
+
+    public static MockMultipartFile getMockImageFile() {
+        return new MockMultipartFile(
+            "random image name",
+            "image.jpg",
+            MediaType.IMAGE_JPEG_VALUE,
+            "image".getBytes()
+        );
     }
 
     public static Schema commonResponse = schema("CommonResponse");
