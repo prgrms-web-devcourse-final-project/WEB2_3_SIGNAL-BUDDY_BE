@@ -117,9 +117,7 @@ public class Feedback extends BaseTimeEntity {
     }
 
     public void updateImageUrl(String imageUrl) {
-        if (!this.imageUrl.equals(imageUrl)) {
-            this.imageUrl = imageUrl;
-        }
+        this.imageUrl = imageUrl;
     }
 
     public void updateFeedbackStatus() {
