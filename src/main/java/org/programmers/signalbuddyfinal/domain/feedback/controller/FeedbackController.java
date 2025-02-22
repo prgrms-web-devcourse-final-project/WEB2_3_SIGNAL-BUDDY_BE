@@ -53,11 +53,14 @@ public class FeedbackController {
         @PageableDefault Pageable pageable,
         @RequestParam(value = "status", required = false) AnswerStatus answerStatus,
         @RequestParam(value = "category", required = false) Set<FeedbackCategory> categories,
-        @RequestParam(value = "crossroadId", required = false) Long crossroadId
+        @RequestParam(value = "crossroadId", required = false) Long crossroadId,
+        @RequestParam(value = "keyword", required = false) String keyword
     ) {
         return ResponseEntity.ok(
             ApiResponse.createSuccess(
-                feedbackService.searchFeedbackList(pageable, answerStatus, categories, crossroadId)
+                feedbackService.searchFeedbackList(
+                    pageable, answerStatus, categories, crossroadId, keyword
+                )
             )
         );
     }

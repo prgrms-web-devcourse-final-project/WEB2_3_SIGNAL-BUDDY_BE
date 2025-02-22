@@ -6,6 +6,7 @@ import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anySet;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.commonResponseFormat;
@@ -177,8 +178,11 @@ class FeedbackControllerTest extends ControllerTest {
             new PageImpl<>(feedbacks, pageable, 55)
         );
 
-        given(feedbackService.searchFeedbackList(any(Pageable.class), any(AnswerStatus.class), anySet(), anyLong()))
-            .willReturn(response);
+        given(
+            feedbackService.searchFeedbackList(
+                any(Pageable.class), any(AnswerStatus.class), anySet(), anyLong(), anyString()
+            )
+        ).willReturn(response);
 
         // When
         ResultActions result = mockMvc.perform(
@@ -189,6 +193,7 @@ class FeedbackControllerTest extends ControllerTest {
                 .queryParam("category",
                     FeedbackCategory.ETC.getValue(), FeedbackCategory.DELAY.getValue())
                 .queryParam("crossroadId", String.valueOf(1L))
+                .queryParam("keyword", "test search")
         );
 
         // Then
@@ -200,13 +205,13 @@ class FeedbackControllerTest extends ControllerTest {
             )
             .andDo(
                 document(
-                    "피드백 목록",
+                    "피드백 목록 조회",
                     preprocessRequest(prettyPrint()),
                     preprocessResponse(prettyPrint()),
                     resource(
                         ResourceSnippetParameters.builder()
                             .tag(tag)
-                            .summary("피드백 목록")
+                            .summary("피드백 목록 조회")
                             .queryParameters(
                                 parameterWithName("page").type(SimpleType.NUMBER)
                                     .description("페이지 번호 (기본값 : 0, 0부터 시작)").optional(),
@@ -214,20 +219,22 @@ class FeedbackControllerTest extends ControllerTest {
                                     .description("페이지 크기 (기본값 : 7)").optional(),
                                 parameterWithName("status").type(SimpleType.STRING)
                                     .description("""
-                                        피드백 답변 상태 (지정하지 않으면 전체 검색, 택 1)
+                                        피드백 답변 상태 (택 1)
                                         - before : 답변 전
                                         - completion : 답변 완료
                                         """).optional(),
                                 parameterWithName("category").type(SimpleType.STRING)
                                     .description("""
-                                        피드백 유형 (지정하지 않으면 전체 검색, 여러 개 선택 가능)
+                                        피드백 유형 (여러 개 선택 가능)
                                         - delay : 신호 지연
                                         - malfunction : 오작동
                                         - add-signal : 신호등 추가
                                         - etc : 기타
                                         """).optional(),
                                 parameterWithName("crossroadId").type(SimpleType.NUMBER)
-                                    .description("교차로 ID (지정하지 않으면 전체 검색)").optional()
+                                    .description("교차로 ID").optional(),
+                                parameterWithName("keyword").type(SimpleType.STRING)
+                                    .description("검색어").optional()
                             )
                             .responseFields(
                                 ArrayUtils.addAll(
