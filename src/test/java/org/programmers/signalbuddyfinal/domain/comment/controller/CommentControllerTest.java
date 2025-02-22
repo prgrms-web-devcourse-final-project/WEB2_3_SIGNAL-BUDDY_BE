@@ -151,6 +151,12 @@ class CommentControllerTest extends ControllerTest {
                                 parameterWithName("feedbackId").type(SimpleType.NUMBER)
                                     .description("댓글을 작성할 피드백 ID")
                             )
+                            .queryParameters(
+                                parameterWithName("page").type(SimpleType.NUMBER)
+                                    .description("페이지 번호 (기본값 : 0, 0부터 시작)").optional(),
+                                parameterWithName("size").type(SimpleType.NUMBER)
+                                    .description("페이지 크기 (기본값 : 7)").optional()
+                            )
                             .responseFields(
                                 ArrayUtils.addAll(
                                     pageResponseFormat(),
