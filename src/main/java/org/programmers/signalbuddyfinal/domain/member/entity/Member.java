@@ -48,7 +48,7 @@ public class Member extends BaseTimeEntity {
         if (user == null || member == null) {
             return true;
         }
-        return !user.getMemberId().equals(member.getMemberId());
+        return !member.getMemberId().equals(user.getMemberId());
     }
 
     public void updateMember(MemberUpdateRequest request, String encodedPassword) {
