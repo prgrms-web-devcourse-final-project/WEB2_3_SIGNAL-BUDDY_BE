@@ -8,7 +8,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
-import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.pageResponseFormat;
+import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.pageResponseWithMemberFormat;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessRequest;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessResponse;
@@ -54,6 +54,8 @@ class CommentControllerTest extends ControllerTest {
     @MockitoBean
     private CommentService commentService;
 
+    private final String tag = "Comment API";
+
     @DisplayName("댓글을 작성한다.")
     @Test
     @WithMockCustomUser
@@ -80,7 +82,7 @@ class CommentControllerTest extends ControllerTest {
                     preprocessResponse(prettyPrint()),
                     resource(
                         ResourceSnippetParameters.builder()
-                            .tag("Comment API")
+                            .tag(tag)
                             .summary("댓글 작성")
                             .pathParameters(
                                 parameterWithName("feedbackId").type(SimpleType.NUMBER)
@@ -145,7 +147,7 @@ class CommentControllerTest extends ControllerTest {
                     preprocessResponse(prettyPrint()),
                     resource(
                         ResourceSnippetParameters.builder()
-                            .tag("Comment API")
+                            .tag(tag)
                             .summary("댓글 목록")
                             .pathParameters(
                                 parameterWithName("feedbackId").type(SimpleType.NUMBER)
@@ -159,7 +161,7 @@ class CommentControllerTest extends ControllerTest {
                             )
                             .responseFields(
                                 ArrayUtils.addAll(
-                                    pageResponseFormat(),
+                                    pageResponseWithMemberFormat(),
                                     fieldWithPath("data.searchResults[].commentId")
                                         .type(JsonFieldType.NUMBER)
                                         .description("댓글 ID"),
@@ -171,28 +173,7 @@ class CommentControllerTest extends ControllerTest {
                                         .description("댓글 생성일"),
                                     fieldWithPath("data.searchResults[].updatedAt")
                                         .type(JsonFieldType.STRING)
-                                        .description("댓글 수정일"),
-                                    fieldWithPath("data.searchResults[].member")
-                                        .type(JsonFieldType.OBJECT)
-                                        .description("작성자 정보"),
-                                    fieldWithPath("data.searchResults[].member.memberId")
-                                        .type(JsonFieldType.NUMBER)
-                                        .description("작성자 ID(PK)"),
-                                    fieldWithPath("data.searchResults[].member.email")
-                                        .type(JsonFieldType.STRING)
-                                        .description("작성자의 이메일"),
-                                    fieldWithPath("data.searchResults[].member.nickname")
-                                        .type(JsonFieldType.STRING)
-                                        .description("작성자의 닉네임"),
-                                    fieldWithPath("data.searchResults[].member.profileImageUrl")
-                                        .type(JsonFieldType.STRING)
-                                        .description("작성자의 프로필 이미지 URL"),
-                                    fieldWithPath("data.searchResults[].member.role")
-                                        .type(JsonFieldType.STRING)
-                                        .description("작성자의 권한 (USER or ADMIN)"),
-                                    fieldWithPath("data.searchResults[].member.memberStatus")
-                                        .type(JsonFieldType.STRING)
-                                        .description("작성자의 탈퇴 여부 (ACTIVITY or WITHDRAWAL)")
+                                        .description("댓글 수정일")
                                 )
                             )
                             .build()
@@ -229,7 +210,7 @@ class CommentControllerTest extends ControllerTest {
                     preprocessResponse(prettyPrint()),
                     resource(
                         ResourceSnippetParameters.builder()
-                            .tag("Comment API")
+                            .tag(tag)
                             .summary("댓글 수정")
                             .pathParameters(
                                 parameterWithName("feedbackId").type(SimpleType.NUMBER)
@@ -272,7 +253,7 @@ class CommentControllerTest extends ControllerTest {
                     preprocessResponse(prettyPrint()),
                     resource(
                         ResourceSnippetParameters.builder()
-                            .tag("Comment API")
+                            .tag(tag)
                             .summary("댓글 삭제")
                             .pathParameters(
                                 parameterWithName("feedbackId").type(SimpleType.NUMBER)
