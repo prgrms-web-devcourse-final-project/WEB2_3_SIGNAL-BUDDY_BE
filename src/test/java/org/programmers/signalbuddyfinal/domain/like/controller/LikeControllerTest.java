@@ -7,7 +7,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
-import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.commonResponse;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.commonResponseFormat;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.getTokenExample;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.jwtFormat;
@@ -76,8 +75,6 @@ class LikeControllerTest extends ControllerTest {
                                 parameterWithName("feedbackId").type(SimpleType.NUMBER)
                                     .description("좋아요를 추가할 피드백 ID")
                             )
-                            .responseSchema(commonResponse)
-                            .responseFields(commonResponseFormat())
                             .build()
                     )
                 )
@@ -159,8 +156,6 @@ class LikeControllerTest extends ControllerTest {
                                 parameterWithName("feedbackId").type(SimpleType.NUMBER)
                                     .description("좋아요를 삭제할 피드백 ID")
                             )
-                            .responseSchema(commonResponse)
-                            .responseFields(commonResponseFormat())
                             .build()
                     )
                 )

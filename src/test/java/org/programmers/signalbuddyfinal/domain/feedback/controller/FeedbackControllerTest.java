@@ -9,7 +9,6 @@ import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
-import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.commonResponse;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.commonResponseFormat;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.getMockImageFile;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.getTokenExample;
@@ -470,8 +469,6 @@ class FeedbackControllerTest extends ControllerTest {
                                 parameterWithName("feedbackId").type(SimpleType.NUMBER)
                                     .description("삭제하려는 피드백 ID")
                             )
-                            .responseSchema(commonResponse)
-                            .responseFields(commonResponseFormat())
                             .build()
                     )
                 )

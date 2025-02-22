@@ -9,8 +9,6 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
-import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.commonResponse;
-import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.commonResponseFormat;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.getTokenExample;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.jwtFormat;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.pageResponseWithMemberFormat;
@@ -102,8 +100,6 @@ class CommentControllerTest extends ControllerTest {
                                 fieldWithPath("content").type(JsonFieldType.STRING)
                                     .description("댓글 내용")
                             )
-                            .responseSchema(commonResponse)
-                            .responseFields(commonResponseFormat())
                             .build()
                     )
                 )
@@ -238,8 +234,6 @@ class CommentControllerTest extends ControllerTest {
                                 fieldWithPath("content").type(JsonFieldType.STRING)
                                     .description("수정한 댓글 내용")
                             )
-                            .responseSchema(commonResponse)
-                            .responseFields(commonResponseFormat())
                             .build()
                     )
                 )
@@ -285,8 +279,6 @@ class CommentControllerTest extends ControllerTest {
                                 parameterWithName("commentId").type(SimpleType.NUMBER)
                                     .description("삭제할 댓글 ID")
                             )
-                            .responseSchema(commonResponse)
-                            .responseFields(commonResponseFormat())
                             .build()
                     )
                 )
