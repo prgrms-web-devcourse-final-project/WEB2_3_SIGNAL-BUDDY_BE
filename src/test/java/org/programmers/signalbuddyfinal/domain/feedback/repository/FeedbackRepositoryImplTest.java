@@ -25,6 +25,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 class FeedbackRepositoryImplTest extends RepositoryTest {
 
@@ -36,6 +37,9 @@ class FeedbackRepositoryImplTest extends RepositoryTest {
 
     @Autowired
     private MemberRepository memberRepository;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     private Member member;
     private Member withDrawalMember;
@@ -50,13 +54,15 @@ class FeedbackRepositoryImplTest extends RepositoryTest {
         saveFeedback("test subject2", "test content2", withDrawalMember, crossroad);
         saveFeedback("test subject3", "test content3", member, crossroad);
         saveFeedback("test subject4", "test content4", member, crossroad);
+
+        createFulltextIndex();
     }
 
     @DisplayName("활동 중인 회원들의 피드백 목록을 조회한다.")
     @Test
     void getFeedbacks() {
         final Page<FeedbackResponse> allByActiveMembers = feedbackRepository.findAllByActiveMembers(
-            Pageable.ofSize(10), AnswerStatus.BEFORE, null, null);
+            Pageable.ofSize(10), AnswerStatus.BEFORE, null, null , null);
 
         assertThat(allByActiveMembers).isNotNull();
         assertThat(allByActiveMembers.getTotalElements()).isEqualTo(3);
@@ -79,10 +85,12 @@ class FeedbackRepositoryImplTest extends RepositoryTest {
         }
         saveFeedback(subject + 13, content + 13, withDrawalMember, crossroad);
 
+        createFulltextIndex();
+
         // When
         Page<FeedbackResponse> actual = feedbackRepository.findAllByActiveMembers(
             Pageable.ofSize(10), AnswerStatus.BEFORE,
-            null, crossroad.getCrossroadId()
+            null, crossroad.getCrossroadId(), null
         );
 
         // Then
@@ -110,10 +118,12 @@ class FeedbackRepositoryImplTest extends RepositoryTest {
         saveFeedback("test subject13", "test content13", FeedbackCategory.ADD_SIGNAL, member, crossroad);
         saveFeedback("test subject14", "test content14", member, crossroad);
 
+        createFulltextIndex();
+
         // When
         Page<FeedbackResponse> actual = feedbackRepository.findAllByActiveMembers(
             Pageable.ofSize(10), null,
-            categories, null
+            categories, null, null
         );
 
         // Then
@@ -129,6 +139,43 @@ class FeedbackRepositoryImplTest extends RepositoryTest {
             for (FeedbackResponse feedback : actual.getContent()) {
                 softAssertions.assertThat(feedback.getCategory())
                     .isNotEqualTo(FeedbackCategory.ETC);
+            }
+        });
+    }
+
+    @DisplayName("피드백의 제목과 내용을 대상으로 검색어로 조회한다.")
+    @Test
+    void findAllByActiveMembersByKeyword() {
+        // Given
+        String keyword = "홍길동";
+        Set<FeedbackCategory> categories = Set.of(FeedbackCategory.DELAY, FeedbackCategory.ADD_SIGNAL);
+        Crossroad crossroad = saveCrossroad("114111", "00삼거리", 37.42222, 127.42132);
+        saveFeedback("ㅁㅁㅁ " + keyword, "test content11", FeedbackCategory.DELAY, member, crossroad);
+        saveFeedback("test subject12", "test content12", FeedbackCategory.DELAY, member, crossroad);
+        saveFeedback("test subject13", keyword + " ㅁㅁㅁ", FeedbackCategory.ADD_SIGNAL, member, crossroad);
+        saveFeedback("test subject14", "test content14", member, crossroad);
+
+        createFulltextIndex();
+
+        // When
+        Page<FeedbackResponse> actual = feedbackRepository.findAllByActiveMembers(
+            Pageable.ofSize(10), null,
+            categories, null, keyword
+        );
+
+        // Then
+        SoftAssertions.assertSoftly(softAssertions -> {
+            softAssertions.assertThat(actual).isNotNull();
+            softAssertions.assertThat(actual.getTotalElements()).isEqualTo(2);
+            softAssertions.assertThat(actual.getTotalPages()).isEqualTo(1);
+
+            softAssertions.assertThat(actual.getContent()).isNotEmpty().allSatisfy(
+                feedback -> assertThat(feedback.getMember().getMemberStatus())
+                    .isEqualTo(MemberStatus.ACTIVITY)
+            );
+            for (FeedbackResponse feedback : actual.getContent()) {
+                softAssertions.assertThat(feedback.getSubject() + feedback.getContent())
+                    .contains(keyword);
             }
         });
     }
@@ -188,5 +235,12 @@ class FeedbackRepositoryImplTest extends RepositoryTest {
         feedbackRepository.save(
             Feedback.create().subject(subject).content(content).secret(Boolean.FALSE)
                 .category(category).member(member).crossroad(crossroad).build());
+    }
+
+    private void createFulltextIndex() {
+        jdbcTemplate.execute(
+            "CREATE FULLTEXT INDEX IF NOT EXISTS idx_subject_content " +
+                "ON feedbacks (subject, content)"
+        );
     }
 }
