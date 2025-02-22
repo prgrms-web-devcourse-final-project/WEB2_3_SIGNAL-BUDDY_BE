@@ -15,9 +15,11 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackResponse;
 import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.AnswerStatus;
+import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.FeedbackCategory;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.springframework.data.domain.Page;
@@ -35,30 +37,58 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
 
     private static final QBean<FeedbackResponse> feedbackResponseDto = Projections.fields(
         FeedbackResponse.class, feedback.feedbackId, feedback.subject, feedback.content,
-        feedback.likeCount, feedback.secret, feedback.answerStatus, feedback.createdAt,
-        feedback.updatedAt, memberResponseDto.as("member"));
+        feedback.category, feedback.imageUrl, feedback.likeCount, feedback.secret,
+        feedback.answerStatus, memberResponseDto.as("member"),
+        feedback.createdAt, feedback.updatedAt);
 
     private static final QBean<FeedbackResponse> feedbackNoMemberDto = Projections.fields(
         FeedbackResponse.class, feedback.feedbackId, feedback.subject, feedback.content,
-        feedback.likeCount, feedback.secret, feedback.createdAt, feedback.updatedAt);
+        feedback.category, feedback.imageUrl, feedback.likeCount, feedback.secret,
+        feedback.createdAt, feedback.updatedAt);
 
     private final JPAQueryFactory jpaQueryFactory;
 
-    @Override
-    public Page<FeedbackResponse> findAllByActiveMembers(Pageable pageable, Long answerStatus) {
-        final BooleanExpression answerStatusCondition = answerStatusCondition(answerStatus);
+    private final BooleanExpression isNotDeletedFeedback = feedback.deletedAt.isNull();
 
-        final List<FeedbackResponse> results = jpaQueryFactory.select(feedbackResponseDto)
-            .from(feedback).join(member).on(feedback.member.eq(member)).fetchJoin()
-            .where(member.memberStatus.eq(MemberStatus.ACTIVITY).and(answerStatusCondition))
+    @Override
+    public Page<FeedbackResponse> findAllByActiveMembers(
+        Pageable pageable,
+        AnswerStatus answerStatus, Set<FeedbackCategory> categories,
+        Long crossroadId
+    ) {
+        BooleanExpression activityMember = member.memberStatus.eq(MemberStatus.ACTIVITY);
+        BooleanExpression answerStatusCondition = answerStatusCondition(answerStatus);
+        BooleanExpression feedbackCategoriesCondition = feedbackCategoriesCondition(categories);
+        BooleanExpression crossroadIdCondition = crossroadIdCondition(crossroadId);
+
+        List<FeedbackResponse> results = jpaQueryFactory
+            .select(feedbackResponseDto)
+            .from(feedback)
+            .join(member).on(feedback.member.eq(member)).fetchJoin()
+            .where(
+                activityMember
+                    .and(answerStatusCondition)
+                    .and(feedbackCategoriesCondition)
+                    .and(crossroadIdCondition)
+                    .and(isNotDeletedFeedback)
+            )
             .offset(pageable.getOffset()).limit(pageable.getPageSize())
-            .orderBy(new OrderSpecifier<>(Order.DESC, feedback.createdAt)).fetch();
+            .orderBy(new OrderSpecifier<>(Order.DESC, feedback.createdAt))
+            .fetch();
 
         long count = Optional.ofNullable(
-            jpaQueryFactory.select(feedback.count()).from(feedback).join(member)
-                .on(feedback.member.eq(member)).fetchJoin()
-                .where(member.memberStatus.eq(MemberStatus.ACTIVITY).and(answerStatusCondition))
-                .fetchOne()).orElse(0L);
+            jpaQueryFactory
+                .select(feedback.count())
+                .from(feedback)
+                .join(member).on(feedback.member.eq(member)).fetchJoin()
+                .where(
+                    activityMember
+                        .and(answerStatusCondition)
+                        .and(feedbackCategoriesCondition)
+                        .and(crossroadIdCondition)
+                        .and(isNotDeletedFeedback)
+                ).fetchOne()
+        ).orElse(0L);
 
         return new PageImpl<>(results, pageable, count);
     }
@@ -68,44 +98,67 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
         final List<FeedbackResponse> responses = jpaQueryFactory.select(feedbackNoMemberDto)
             .from(feedback).join(member)
             .on(feedback.member.eq(member).and(member.memberId.eq(memberId)))
-            .where(feedback.deletedAt.isNull())
+            .where(isNotDeletedFeedback)
             .offset(pageable.getOffset()).limit(pageable.getPageSize())
             .orderBy(new OrderSpecifier<>(Order.DESC, feedback.createdAt)).fetch();
+
         final Long count = jpaQueryFactory.select(feedback.count()).from(feedback).join(member)
-            .on(feedback.member.eq(member).and(member.memberId.eq(memberId))).fetchOne();
+            .on(feedback.member.eq(member).and(member.memberId.eq(memberId)))
+            .where(isNotDeletedFeedback).fetchOne();
         return new PageImpl<>(responses, pageable, count != null ? count : 0);
     }
 
     @Override
-    public Page<FeedbackResponse> findAll(Pageable pageable, LocalDate startDate, LocalDate endDate,
-        Long answerStatus) {
-
+    public Page<FeedbackResponse> findAll(
+        Pageable pageable,
+        LocalDate startDate, LocalDate endDate,
+        AnswerStatus answerStatus
+    ) {
         final BooleanExpression betweenDates = betweenDates(feedback.createdAt, startDate, endDate);
-        final BooleanExpression answerStatusCondition = answerStatusCondition(answerStatus);
+        BooleanExpression answerStatusCondition = answerStatusCondition(answerStatus);
 
         final List<FeedbackResponse> results = jpaQueryFactory.select(feedbackResponseDto)
             .from(feedback).join(member).on(feedback.member.eq(member)).fetchJoin()
-            .where(betweenDates.and(answerStatusCondition(answerStatus)))
+            .where(betweenDates.and(answerStatusCondition))
             .offset(pageable.getOffset()).limit(pageable.getPageSize())
             .orderBy(getOrderSpecifiers(pageable, feedback.getType(), "feedback")).fetch();
 
         long count = Optional.ofNullable(
             jpaQueryFactory.select(feedback.count()).from(feedback).join(member)
                 .on(feedback.member.eq(member)).fetchJoin()
-                .where(betweenDates.and(answerStatusCondition)).fetchOne()).orElse(0L);
+                .where(betweenDates.and(answerStatusCondition)).fetchOne()
+        ).orElse(0L);
 
         return new PageImpl<>(results, pageable, count);
     }
 
-    private BooleanExpression answerStatusCondition(Long answerStatus) {
+    private BooleanExpression answerStatusCondition(AnswerStatus answerStatus) {
         if (answerStatus == null) {
             return Expressions.TRUE;
         }
+        return feedback.answerStatus.eq(answerStatus);
+    }
 
-        return switch (answerStatus.intValue()) {
-            case 0 -> feedback.answerStatus.eq(AnswerStatus.BEFORE);
-            case 1 -> feedback.answerStatus.eq(AnswerStatus.COMPLETION);
-            default -> Expressions.TRUE;
-        };
+    private BooleanExpression crossroadIdCondition(Long crossroadId) {
+        if (crossroadId == null) {
+            return Expressions.TRUE;
+        }
+        return feedback.crossroad.crossroadId.eq(crossroadId);
+    }
+
+    private BooleanExpression feedbackCategoriesCondition(Set<FeedbackCategory> categories) {
+        if (categories == null || categories.isEmpty()) {
+            return Expressions.TRUE;
+        }
+
+        BooleanExpression expression = null;
+        for (FeedbackCategory category : categories) {
+            if (expression == null) {
+                expression = feedback.category.eq(category);
+            } else {
+                expression = expression.or(feedback.category.eq(category));
+            }
+        }
+        return expression;
     }
 }
