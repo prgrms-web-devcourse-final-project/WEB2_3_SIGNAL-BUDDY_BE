@@ -1,6 +1,7 @@
 package org.programmers.signalbuddyfinal.domain.comment.controller;
 
 import static com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper.document;
+import static com.epages.restdocs.apispec.ResourceDocumentation.headerWithName;
 import static com.epages.restdocs.apispec.ResourceDocumentation.parameterWithName;
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
 import static org.mockito.ArgumentMatchers.any;
@@ -8,6 +9,8 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
+import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.getTokenExample;
+import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.jwtFormat;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.pageResponseWithMemberFormat;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessRequest;
@@ -42,6 +45,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -71,6 +75,7 @@ class CommentControllerTest extends ControllerTest {
             post("/api/feedbacks/{feedbackId}/comments", feedbackId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request))
+                .header(HttpHeaders.AUTHORIZATION, getTokenExample())
         );
 
         // Then
@@ -84,6 +89,9 @@ class CommentControllerTest extends ControllerTest {
                         ResourceSnippetParameters.builder()
                             .tag(tag)
                             .summary("댓글 작성")
+                            .requestHeaders(
+                                jwtFormat()
+                            )
                             .pathParameters(
                                 parameterWithName("feedbackId").type(SimpleType.NUMBER)
                                     .description("댓글을 작성할 피드백 ID")
@@ -199,6 +207,7 @@ class CommentControllerTest extends ControllerTest {
                 feedbackId, commentId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request))
+                .header(HttpHeaders.AUTHORIZATION, getTokenExample())
         );
 
         // Then
@@ -212,6 +221,9 @@ class CommentControllerTest extends ControllerTest {
                         ResourceSnippetParameters.builder()
                             .tag(tag)
                             .summary("댓글 수정")
+                            .requestHeaders(
+                                jwtFormat()
+                            )
                             .pathParameters(
                                 parameterWithName("feedbackId").type(SimpleType.NUMBER)
                                     .description("댓글을 수정할 피드백 ID"),
@@ -240,8 +252,10 @@ class CommentControllerTest extends ControllerTest {
 
         // When
         ResultActions result = mockMvc.perform(
-            delete("/api/feedbacks/{feedbackId}/comments/{commentId}",
+            delete(
+                "/api/feedbacks/{feedbackId}/comments/{commentId}",
                 feedbackId, commentId)
+                .header(HttpHeaders.AUTHORIZATION, getTokenExample())
         );
 
         // Then
@@ -255,6 +269,10 @@ class CommentControllerTest extends ControllerTest {
                         ResourceSnippetParameters.builder()
                             .tag(tag)
                             .summary("댓글 삭제")
+                            .requestHeaders(
+                                headerWithName(HttpHeaders.AUTHORIZATION).type(SimpleType.STRING)
+                                    .description("JWT")
+                            )
                             .pathParameters(
                                 parameterWithName("feedbackId").type(SimpleType.NUMBER)
                                     .description("댓글을 삭제할 피드백 ID"),

@@ -1,11 +1,15 @@
 package org.programmers.signalbuddyfinal.global.support;
 
+import static com.epages.restdocs.apispec.ResourceDocumentation.headerWithName;
 import static com.epages.restdocs.apispec.Schema.schema;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 
+import com.epages.restdocs.apispec.HeaderDescriptorWithType;
 import com.epages.restdocs.apispec.Schema;
+import com.epages.restdocs.apispec.SimpleType;
 import java.util.Arrays;
 import java.util.stream.Stream;
+import org.springframework.http.HttpHeaders;
 import org.springframework.restdocs.payload.FieldDescriptor;
 import org.springframework.restdocs.payload.JsonFieldType;
 
@@ -93,6 +97,11 @@ public final class RestDocsFormatGenerators {
 
         return Stream.concat(Arrays.stream(pageDocs), Arrays.stream(memberDocs))
             .toArray(FieldDescriptor[]::new);
+    }
+
+    public static HeaderDescriptorWithType jwtFormat() {
+        return headerWithName(HttpHeaders.AUTHORIZATION).type(SimpleType.STRING)
+            .description("JWT");
     }
 
     public static String getTokenExample() {

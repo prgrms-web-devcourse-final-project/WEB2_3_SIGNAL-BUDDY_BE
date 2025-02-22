@@ -8,6 +8,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.commonResponseFormat;
+import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.getTokenExample;
+import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.jwtFormat;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessRequest;
@@ -27,6 +29,7 @@ import org.programmers.signalbuddyfinal.global.anotation.WithMockCustomUser;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.support.ControllerTest;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.ResultActions;
@@ -37,6 +40,8 @@ class LikeControllerTest extends ControllerTest {
 
     @MockitoBean
     private LikeService likeService;
+
+    private final String tag = "Like API";
 
     @DisplayName("좋아요를 추가한다.")
     @Test
@@ -49,6 +54,7 @@ class LikeControllerTest extends ControllerTest {
         // When
         ResultActions result = mockMvc.perform(
             post("/api/feedbacks/{feedbackId}/like", feedbackId)
+                .header(HttpHeaders.AUTHORIZATION, getTokenExample())
         );
 
         // Then
@@ -60,8 +66,11 @@ class LikeControllerTest extends ControllerTest {
                     preprocessResponse(prettyPrint()),
                     resource(
                         ResourceSnippetParameters.builder()
-                            .tag("Like API")
+                            .tag(tag)
                             .summary("좋아요 추가")
+                            .requestHeaders(
+                                jwtFormat()
+                            )
                             .pathParameters(
                                 parameterWithName("feedbackId").type(SimpleType.NUMBER)
                                     .description("좋아요를 추가할 피드백 ID")
@@ -96,7 +105,7 @@ class LikeControllerTest extends ControllerTest {
                     preprocessResponse(prettyPrint()),
                     resource(
                         ResourceSnippetParameters.builder()
-                            .tag("Like API")
+                            .tag(tag)
                             .summary("좋아요 여부 확인")
                             .pathParameters(
                                 parameterWithName("feedbackId").type(SimpleType.NUMBER)
@@ -126,6 +135,7 @@ class LikeControllerTest extends ControllerTest {
         // When
         ResultActions result = mockMvc.perform(
             delete("/api/feedbacks/{feedbackId}/like", feedbackId)
+                .header(HttpHeaders.AUTHORIZATION, getTokenExample())
         );
 
         // Then
@@ -137,8 +147,11 @@ class LikeControllerTest extends ControllerTest {
                     preprocessResponse(prettyPrint()),
                     resource(
                         ResourceSnippetParameters.builder()
-                            .tag("Like API")
+                            .tag(tag)
                             .summary("좋아요 삭제")
+                            .requestHeaders(
+                                jwtFormat()
+                            )
                             .pathParameters(
                                 parameterWithName("feedbackId").type(SimpleType.NUMBER)
                                     .description("좋아요를 삭제할 피드백 ID")
