@@ -79,11 +79,10 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
     private String extractAccessToken(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
-        if (bearerToken != null || bearerToken.startsWith("Bearer ")) {
-
-            return bearerToken.substring(7);
+        if (bearerToken == null || !bearerToken.startsWith("Bearer ")) {
+            throw new BusinessException(TokenErrorCode.ACCESS_TOKEN_NOT_EXIST);
         }
-        throw new BusinessException(TokenErrorCode.ACCESS_TOKEN_NOT_EXIST);
+        return bearerToken.substring(7);
     }
 
 

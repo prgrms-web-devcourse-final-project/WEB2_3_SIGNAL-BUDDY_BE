@@ -11,7 +11,7 @@ public class RefreshTokenRepository {
 
     private final RedisTemplate<String, String> redisTemplate;
 
-    private static final long EXPIRATION_TIME = 60 * 60 * 24 * 7;
+    private static final long EXPIRATION_TIME = 60 * 60 * 24 * 7l;
 
     // 리프레시 토큰 저장
     public void save(Long memberId, String refreshToken) {
