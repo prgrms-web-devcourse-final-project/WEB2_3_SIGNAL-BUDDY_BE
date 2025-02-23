@@ -1,5 +1,11 @@
 package org.programmers.signalbuddyfinal.domain.bookmark.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -8,6 +14,7 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.programmers.signalbuddyfinal.domain.bookmark.dto.BookmarkRequest;
 import org.programmers.signalbuddyfinal.domain.bookmark.dto.BookmarkResponse;
+import org.programmers.signalbuddyfinal.domain.bookmark.dto.BookmarkSequenceUpdateRequest;
 import org.programmers.signalbuddyfinal.domain.bookmark.entity.Bookmark;
 import org.programmers.signalbuddyfinal.domain.bookmark.repository.BookmarkRepository;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
@@ -19,10 +26,6 @@ import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
 import org.programmers.signalbuddyfinal.global.support.ServiceTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @Transactional
 class BookmarkServiceTest extends ServiceTest {
@@ -40,7 +43,6 @@ class BookmarkServiceTest extends ServiceTest {
     private BookmarkService bookmarkService;
 
     private Member member;
-    private Bookmark bookmark;
 
     @BeforeEach
     void setup() {
@@ -49,10 +51,11 @@ class BookmarkServiceTest extends ServiceTest {
             .profileImageUrl("https://book-test-image.com/test-123131").build();
         member = memberRepository.save(member);
 
-        Point point = geometryFactory.createPoint(new Coordinate(126.553311, 36.66633));
-        bookmark = Bookmark.builder().coordinate(point).address("Some Place").member(member)
-            .build();
-        bookmark = bookmarkRepository.save(bookmark);
+        for (int i = 1; i <= 10; i++) {
+            final BookmarkRequest request = BookmarkRequest.builder().lat(37.12345).lng(127.12345)
+                .address("Address " + i).build();
+            bookmarkService.createBookmark(request, member.getMemberId());
+        }
     }
 
 
@@ -65,7 +68,8 @@ class BookmarkServiceTest extends ServiceTest {
 
         final BookmarkRequest request = BookmarkRequest.builder().lat(37.12345).lng(127.12345)
             .address("test").build();
-        final BookmarkResponse response = bookmarkService.createBookmark(request, user);
+        final BookmarkResponse response = bookmarkService.createBookmark(request,
+            user.getMemberId());
         final Optional<Bookmark> found = bookmarkRepository.findById(response.getBookmarkId());
 
         assertThat(response).isNotNull();
@@ -85,8 +89,11 @@ class BookmarkServiceTest extends ServiceTest {
         final BookmarkRequest request = BookmarkRequest.builder().lat(37.12345).lng(127.12345)
             .address("test").build();
 
+        final Optional<Bookmark> bookmark = bookmarkRepository.findById(1L);
+        assertThat(bookmark).isPresent();
+
         final BookmarkResponse response = bookmarkService.updateBookmark(request,
-            bookmark.getBookmarkId(), user);
+            bookmark.get().getBookmarkId(), user.getMemberId());
         final Optional<Bookmark> found = bookmarkRepository.findById(1L);
 
         assertThat(response).isNotNull();
@@ -95,6 +102,8 @@ class BookmarkServiceTest extends ServiceTest {
         assertThat(found.get().getAddress()).isEqualTo(response.getAddress());
         assertThat(found.get().getCoordinate().getX()).isEqualTo(response.getLng());
         assertThat(found.get().getCoordinate().getY()).isEqualTo(response.getLat());
+        assertThat(found.get().getSequence()).isEqualTo(response.getSequence());
+        assertThat(found.get().getMember().getMemberId()).isEqualTo(member.getMemberId());
     }
 
     @Test
@@ -104,10 +113,35 @@ class BookmarkServiceTest extends ServiceTest {
             new CustomUserDetails(member.getMemberId(), "", "", "", "", MemberRole.USER,
                 MemberStatus.ACTIVITY));
 
-        bookmarkService.deleteBookmark(bookmark.getBookmarkId(), user);
-        final Optional<Bookmark> found = bookmarkRepository.findById(bookmark.getBookmarkId());
+        Point point = geometryFactory.createPoint(new Coordinate(126.553311, 36.66633));
+        Bookmark.builder().coordinate(point).address("Some Place").member(member).build();
 
-        assertThat(found.isPresent()).isFalse();
-        assertThat(bookmarkRepository.existsById(bookmark.getBookmarkId())).isFalse();
+        final List<Long> ids = List.of(1L, 2L, 3L);
+        bookmarkService.deleteBookmark(ids, user.getMemberId());
+        final List<Bookmark> bookmarkList = bookmarkRepository.findAllById(ids);
+
+        assertThat(bookmarkList).isNotEmpty().allSatisfy(e -> {
+            assertThat(e.getDeletedAt()).isNotNull();
+        });
+    }
+
+    @Test
+    @DisplayName("나의 목적지 순서 변경")
+    void updateBookmarkSequences() {
+        final List<Long> ids = List.of(1L, 2L, 3L);
+        final List<BookmarkSequenceUpdateRequest> requests = List.of(
+            new BookmarkSequenceUpdateRequest(1L, 3), new BookmarkSequenceUpdateRequest(2L, 5),
+            new BookmarkSequenceUpdateRequest(3L, 9));
+
+        final List<Bookmark> bookmarkList = bookmarkRepository.findAllById(ids);
+        final Map<Long, Integer> map = bookmarkList.stream()
+            .collect(Collectors.toMap(Bookmark::getBookmarkId, Bookmark::getSequence));
+
+        final List<BookmarkResponse> responses = bookmarkService.updateBookmarkSequences(
+            member.getMemberId(), requests);
+
+        assertThat(responses).isNotEmpty().allSatisfy(e -> {
+            assertThat(map).doesNotContainEntry(e.getBookmarkId(), e.getSequence());
+        });
     }
 }

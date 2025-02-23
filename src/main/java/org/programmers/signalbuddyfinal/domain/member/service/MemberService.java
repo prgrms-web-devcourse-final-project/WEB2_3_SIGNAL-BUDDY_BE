@@ -71,11 +71,10 @@ public class MemberService {
     }
 
     @Transactional
-    public MemberResponse deleteMember(Long id) {
+    public void deleteMember(Long id) {
         final Member member = findMemberById(id);
         member.softDelete();
         log.info("Member deleted: {}", member);
-        return MemberMapper.INSTANCE.toDto(member);
     }
 
     @Transactional
