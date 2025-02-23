@@ -4,8 +4,11 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.programmers.signalbuddyfinal.domain.admin.dto.AdminJoinRequest;
+import org.programmers.signalbuddyfinal.domain.admin.dto.AdminMemberDetailResponse;
 import org.programmers.signalbuddyfinal.domain.admin.dto.AdminMemberResponse;
+import org.programmers.signalbuddyfinal.domain.admin.dto.MemberFilterRequest;
 import org.programmers.signalbuddyfinal.domain.admin.dto.WithdrawalMemberResponse;
+import org.programmers.signalbuddyfinal.domain.admin.exception.AdminErrorCode;
 import org.programmers.signalbuddyfinal.domain.admin.mapper.AdminMapper;
 import org.programmers.signalbuddyfinal.domain.bookmark.dto.AdminBookmarkResponse;
 import org.programmers.signalbuddyfinal.domain.bookmark.repository.BookmarkRepository;
@@ -33,14 +36,14 @@ public class AdminService {
     private final BookmarkRepository bookmarkRepository;
     private BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
 
-    public Page<AdminMemberResponse> getAllMembers(Pageable pageable) {
+    public Page<AdminMemberDetailResponse> getAllMembers(Pageable pageable) {
         Page<Member> membersPage = memberRepository.findAllMembers(pageable);
 
-        Page<AdminMemberResponse> adminMemberResponses = membersPage.map(member -> {
+        Page<AdminMemberDetailResponse> adminMemberResponses = membersPage.map(member -> {
 
             List<AdminBookmarkResponse> adminBookmarkResponses = bookmarkRepository.findBookmarkByMember(
                 member.getMemberId());
-            AdminMemberResponse response = AdminMapper.INSTANCE.toAdminMemberResponse(member,
+            AdminMemberDetailResponse response = AdminMapper.INSTANCE.toAdminMemberResponse(member,
                 adminBookmarkResponses);
 
             return response;
@@ -49,14 +52,14 @@ public class AdminService {
         return adminMemberResponses;
     }
 
-    public AdminMemberResponse getMember(Long id) {
+    public AdminMemberDetailResponse getMember(Long id) {
         Member member = memberRepository.findById(id).orElseThrow(() -> new BusinessException(
             MemberErrorCode.NOT_FOUND_MEMBER));
 
         List<AdminBookmarkResponse> adminBookmarkResponses = bookmarkRepository.findBookmarkByMember(
             member.getMemberId());
 
-        AdminMemberResponse response = AdminMapper.INSTANCE.toAdminMemberResponse(member,
+        AdminMemberDetailResponse response = AdminMapper.INSTANCE.toAdminMemberResponse(member,
             adminBookmarkResponses);
 
         return response;
@@ -66,6 +69,23 @@ public class AdminService {
         Page<WithdrawalMemberResponse> membersPage = memberRepository.findAllWithdrawMembers(pageable);
 
        return membersPage;
+    }
+
+    // 회원 필터링
+    public Page<AdminMemberResponse> getAllMemberWithFilter(Pageable pageable, MemberFilterRequest memberFilterRequest) {
+
+        if((memberFilterRequest.getStartDate() != null && memberFilterRequest.getEndDate() != null)&& memberFilterRequest.getAgo() !=null){
+            throw new BusinessException(AdminErrorCode.DUPLICATED_DATE);
+        }
+        Page<AdminMemberResponse> members = memberRepository.findAllMemberWithFilter(pageable,
+            memberFilterRequest);
+
+        return members;
+    }
+
+    // 회원 검색
+    public Page<AdminMemberResponse> searchMember (Pageable pageable,String content){
+        return memberRepository.findMemberByEmailOrNickname(pageable,content);
     }
 
     @Transactional

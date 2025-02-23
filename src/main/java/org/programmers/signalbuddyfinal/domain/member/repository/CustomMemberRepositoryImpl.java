@@ -2,9 +2,17 @@ package org.programmers.signalbuddyfinal.domain.member.repository;
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.QBean;
+import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.programmers.signalbuddyfinal.domain.admin.dto.AdminMemberResponse;
+import org.programmers.signalbuddyfinal.domain.admin.dto.MemberFilterRequest;
 import org.programmers.signalbuddyfinal.domain.admin.dto.WithdrawalMemberResponse;
+import org.programmers.signalbuddyfinal.domain.admin.dto.enums.Ago;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.QMember;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
@@ -17,16 +25,25 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 import static org.programmers.signalbuddyfinal.domain.member.entity.QMember.member;
+import static org.programmers.signalbuddyfinal.domain.social.entity.QSocialProvider.socialProvider;
 
+@Slf4j
 @Repository
 @RequiredArgsConstructor
 public class CustomMemberRepositoryImpl implements CustomMemberRepository {
 
     private static final QBean<WithdrawalMemberResponse> withdrawalMemberResponseDto = Projections.fields(
-        WithdrawalMemberResponse.class, member.memberId, member.email, member.nickname, member.profileImageUrl, member.role, member.memberStatus,
+        WithdrawalMemberResponse.class, member.memberId, member.email, member.nickname,
+        member.profileImageUrl, member.role, member.memberStatus,
         member.createdAt, member.updatedAt);
 
-    private static final QMember qmember= QMember.member;
+    private static final QBean<AdminMemberResponse> adminMemberResponseDto = Projections.fields(
+        AdminMemberResponse.class, member.memberId.as("memberId"), member.email, member.nickname, member.role,
+        member.memberStatus.as("status"), member.createdAt,
+        socialProvider.oauthProvider.as("oauthProvider")
+    );
+
+    private static final QMember qmember = QMember.member;
 
     private final JPAQueryFactory jpaQueryFactory;
 
@@ -68,5 +85,120 @@ public class CustomMemberRepositoryImpl implements CustomMemberRepository {
             .fetchCount();
 
         return new PageImpl<>(members, pageable, total);
+    }
+
+    @Override
+    public Page<AdminMemberResponse> findMemberByEmailOrNickname(Pageable pageable, String content) {
+        List<AdminMemberResponse> members = jpaQueryFactory
+            .select(adminMemberResponseDto)
+            .from(member)
+            .leftJoin(socialProvider).on(socialProvider.member.memberId.eq(member.memberId))
+            .where(
+                member.email.eq(content).or(member.nickname.eq(content))
+            )
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .orderBy(member.email.asc())
+            .fetch();
+
+        long total = jpaQueryFactory
+            .select(adminMemberResponseDto)
+            .from(member)
+            .where(member.email.eq(content).or(member.nickname.eq(content)))
+            .fetchCount();
+
+        return new PageImpl<>(members, pageable, total);
+    }
+
+    @Override
+    public Page<AdminMemberResponse> findAllMemberWithFilter(Pageable pageable,
+        MemberFilterRequest filter) {
+
+        List<AdminMemberResponse> members = jpaQueryFactory
+            .select(adminMemberResponseDto)
+            .from(member)
+            .leftJoin(socialProvider).on(socialProvider.member.memberId.eq(member.memberId))
+            .where(
+                eqStatus(filter.getStatus()),
+                eqRole(filter.getRole()),
+                eqOAuthProvider(filter.getOAuthProvider()),
+                betweenCreatedAt(filter.getStartDate(), filter.getEndDate()),
+                withinSignupPeriod(filter.getAgo())
+            )
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .orderBy(member.email.asc())
+            .fetch();
+
+        long total = jpaQueryFactory
+            .select(adminMemberResponseDto)
+            .from(member)
+            .leftJoin(socialProvider).on(socialProvider.member.memberId.eq(member.memberId))
+            .where(
+                eqStatus(filter.getStatus()),
+                eqRole(filter.getRole()),
+                eqOAuthProvider(filter.getOAuthProvider()),
+                betweenCreatedAt(filter.getStartDate(), filter.getEndDate()),
+                withinSignupPeriod(filter.getAgo())
+            )
+            .fetchCount();
+
+        return new PageImpl<>(members, pageable, total);
+    }
+
+    private BooleanExpression eqStatus(MemberStatus status) {
+        return (status != null ? member.memberStatus.eq(status) : Expressions.TRUE);
+    }
+
+    private BooleanExpression eqRole(MemberRole role) {
+        return (role != null ? member.role.eq(role) : Expressions.TRUE);
+    }
+
+    private BooleanExpression eqOAuthProvider(String oauthProvider) {
+        return ((oauthProvider != null && !oauthProvider.isEmpty())
+            ? socialProvider.oauthProvider.eq(oauthProvider) : Expressions.TRUE);
+    }
+
+    // 기간 조회
+    private BooleanExpression betweenCreatedAt(LocalDateTime startDate, LocalDateTime endDate) {
+        if (startDate != null && endDate != null) {
+            return member.createdAt.between(startDate, endDate);
+        } else if (startDate != null) {
+            return member.createdAt.goe(startDate);
+        } else if (endDate != null) {
+            return member.createdAt.loe(endDate);
+        }
+        return Expressions.TRUE;
+    }
+
+    // 이전 날짜 조회
+    private BooleanExpression withinSignupPeriod(Ago ago) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime startDate;
+
+        if (ago == null) {
+            return Expressions.TRUE;
+        }
+
+        switch (ago) {
+            case TODAY:
+                startDate = now.truncatedTo(ChronoUnit.DAYS);
+                break;
+            case THREE_DAYS:
+                startDate = now.minusDays(3);
+                break;
+            case WEEK:
+                startDate = now.minusWeeks(1);
+                break;
+            case MONTH:
+                startDate = now.minusMonths(1);
+                break;
+            case THREE_MONTH:
+                startDate = now.minusMonths(3);
+                break;
+            default:
+                return Expressions.TRUE;
+        }
+        return member.createdAt.goe(startDate);
     }
 }

@@ -1,6 +1,7 @@
 package org.programmers.signalbuddyfinal.domain.member.entity;
 
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import lombok.*;
 import org.programmers.signalbuddyfinal.domain.basetime.BaseTimeEntity;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberUpdateRequest;
@@ -70,4 +71,5 @@ public class Member extends BaseTimeEntity {
     public void softDelete() {
         this.memberStatus = MemberStatus.WITHDRAWAL;
     }
+
 }
