@@ -29,7 +29,7 @@ public class AwsFileService {
 
     private final S3Client s3Client;
 
-    @Value("${cloud.aws.s3.folder}")
+    @Value("${cloud.aws.s3.folder.member}")
     private String profileImageDir;
 
     @Value("${cloud.aws.s3.bucket}")

@@ -12,5 +12,6 @@ import org.springframework.security.test.context.support.WithSecurityContext;
 public @interface WithMockCustomUser {
 
     String userName() default "1";
+
     String roleType() default "RULE_USER";
 }
