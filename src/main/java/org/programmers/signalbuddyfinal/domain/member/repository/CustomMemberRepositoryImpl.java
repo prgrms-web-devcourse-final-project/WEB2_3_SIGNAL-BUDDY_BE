@@ -38,8 +38,8 @@ public class CustomMemberRepositoryImpl implements CustomMemberRepository {
         member.createdAt, member.updatedAt);
 
     private static final QBean<AdminMemberResponse> adminMemberResponseDto = Projections.fields(
-        AdminMemberResponse.class, member.memberId, member.email, member.nickname, member.role,
-        member.memberStatus, member.createdAt,
+        AdminMemberResponse.class, member.memberId.as("memberId"), member.email, member.nickname, member.role,
+        member.memberStatus.as("status"), member.createdAt,
         socialProvider.oauthProvider.as("oauthProvider")
     );
 

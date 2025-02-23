@@ -1,5 +1,6 @@
 package org.programmers.signalbuddyfinal.domain.admin.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -53,7 +52,6 @@ public class AdminController {
         return ResponseEntity.ok(members);
     }
 
-    // 전체회원조회 필터링
     @GetMapping("members/filter")
     public ResponseEntity<ApiResponse<Page<AdminMemberResponse>>> getAllFilteredMembers(
         @PageableDefault(page = 0, size = 10, sort = "email") Pageable pageable,

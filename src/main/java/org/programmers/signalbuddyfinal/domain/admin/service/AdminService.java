@@ -71,13 +71,12 @@ public class AdminService {
        return membersPage;
     }
 
-    // 필터링을 통한 조회
+    // 회원 필터링
     public Page<AdminMemberResponse> getAllMemberWithFilter(Pageable pageable, MemberFilterRequest memberFilterRequest) {
 
         if((memberFilterRequest.getStartDate() != null && memberFilterRequest.getEndDate() != null)&& memberFilterRequest.getAgo() !=null){
             throw new BusinessException(AdminErrorCode.DUPLICATED_DATE);
         }
-
         Page<AdminMemberResponse> members = memberRepository.findAllMemberWithFilter(pageable,
             memberFilterRequest);
 
