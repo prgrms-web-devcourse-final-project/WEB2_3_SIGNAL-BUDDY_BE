@@ -37,11 +37,11 @@ class AdminMemberRepositoryTest extends RepositoryTest {
         createMember("user1@test.com", "user1", MemberRole.USER, MemberStatus.ACTIVITY, null);
         createMember("user2@test.com", "user2", MemberRole.USER, MemberStatus.ACTIVITY, null);
         createMember("user3@test.com", "user3", MemberRole.USER, MemberStatus.ACTIVITY, null);
-        createMember("user4@test.com", "user4", MemberRole.USER, MemberStatus.ACTIVITY, "NAVER");
+        createMember("user4@test.com", "user4", MemberRole.USER, MemberStatus.ACTIVITY, "naver");
         createMember("user5@test.com", "user5", MemberRole.USER, MemberStatus.WITHDRAWAL, null);
         createMember("user6@test.com", "user6", MemberRole.USER, MemberStatus.WITHDRAWAL, null);
-        createMember("user7@test.com", "user7", MemberRole.USER, MemberStatus.WITHDRAWAL, "NAVER");
-        createMember("user8@test.com", "user8", MemberRole.USER, MemberStatus.WITHDRAWAL, "NAVER");
+        createMember("user7@test.com", "user7", MemberRole.USER, MemberStatus.WITHDRAWAL, "naver");
+        createMember("user8@test.com", "user8", MemberRole.USER, MemberStatus.WITHDRAWAL, "naver");
         createMember("admin@test.com", "amin", MemberRole.ADMIN, MemberStatus.ACTIVITY, null);
         pageable = PageRequest.of(0, 10);
     }
@@ -53,7 +53,7 @@ class AdminMemberRepositoryTest extends RepositoryTest {
             null);
         MemberFilterRequest statusFilter = createFilter(MemberStatus.ACTIVITY, null, null, null,
             null, null);
-        MemberFilterRequest oAuthFilter = createFilter(null, null, "NAVER", null, null, null);
+        MemberFilterRequest oAuthFilter = createFilter(null, null, "naver", null, null, null);
 
         assertThat(memberRepository.findAllMemberWithFilter(pageable, roleFilter)
             .getTotalElements()).isEqualTo(8);
@@ -89,7 +89,7 @@ class AdminMemberRepositoryTest extends RepositoryTest {
     public void 사용자_활성_oAuth_조회() {
 
         MemberFilterRequest roleAndActivityWithOAuthAFilter = createFilter(MemberStatus.ACTIVITY,
-            MemberRole.USER, "NAVER", null, null, null);
+            MemberRole.USER, "naver", null, null, null);
 
         assertThat(
             memberRepository.findAllMemberWithFilter(pageable, roleAndActivityWithOAuthAFilter)
@@ -146,7 +146,7 @@ class AdminMemberRepositoryTest extends RepositoryTest {
         if (oAuthProvider != null) {
             SocialProvider socialProvider = SocialProvider.builder()
                 .socialId("socialId")
-                .oauthProvider("NAVER")
+                .oauthProvider("naver")
                 .member(member)
                 .build();
             socialProviderRepository.save(socialProvider);
