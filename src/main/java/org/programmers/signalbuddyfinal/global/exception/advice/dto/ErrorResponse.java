@@ -8,7 +8,7 @@ import org.programmers.signalbuddyfinal.global.exception.ErrorCode;
 @AllArgsConstructor
 public class ErrorResponse {
 
-    private int code;
+    private String code;
     private String message;
 
     public ErrorResponse(ErrorCode errorCode) {
