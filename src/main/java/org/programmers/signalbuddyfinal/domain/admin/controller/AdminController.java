@@ -63,8 +63,7 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.createSuccess(members));
     }
 
-    //회원 검색
-    @GetMapping("member/{content}")
+    @GetMapping("members/{content}")
     public ResponseEntity<ApiResponse<Page<AdminMemberResponse>>> searchMember(
         @PageableDefault(page = 0, size = 10, sort = "email") Pageable pageable,
         @PathVariable String content) {
