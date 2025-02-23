@@ -1,6 +1,7 @@
 package org.programmers.signalbuddyfinal.domain.comment.controller;
 
 import static com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper.document;
+import static com.epages.restdocs.apispec.ResourceDocumentation.headerWithName;
 import static com.epages.restdocs.apispec.ResourceDocumentation.parameterWithName;
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
 import static org.mockito.ArgumentMatchers.any;
@@ -8,7 +9,9 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
-import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.pageResponseFormat;
+import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.getTokenExample;
+import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.jwtFormat;
+import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.pageResponseWithMemberFormat;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessRequest;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessResponse;
@@ -42,6 +45,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -53,6 +57,8 @@ class CommentControllerTest extends ControllerTest {
 
     @MockitoBean
     private CommentService commentService;
+
+    private final String tag = "Comment API";
 
     @DisplayName("댓글을 작성한다.")
     @Test
@@ -69,6 +75,7 @@ class CommentControllerTest extends ControllerTest {
             post("/api/feedbacks/{feedbackId}/comments", feedbackId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request))
+                .header(HttpHeaders.AUTHORIZATION, getTokenExample())
         );
 
         // Then
@@ -80,8 +87,11 @@ class CommentControllerTest extends ControllerTest {
                     preprocessResponse(prettyPrint()),
                     resource(
                         ResourceSnippetParameters.builder()
-                            .tag("Comment API")
+                            .tag(tag)
                             .summary("댓글 작성")
+                            .requestHeaders(
+                                jwtFormat()
+                            )
                             .pathParameters(
                                 parameterWithName("feedbackId").type(SimpleType.NUMBER)
                                     .description("댓글을 작성할 피드백 ID")
@@ -145,15 +155,21 @@ class CommentControllerTest extends ControllerTest {
                     preprocessResponse(prettyPrint()),
                     resource(
                         ResourceSnippetParameters.builder()
-                            .tag("Comment API")
+                            .tag(tag)
                             .summary("댓글 목록")
                             .pathParameters(
                                 parameterWithName("feedbackId").type(SimpleType.NUMBER)
                                     .description("댓글을 작성할 피드백 ID")
                             )
+                            .queryParameters(
+                                parameterWithName("page").type(SimpleType.NUMBER)
+                                    .description("페이지 번호 (기본값 : 0, 0부터 시작)").optional(),
+                                parameterWithName("size").type(SimpleType.NUMBER)
+                                    .description("페이지 크기 (기본값 : 7)").optional()
+                            )
                             .responseFields(
                                 ArrayUtils.addAll(
-                                    pageResponseFormat(),
+                                    pageResponseWithMemberFormat(),
                                     fieldWithPath("data.searchResults[].commentId")
                                         .type(JsonFieldType.NUMBER)
                                         .description("댓글 ID"),
@@ -165,28 +181,7 @@ class CommentControllerTest extends ControllerTest {
                                         .description("댓글 생성일"),
                                     fieldWithPath("data.searchResults[].updatedAt")
                                         .type(JsonFieldType.STRING)
-                                        .description("댓글 수정일"),
-                                    fieldWithPath("data.searchResults[].member")
-                                        .type(JsonFieldType.OBJECT)
-                                        .description("작성자 정보"),
-                                    fieldWithPath("data.searchResults[].member.memberId")
-                                        .type(JsonFieldType.NUMBER)
-                                        .description("작성자 ID(PK)"),
-                                    fieldWithPath("data.searchResults[].member.email")
-                                        .type(JsonFieldType.STRING)
-                                        .description("작성자의 이메일"),
-                                    fieldWithPath("data.searchResults[].member.nickname")
-                                        .type(JsonFieldType.STRING)
-                                        .description("작성자의 닉네임"),
-                                    fieldWithPath("data.searchResults[].member.profileImageUrl")
-                                        .type(JsonFieldType.STRING)
-                                        .description("작성자의 프로필 이미지 URL"),
-                                    fieldWithPath("data.searchResults[].member.role")
-                                        .type(JsonFieldType.STRING)
-                                        .description("작성자의 권한 (USER or ADMIN)"),
-                                    fieldWithPath("data.searchResults[].member.memberStatus")
-                                        .type(JsonFieldType.STRING)
-                                        .description("작성자의 탈퇴 여부 (ACTIVITY or WITHDRAWAL)")
+                                        .description("댓글 수정일")
                                 )
                             )
                             .build()
@@ -212,6 +207,7 @@ class CommentControllerTest extends ControllerTest {
                 feedbackId, commentId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request))
+                .header(HttpHeaders.AUTHORIZATION, getTokenExample())
         );
 
         // Then
@@ -223,8 +219,11 @@ class CommentControllerTest extends ControllerTest {
                     preprocessResponse(prettyPrint()),
                     resource(
                         ResourceSnippetParameters.builder()
-                            .tag("Comment API")
+                            .tag(tag)
                             .summary("댓글 수정")
+                            .requestHeaders(
+                                jwtFormat()
+                            )
                             .pathParameters(
                                 parameterWithName("feedbackId").type(SimpleType.NUMBER)
                                     .description("댓글을 수정할 피드백 ID"),
@@ -253,8 +252,10 @@ class CommentControllerTest extends ControllerTest {
 
         // When
         ResultActions result = mockMvc.perform(
-            delete("/api/feedbacks/{feedbackId}/comments/{commentId}",
+            delete(
+                "/api/feedbacks/{feedbackId}/comments/{commentId}",
                 feedbackId, commentId)
+                .header(HttpHeaders.AUTHORIZATION, getTokenExample())
         );
 
         // Then
@@ -266,8 +267,12 @@ class CommentControllerTest extends ControllerTest {
                     preprocessResponse(prettyPrint()),
                     resource(
                         ResourceSnippetParameters.builder()
-                            .tag("Comment API")
+                            .tag(tag)
                             .summary("댓글 삭제")
+                            .requestHeaders(
+                                headerWithName(HttpHeaders.AUTHORIZATION).type(SimpleType.STRING)
+                                    .description("JWT")
+                            )
                             .pathParameters(
                                 parameterWithName("feedbackId").type(SimpleType.NUMBER)
                                     .description("댓글을 삭제할 피드백 ID"),

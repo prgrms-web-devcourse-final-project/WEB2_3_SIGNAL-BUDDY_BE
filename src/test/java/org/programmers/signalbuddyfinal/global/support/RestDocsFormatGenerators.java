@@ -1,15 +1,19 @@
 package org.programmers.signalbuddyfinal.global.support;
 
+import static com.epages.restdocs.apispec.ResourceDocumentation.headerWithName;
 import static com.epages.restdocs.apispec.Schema.schema;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
-import static org.springframework.restdocs.snippet.Attributes.key;
 
+import com.epages.restdocs.apispec.HeaderDescriptorWithType;
 import com.epages.restdocs.apispec.Schema;
+import com.epages.restdocs.apispec.SimpleType;
 import java.util.Arrays;
 import java.util.stream.Stream;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.restdocs.payload.FieldDescriptor;
 import org.springframework.restdocs.payload.JsonFieldType;
-import org.springframework.restdocs.snippet.Attributes;
 
 /**
  * 요청 값의 양식을 설정
@@ -55,34 +59,73 @@ public final class RestDocsFormatGenerators {
         pageDocs[6] = fieldWithPath("data.searchResults").type(JsonFieldType.ARRAY)
             .description("검색 결과 목록");
 
-        // commonDocs, pageDocs 두 배열 합치기
         return Stream.concat(Arrays.stream(commonDocs), Arrays.stream(pageDocs))
             .toArray(FieldDescriptor[]::new);
     }
 
-    public static Attributes.Attribute phoneNumberFormat() {
-        return key("format").value("000-0000-0000");
+    public static FieldDescriptor[] pageResponseWithMemberFormat() {
+        FieldDescriptor[] pageDocs = pageResponseFormat();
+
+        FieldDescriptor[] memberDocs = new FieldDescriptor[7];
+        memberDocs[0] = fieldWithPath("data.searchResults[].member")
+            .type(JsonFieldType.OBJECT)
+            .description("작성자 정보");
+        memberDocs[1] = fieldWithPath("data.searchResults[].member.memberId")
+            .type(JsonFieldType.NUMBER)
+            .description("작성자 ID(PK)");
+        memberDocs[2] = fieldWithPath("data.searchResults[].member.email")
+            .type(JsonFieldType.STRING)
+            .description("작성자의 이메일");
+        memberDocs[3] = fieldWithPath("data.searchResults[].member.nickname")
+            .type(JsonFieldType.STRING)
+            .description("작성자의 닉네임");
+        memberDocs[4] = fieldWithPath("data.searchResults[].member.profileImageUrl")
+            .type(JsonFieldType.STRING)
+            .description("작성자의 프로필 이미지 URL");
+        memberDocs[5] = fieldWithPath("data.searchResults[].member.role")
+            .type(JsonFieldType.STRING)
+            .description("""
+                작성자의 권한
+                - USER : 일반 사용자
+                - ADMIN : 관리자
+                """);
+        memberDocs[6] = fieldWithPath("data.searchResults[].member.memberStatus")
+            .type(JsonFieldType.STRING)
+            .description("""
+                작성자의 탈퇴 여부
+                - ACTIVITY : 활동 상태
+                - WITHDRAWAL : 탈퇴 상태
+                """);
+
+        return Stream.concat(Arrays.stream(pageDocs), Arrays.stream(memberDocs))
+            .toArray(FieldDescriptor[]::new);
     }
 
-    public static Attributes.Attribute emailFormat() {
-        return key("format").value("example-email@example.com");
+    public static HeaderDescriptorWithType jwtFormat() {
+        return headerWithName(HttpHeaders.AUTHORIZATION).type(SimpleType.STRING)
+            .description("JWT");
     }
 
-    public static Attributes.Attribute imageUrlFormat() {
-        return key("format").value("https://example-image-url.com");
+    public static String getTokenExample() {
+        return "Bearer Your_Token";
     }
 
-    public static Attributes.Attribute tokenFormat() {
-        return key("format").value("Bearer YOUR_TOKEN");
+    /**
+     * 해당 formName에 첨부할 Mock Image MultipartFile 반환
+     *
+     * @param formName Multipart Form Field Name
+     * @return MockMultipartFile
+     */
+    public static MockMultipartFile getMockImageFile(String formName) {
+        return new MockMultipartFile(
+            formName,
+            "image.jpg",
+            MediaType.IMAGE_JPEG_VALUE,
+            "image".getBytes()
+        );
     }
 
-    public static Attributes.Attribute encodingFormat() {
-        return key("format").value("URL 인코딩 필수");
-    }
+    public static final Schema commonResponse = schema("CommonResponse");
 
-    public static Attributes.Attribute pageFormat() {
-        return  key("format").value("0부터 시작");
-    }
-
-    public static Schema commonResponse = schema("CommonResponse");
+    private RestDocsFormatGenerators() {}
 }

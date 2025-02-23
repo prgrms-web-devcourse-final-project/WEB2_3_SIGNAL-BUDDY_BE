@@ -1,25 +1,30 @@
 package org.programmers.signalbuddyfinal.domain.feedback.service;
 
-import java.time.LocalDate;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.comment.repository.CommentRepository;
-import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackMapper;
+import org.programmers.signalbuddyfinal.domain.crossroad.entity.Crossroad;
+import org.programmers.signalbuddyfinal.domain.crossroad.repository.CrossroadRepository;
+import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackRequest;
 import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackResponse;
-import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackWriteRequest;
 import org.programmers.signalbuddyfinal.domain.feedback.entity.Feedback;
+import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.AnswerStatus;
+import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.FeedbackCategory;
 import org.programmers.signalbuddyfinal.domain.feedback.exception.FeedbackErrorCode;
-import org.programmers.signalbuddyfinal.domain.feedback.repository.FeedbackJdbcRepository;
+import org.programmers.signalbuddyfinal.domain.feedback.mapper.FeedbackMapper;
 import org.programmers.signalbuddyfinal.domain.feedback.repository.FeedbackRepository;
 import org.programmers.signalbuddyfinal.domain.like.repository.LikeRepository;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
+import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
+import org.programmers.signalbuddyfinal.domain.member.service.AwsFileService;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -28,45 +33,65 @@ public class FeedbackService {
 
     private final FeedbackRepository feedbackRepository;
     private final MemberRepository memberRepository;
-    private final FeedbackJdbcRepository feedbackJdbcRepository;
     private final CommentRepository commentRepository;
     private final LikeRepository likeRepository;
-
-    public PageResponse<FeedbackResponse> searchFeedbackList(Pageable pageable, Long answerStatus) {
-        Page<FeedbackResponse> responsePage = feedbackRepository.findAllByActiveMembers(pageable,
-            answerStatus);
-        return new PageResponse<>(responsePage);
-    }
+    private final CrossroadRepository crossroadRepository;
+    private final AwsFileService awsFileService;
 
     public PageResponse<FeedbackResponse> searchFeedbackList(
         Pageable pageable,
-        LocalDate startDate, LocalDate endDate,
-        Long answerStatus
+        AnswerStatus answerStatus, Set<FeedbackCategory> categories,
+        Long crossroadId, String keyword
     ) {
-        Page<FeedbackResponse> responsePage = feedbackRepository.findAll(pageable, startDate,
-            endDate, answerStatus);
-        return new PageResponse<>(responsePage);
+        return new PageResponse<>(
+            feedbackRepository.findAllByActiveMembers(
+                pageable, answerStatus, categories, crossroadId, keyword
+            )
+        );
     }
 
-    public PageResponse<FeedbackResponse> searchByKeyword(
-        Pageable pageable, String keyword, Long answerStatus
+    public PageResponse<FeedbackResponse> findPagedExcludingMember(
+        Long memberId, Pageable pageable
     ) {
-        Page<FeedbackResponse> responsePage = feedbackJdbcRepository.fullTextSearch(pageable,
-            keyword, answerStatus);
-        return new PageResponse<>(responsePage);
+        return new PageResponse<>(
+            feedbackRepository.findPagedExcludingMember(memberId, pageable)
+        );
     }
 
-    public FeedbackResponse searchFeedbackDetail(Long feedbackId) {
+    public FeedbackResponse searchFeedbackDetail(
+        Long feedbackId, CustomUser2Member user
+    ) {
         Feedback feedback = feedbackRepository.findByIdOrThrow(feedbackId);
+
+        // 비밀글일 때
+        // 피드백 작성자와 조회 요청자가 다른 경우 (관리자는 모든 피드백을 조회할 수 있음)
+        if (Boolean.TRUE.equals(feedback.getSecret())
+            && Member.isNotSameMember(user, feedback.getMember())
+            && !MemberRole.ADMIN.equals(user.getRole())) {
+            throw new BusinessException(FeedbackErrorCode.SECRET_FEEDBACK_NOT_AUTHORIZED);
+        }
+
         return FeedbackMapper.INSTANCE.toResponse(feedback);
     }
 
     @Transactional
-    public FeedbackResponse writeFeedback(FeedbackWriteRequest request, CustomUser2Member user) {
+    public FeedbackResponse writeFeedback(
+        FeedbackRequest request, MultipartFile image,
+        CustomUser2Member user
+    ) {
         Member member = memberRepository.findByIdOrThrow(user.getMemberId());
+        Crossroad crossroad = crossroadRepository.findByIdOrThrow(request.getCrossroadId());
+
+        String imageUrl = null;
+        if (image != null) {
+            String fileName = awsFileService.saveProfileImage(image);
+            imageUrl = awsFileService.getProfileImage(fileName).toString();
+        }
 
         Feedback feedback = Feedback.create()
-            .subject(request.getSubject()).content(request.getContent()).member(member)
+            .subject(request.getSubject()).content(request.getContent())
+            .category(request.getCategory()).secret(request.getSecret())
+            .member(member).crossroad(crossroad).imageUrl(imageUrl)
             .build();
         Feedback savedFeedback = feedbackRepository.save(feedback);
 
@@ -74,7 +99,11 @@ public class FeedbackService {
     }
 
     @Transactional
-    public void updateFeedback(Long feedbackId, FeedbackWriteRequest request, CustomUser2Member user) {
+    public FeedbackResponse updateFeedback(
+        Long feedbackId,
+        FeedbackRequest request, MultipartFile image,
+        CustomUser2Member user
+    ) {
         Feedback feedback = feedbackRepository.findByIdOrThrow(feedbackId);
 
         // 피드백 작성자와 수정 요청자가 다른 경우
@@ -83,25 +112,35 @@ public class FeedbackService {
         }
 
         feedback.updateFeedback(request);
+
+        if (!feedback.getCrossroad().getCrossroadId().equals(request.getCrossroadId())) {
+            Crossroad crossroad = crossroadRepository.findByIdOrThrow(request.getCrossroadId());
+            feedback.updateCrossroad(crossroad);
+        }
+
+        if (image != null) {
+            String fileName = awsFileService.saveProfileImage(image);
+            String imageUrl = awsFileService.getProfileImage(fileName).toString();
+            feedback.updateImageUrl(imageUrl);
+        }
+
+        return FeedbackMapper.INSTANCE.toResponse(feedback);
     }
 
     @Transactional
-    public void deleteFeedback(Long feedbackId, CustomUser2Member user) {
+    public void deleteFeedback(
+        Long feedbackId, CustomUser2Member user
+    ) {
         Feedback feedback = feedbackRepository.findByIdOrThrow(feedbackId);
 
-        // 피드백 작성자와 삭제 요청자가 다른 경우
-        if (Member.isNotSameMember(user, feedback.getMember())) {
+        // 피드백 작성자와 삭제 요청자가 다른 경우 (관리자는 모든 피드백을 삭제할 수 있음)
+        if (Member.isNotSameMember(user, feedback.getMember())
+            && !MemberRole.ADMIN.equals(user.getRole())) {
             throw new BusinessException(FeedbackErrorCode.FEEDBACK_ELIMINATOR_NOT_AUTHORIZED);
         }
 
         commentRepository.softDeleteAllByFeedbackId(feedbackId);
         likeRepository.deleteAllByFeedbackId(feedbackId);
         feedbackRepository.deleteById(feedbackId);
-    }
-
-    public PageResponse<FeedbackResponse> findPagedExcludingMember(Long memberId, Pageable pageable) {
-        final Page<FeedbackResponse> page = feedbackRepository.findPagedExcludingMember(
-            memberId, pageable);
-        return new PageResponse<>(page);
     }
 }

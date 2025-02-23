@@ -26,7 +26,6 @@ public class CrossroadService {
     private final CrossroadProvider crossroadProvider;
     private final HttpRequestManager httpRequestManager;
 
-    // TODO: 시간 남으면 Spring Batch로 동작시키기
     @Transactional
     public void saveCrossroadDates(int page, int pageSize) {
         List<CrossroadApiResponse> responseList = crossroadProvider.requestCrossroadApi(page,

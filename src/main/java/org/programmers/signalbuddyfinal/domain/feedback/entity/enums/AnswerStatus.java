@@ -8,7 +8,9 @@ import lombok.Getter;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public enum AnswerStatus {
 
-    BEFORE("답변 전"), COMPLETION("답변 완료");
+    BEFORE("답변 전", "before"),
+    COMPLETION("답변 완료", "completion");
 
-    private final String status;
+    private final String message;
+    private final String value;
 }

@@ -45,7 +45,10 @@ public class Member extends BaseTimeEntity {
 
     // 요청자와 작성자가 다른 경우
     public static boolean isNotSameMember(CustomUser2Member user, Member member) {
-        return !user.getMemberId().equals(member.getMemberId());
+        if (user == null || member == null) {
+            return true;
+        }
+        return !member.getMemberId().equals(user.getMemberId());
     }
 
     public void updateMember(MemberUpdateRequest request, String encodedPassword) {

@@ -4,6 +4,6 @@ import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadApiRespons
 
 import java.util.List;
 
-public interface QueryCrossroadRepository {
+public interface CustomCrossroadRepository {
     List<CrossroadApiResponse> findNearByCrossroads(double latitude, double longitude);
 }
