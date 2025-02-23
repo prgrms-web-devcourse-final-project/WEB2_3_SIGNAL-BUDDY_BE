@@ -7,6 +7,8 @@ import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.programmers.signalbuddyfinal.domain.member.exception.MemberErrorCode;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
+import org.programmers.signalbuddyfinal.global.response.ApiResponse;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -19,14 +21,11 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final MemberRepository memberRepository;
 
     @Override
-    public CustomUserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+    public CustomUserDetails loadUserByUsername(String identifier) throws UsernameNotFoundException {
 
-        Member findMember = memberRepository.findByEmail(email)
-            .orElseThrow(() -> {
-                log.info("인증 실패: {}", email);
-                return new BusinessException(MemberErrorCode.NOT_FOUND_MEMBER);
-            });
-
+        Member findMember = identifier.contains("@")
+            ? memberRepository.findByEmail(identifier).orElseThrow(()-> new BusinessException(MemberErrorCode.NOT_FOUND_MEMBER))
+            : memberRepository.findById(Long.parseLong(identifier)).orElseThrow(()-> new BusinessException(MemberErrorCode.NOT_FOUND_MEMBER));
         final MemberStatus memberStatus = findMember.getMemberStatus();
         if (memberStatus == MemberStatus.WITHDRAWAL) {
             throw new BusinessException(MemberErrorCode.WITHDRAWN_MEMBER);
