@@ -17,4 +17,9 @@ public enum AdminErrorCode implements ErrorCode {
     private HttpStatus httpStatus;
     private int code;
     private String message;
+
+    @Override
+    public int getCode() {
+        return code;
+    }
 }
