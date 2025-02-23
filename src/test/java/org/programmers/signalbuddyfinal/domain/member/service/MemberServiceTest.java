@@ -112,7 +112,7 @@ class MemberServiceTest {
 
         //given
         final MemberJoinRequest request = MemberJoinRequest.builder().email("test2@example.com")
-            .nickname("TestUser2").password("password123").profileImageUrl(profileImage).build();
+            .nickname("TestUser2").password("password123").build();
         final Member expectedMember = Member.builder().memberId(id).email("test2@example.com")
             .nickname("TestUser2").profileImageUrl(null).memberStatus(MemberStatus.ACTIVITY)
             .role(MemberRole.USER).build();
@@ -120,7 +120,7 @@ class MemberServiceTest {
         when(memberRepository.save(any(Member.class))).thenReturn(expectedMember);
 
         //when
-        MemberResponse actualResponse = memberService.joinMember(request);
+        MemberResponse actualResponse = memberService.joinMember(request, profileImage);
 
         //then
         assertThat(actualResponse.getEmail()).isEqualTo(expectedMember.getEmail());

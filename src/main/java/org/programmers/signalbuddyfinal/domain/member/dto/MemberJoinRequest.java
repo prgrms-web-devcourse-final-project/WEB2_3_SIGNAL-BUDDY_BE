@@ -16,8 +16,6 @@ import org.springframework.web.multipart.MultipartFile;
 @AllArgsConstructor
 public class MemberJoinRequest {
 
-    private MultipartFile profileImageUrl;
-
     @Email(message = "이메일 형식에 맞지 않습니다.")
     @NotBlank(message = "이메일은 필수 입력 사항입니다.")
     private String email;
