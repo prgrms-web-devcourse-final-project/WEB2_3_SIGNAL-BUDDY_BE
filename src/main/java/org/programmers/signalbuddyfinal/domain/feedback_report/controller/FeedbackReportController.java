@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.feedback_report.dto.FeedbackReportRequest;
 import org.programmers.signalbuddyfinal.domain.feedback_report.dto.FeedbackReportResponse;
+import org.programmers.signalbuddyfinal.domain.feedback_report.dto.FeedbackReportUpdateRequest;
 import org.programmers.signalbuddyfinal.domain.feedback_report.service.FeedbackReportService;
 import org.programmers.signalbuddyfinal.global.annotation.CurrentUser;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
@@ -11,6 +12,7 @@ import org.programmers.signalbuddyfinal.global.response.ApiResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -39,6 +41,19 @@ public class FeedbackReportController {
     public ResponseEntity<ApiResponse<Object>> searchFeedbackReportList(
         @PathVariable("feedbackId") long feedbackId
     ) {
+        return ResponseEntity.ok(
+            ApiResponse.createSuccessWithNoData()
+        );
+    }
+
+    @PatchMapping("/api/feedbacks/{feedbackId}/reports/{reportId}")
+    public ResponseEntity<ApiResponse<Object>> updateFeedbackReports(
+        @PathVariable("feedbackId") long feedbackId,
+        @PathVariable("reportId") long reportId,
+        @Valid @RequestBody FeedbackReportUpdateRequest request,
+        @CurrentUser CustomUser2Member user
+    ) {
+        reportService.updateFeedbackReport(feedbackId, reportId, request, user);
         return ResponseEntity.ok(
             ApiResponse.createSuccessWithNoData()
         );
