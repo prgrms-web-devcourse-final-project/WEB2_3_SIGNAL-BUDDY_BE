@@ -1,0 +1,60 @@
+package org.programmers.signalbuddyfinal.domain.trafficSignal.service;
+
+import com.opencsv.bean.CsvToBean;
+import com.opencsv.bean.CsvToBeanBuilder;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.programmers.signalbuddyfinal.domain.trafficSignal.dto.TrafficFileResponse;
+import org.programmers.signalbuddyfinal.domain.trafficSignal.entity.TrafficSignal;
+import org.programmers.signalbuddyfinal.domain.trafficSignal.exception.TrafficErrorCode;
+import org.programmers.signalbuddyfinal.domain.trafficSignal.repository.TrafficRepository;
+import org.programmers.signalbuddyfinal.global.exception.BusinessException;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.util.ArrayList;
+import java.util.List;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class TrafficCsvService {
+
+    private final TrafficRepository trafficRepository;
+
+    @Transactional
+    public void saveCsvData(MultipartFile file) throws IOException {
+
+        List<TrafficSignal> entityList = new ArrayList<>();
+        Reader reader = new BufferedReader( new InputStreamReader(file.getInputStream() ) );
+
+        try {
+            CsvToBean<TrafficFileResponse> csvToBean = new CsvToBeanBuilder<TrafficFileResponse>(reader)
+                    .withType(TrafficFileResponse.class)
+                    .withIgnoreLeadingWhiteSpace(true)
+                    .build();
+
+            List<TrafficFileResponse> traffics = csvToBean.parse();
+
+            for(TrafficFileResponse trafficRes : traffics) {
+                entityList.add(new TrafficSignal(trafficRes));
+            }
+
+            trafficRepository.saveAll(entityList);
+
+        } catch (DataIntegrityViolationException e) {
+            throw new BusinessException(TrafficErrorCode.ALREADY_EXIST_TRAFFIC_SIGNAL);
+        } catch (Exception e){
+            log.error(e.getMessage());
+        }
+
+    }
+
+}
