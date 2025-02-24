@@ -12,6 +12,7 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -78,9 +79,9 @@ public class SecurityConfig {
 
         // 기본 로그인 관련 설정
         http
-            .formLogin((auth) -> auth.disable())
-            .httpBasic((auth) -> auth.disable())
-            .sessionManagement((auth) -> auth.disable());
+            .formLogin(auth -> auth.disable())
+            .httpBasic(auth -> auth.disable())
+            .sessionManagement(session-> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         // csrf 비활성화
         http.csrf(AbstractHttpConfigurer::disable);

@@ -21,12 +21,11 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
     private final AntPathMatcher antPathMatcher = new AntPathMatcher();
     private final JwtUtil jwtUtil;
     private final Set<String> excludeGetPaths = Set.of(
-        "/api/feedbacks/{feedbackId}/comments", "/api/crossroads/**", "/api/feedbacks",
-        "/feedbacks/**"
+        "/api/feedbacks/{feedbackId}/comments", "/api/crossroads/**", "/api/feedbacks"
     );
     private final Set<String> excludeAllPaths = Set.of(
         "/", "/docs/**", "/ws/**", "/actuator/health", "/webjars/**", "/api/auth/login",
-        "/docs/index.html", "/api/auth/reissue", "/api/members/join",
+        "/docs/index.html", "/api/members/join",
         "/api/admins/join", "/members/signup", "/api/members/files/**", "/actuator/prometheus"
     );
 
@@ -67,14 +66,12 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         String method = request.getMethod();
 
-        if (excludeGetPaths.stream().anyMatch(pattern -> antPathMatcher.match(pattern, path))
-            && method.equals("GET")) {
-            return true;
-        }
-        if (excludeAllPaths.stream().anyMatch(pattern -> antPathMatcher.match(pattern, path))) {
-            return true;
-        }
-        return false;
+        boolean isExcludedOnlyGetMethod = excludeGetPaths.stream()
+            .anyMatch(pattern -> antPathMatcher.match(pattern, path) && method.equals("GET"));
+        boolean isExcluded = excludeAllPaths.stream()
+            .anyMatch(pattern -> antPathMatcher.match(pattern, path));
+
+        return (isExcluded || isExcludedOnlyGetMethod);
     }
 
     private String extractAccessToken(HttpServletRequest request) {

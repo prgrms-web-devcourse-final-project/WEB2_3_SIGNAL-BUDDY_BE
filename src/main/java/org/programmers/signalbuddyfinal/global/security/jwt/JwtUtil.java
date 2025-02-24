@@ -17,7 +17,6 @@ import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetailsS
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,12 +47,12 @@ public class JwtUtil {
         CustomUserDetails nowMember = authentication2User(authentication);
 
         return Jwts.builder()
-            .setSubject(String.valueOf(nowMember.getMemberId()))
+            .subject(String.valueOf(nowMember.getMemberId()))
             .claim("status", nowMember.getStatus().name())
             .claim("auth", nowMember.getRole().name())
             .setIssuedAt(new Date())
             .setExpiration(new Date(new Date().getTime() + accessTokenExpiration))
-            .signWith(key, SignatureAlgorithm.HS256)
+            .signWith(key)
             .compact();
     }
 
@@ -63,10 +62,10 @@ public class JwtUtil {
         CustomUserDetails nowMember = authentication2User(authentication);
 
         String refreshToken = Jwts.builder()
-            .setSubject(String.valueOf(nowMember.getMemberId()))
+            .subject(String.valueOf(nowMember.getMemberId()))
             .setIssuedAt(new Date())
-            .setExpiration(new Date(new Date().getTime() + refreshTokenExpiration*1000))
-            .signWith(key, SignatureAlgorithm.HS256)
+            .setExpiration(new Date(new Date().getTime() + refreshTokenExpiration))
+            .signWith(key)
             .compact();
 
         // 리프레시 토큰 저장
@@ -83,12 +82,10 @@ public class JwtUtil {
                 .build()
                 .parseSignedClaims(token);
             return true;
-        } catch (MalformedJwtException e) {
+        } catch (MalformedJwtException | UnsupportedJwtException e) {
             throw new BusinessException(TokenErrorCode.INVALID_TOKEN);
         } catch (ExpiredJwtException e) {
             throw new BusinessException(TokenErrorCode.EXPIRED_TOKEN);
-        } catch (UnsupportedJwtException e) {
-            throw new BusinessException(TokenErrorCode.INVALID_TOKEN);
         } catch (IllegalArgumentException e) {
             throw new BusinessException(TokenErrorCode.INVALID_TOKEN);
         }

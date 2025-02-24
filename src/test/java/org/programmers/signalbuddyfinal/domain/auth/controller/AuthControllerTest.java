@@ -27,7 +27,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @WebMvcTest(AuthController.class)
-public class AuthControllerTest extends ControllerTest {
+class AuthControllerTest extends ControllerTest {
 
     @MockitoBean
     private AuthService authService;
@@ -40,8 +40,8 @@ public class AuthControllerTest extends ControllerTest {
         String testAccessToken = "testAccessToken";
         String testRefreshToken = "testRefreshToken";
 
-        ApiResponse<?> apiResponse = ApiResponse.createSuccessWithNoData();
-        ResponseEntity<ApiResponse<?>> response = ResponseEntity.ok()
+        ApiResponse apiResponse = ApiResponse.createSuccessWithNoData();
+        ResponseEntity<ApiResponse> response = ResponseEntity.ok()
             .header("Set-Cookie","refresh-token=" + testRefreshToken)
             .header("Authorization", "Bearer " + testAccessToken)
             .body(apiResponse);
@@ -77,8 +77,8 @@ public class AuthControllerTest extends ControllerTest {
         String newRefreshToken = "newRefreshToken";
         String newAccessToken = "newAccessToken";
 
-        ApiResponse<?> apiResponse = ApiResponse.createSuccessWithNoData();
-        ResponseEntity<ApiResponse<?>> response = ResponseEntity.ok()
+        ApiResponse apiResponse = ApiResponse.createSuccessWithNoData();
+        ResponseEntity<ApiResponse> response = ResponseEntity.ok()
                 .header("Set-Cookie","refresh-token=" + newRefreshToken)
                 .header("Authorization", "Bearer " + newAccessToken)
                 .body(apiResponse);

@@ -1,6 +1,5 @@
 package org.programmers.signalbuddyfinal.domain.auth.service;
 
-import jakarta.servlet.http.HttpServletResponse;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.auth.dto.LoginRequest;
@@ -24,7 +23,7 @@ public class AuthService {
     private final JwtUtil jwtUtil;
     private final JwtService jwtService;
 
-    public ResponseEntity<ApiResponse<?>> login(LoginRequest loginRequest) {
+    public ResponseEntity<ApiResponse> login(LoginRequest loginRequest) {
 
         Authentication authentication = authenticationManager.authenticate(
             new UsernamePasswordAuthenticationToken(loginRequest.getId(), loginRequest.getPassword()));
@@ -41,7 +40,7 @@ public class AuthService {
             .body(ApiResponse.createSuccessWithNoData());
     }
 
-    public ResponseEntity<ApiResponse<?>> reissue(String refreshToken) {
+    public ResponseEntity<ApiResponse> reissue(String refreshToken) {
         NewTokenResponse newTokenResponse = jwtService.reissue(refreshToken);
         HttpHeaders headers = new HttpHeaders();
         accessTokenSend2Client(headers, newTokenResponse.getAccessToken());
