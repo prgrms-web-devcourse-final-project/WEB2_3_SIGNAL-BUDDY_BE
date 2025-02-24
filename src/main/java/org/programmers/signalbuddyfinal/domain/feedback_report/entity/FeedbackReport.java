@@ -21,6 +21,7 @@ import org.hibernate.annotations.SQLRestriction;
 import org.programmers.signalbuddyfinal.domain.basetime.BaseTimeEntity;
 import org.programmers.signalbuddyfinal.domain.feedback.entity.Feedback;
 import org.programmers.signalbuddyfinal.domain.feedback_report.entity.enums.FeedbackReportCategory;
+import org.programmers.signalbuddyfinal.domain.feedback_report.entity.enums.FeedbackReportStatus;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 
 @Getter
@@ -49,6 +50,16 @@ public class FeedbackReport extends BaseTimeEntity {
     @JoinColumn(name = "feedback_id", nullable = false)
     private Feedback feedback;
 
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private FeedbackReportStatus status;
+
+    @Column
+    private LocalDateTime processedAt;
+
+    @Column
+    private LocalDateTime deletedAt;
+
     @Builder(builderMethodName = "create")
     private FeedbackReport(
         final FeedbackReportCategory category, final String content,
@@ -58,10 +69,8 @@ public class FeedbackReport extends BaseTimeEntity {
         this.content = Objects.requireNonNull(content);
         this.member = Objects.requireNonNull(member);
         this.feedback = Objects.requireNonNull(feedback);
+        this.status = FeedbackReportStatus.PENDING;
     }
-
-    @Column
-    private LocalDateTime deletedAt;
 
     public void delete() {
         this.deletedAt = LocalDateTime.now();
@@ -69,5 +78,17 @@ public class FeedbackReport extends BaseTimeEntity {
 
     public boolean isDeleted() {
         return deletedAt != null;
+    }
+
+    public void updateStatus(FeedbackReportStatus status) {
+        if (!this.status.equals(status)) {
+            this.status = status;
+
+            if (FeedbackReportStatus.PROCESSED.equals(status)) {
+                this.processedAt = LocalDateTime.now();
+            } else {
+                this.processedAt = null;
+            }
+        }
     }
 }

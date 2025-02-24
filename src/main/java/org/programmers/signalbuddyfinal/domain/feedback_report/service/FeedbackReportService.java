@@ -5,6 +5,7 @@ import org.programmers.signalbuddyfinal.domain.feedback.entity.Feedback;
 import org.programmers.signalbuddyfinal.domain.feedback.repository.FeedbackRepository;
 import org.programmers.signalbuddyfinal.domain.feedback_report.dto.FeedbackReportRequest;
 import org.programmers.signalbuddyfinal.domain.feedback_report.dto.FeedbackReportResponse;
+import org.programmers.signalbuddyfinal.domain.feedback_report.dto.FeedbackReportUpdateRequest;
 import org.programmers.signalbuddyfinal.domain.feedback_report.entity.FeedbackReport;
 import org.programmers.signalbuddyfinal.domain.feedback_report.exception.FeedbackReportErrorCode;
 import org.programmers.signalbuddyfinal.domain.feedback_report.mapper.FeedbackReportMapper;
@@ -44,24 +45,47 @@ public class FeedbackReportService {
     }
 
     @Transactional
+    public void updateFeedbackReport(
+        Long feedbackId, Long reportId,
+        FeedbackReportUpdateRequest request,
+        CustomUser2Member user
+    ) {
+        // 관리자만 복구 가능
+        isNotAdmin(user);
+
+        FeedbackReport report = reportRepository.findByIdOrThrow(reportId);
+        verifyFeedbackAndReport(feedbackId, report);
+
+        report.updateStatus(request.getStatus());
+    }
+
+    @Transactional
     public void deleteFeedbackReport(
         Long feedbackId, Long reportId,
         CustomUser2Member user
     ) {
         // 관리자만 삭제 가능
-        if (MemberRole.USER.equals(user.getRole())) {
-            throw new BusinessException(
-                FeedbackReportErrorCode.ELIMINATOR_NOT_AUTHORIZED
-            );
-        }
+        isNotAdmin(user);
 
         FeedbackReport report = reportRepository.findByIdOrThrow(reportId);
+        verifyFeedbackAndReport(feedbackId, report);
 
-        // 해당 신고와 피드백이 잘못 매칭되어 요청이 들어올 때
+        reportRepository.deleteById(reportId);
+    }
+
+    // 관리자만 접근 가능
+    private void isNotAdmin(CustomUser2Member user) {
+        if (!MemberRole.ADMIN.equals(user.getRole())) {
+            throw new BusinessException(
+                FeedbackReportErrorCode.REQUEST_NOT_AUTHORIZED
+            );
+        }
+    }
+
+    // 요청 들어온 신고와 피드백이 잘못 매칭됐는지 검사
+    private void verifyFeedbackAndReport(Long feedbackId, FeedbackReport report) {
         if (!feedbackId.equals(report.getFeedback().getFeedbackId())) {
             throw new BusinessException(FeedbackReportErrorCode.FEEDBACK_REPORT_MISMATCH);
         }
-
-        reportRepository.deleteById(reportId);
     }
 }
