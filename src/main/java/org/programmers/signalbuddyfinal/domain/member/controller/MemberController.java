@@ -164,8 +164,8 @@ public class MemberController {
     }
 
     @PostMapping("/join")
-    public ResponseEntity<ApiResponse<?>> joinMember(
-        @Validated @RequestPart("memberJoinRequest") MemberJoinRequest memberJoinRequest,
+    public ResponseEntity<ApiResponse<MemberResponse>> joinMember(
+        @Valid @RequestPart("memberJoinRequest") MemberJoinRequest memberJoinRequest,
         @RequestPart("profileImageUrl") MultipartFile profileImage
     ){
         MemberResponse memberResponse = memberService.joinMember(memberJoinRequest, profileImage);

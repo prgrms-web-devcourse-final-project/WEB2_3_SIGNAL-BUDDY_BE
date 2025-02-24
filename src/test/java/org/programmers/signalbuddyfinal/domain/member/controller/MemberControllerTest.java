@@ -9,16 +9,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.commonResponse;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.commonResponseFormat;
-import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.getMockImageFile;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.pageResponseFormat;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessRequest;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessResponse;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.prettyPrint;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
-import static org.springframework.restdocs.payload.PayloadDocumentation.requestFields;
 import static org.springframework.restdocs.payload.PayloadDocumentation.requestPartFields;
 import static org.springframework.restdocs.request.RequestDocumentation.partWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.requestParts;
@@ -27,7 +24,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.epages.restdocs.apispec.ResourceSnippetParameters;
@@ -48,10 +44,8 @@ import org.programmers.signalbuddyfinal.domain.feedback.service.FeedbackService;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberJoinRequest;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberUpdateRequest;
-import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
-import org.programmers.signalbuddyfinal.domain.member.mapper.MemberMapper;
 import org.programmers.signalbuddyfinal.domain.member.service.MemberService;
 import org.programmers.signalbuddyfinal.domain.recentpath.dto.RecentPathRequest;
 import org.programmers.signalbuddyfinal.domain.recentpath.dto.RecentPathResponse;
@@ -83,8 +77,6 @@ import org.testcontainers.shaded.org.apache.commons.lang3.ArrayUtils;
 class MemberControllerTest extends ControllerTest {
 
     private final String tag = "Member API";
-
-    private final String imageFormName = "imageFile";
 
     @MockitoBean
     private MemberService memberService;
