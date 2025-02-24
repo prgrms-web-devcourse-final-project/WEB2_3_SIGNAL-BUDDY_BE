@@ -11,9 +11,11 @@ import org.programmers.signalbuddyfinal.domain.postit.mapper.PostItMapper;
 import org.programmers.signalbuddyfinal.domain.postit.repository.PostItRepository;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Service
+@Transactional(readOnly = true)
 public class PostItService {
 
     private final PostItRepository postItRepository;
@@ -26,7 +28,11 @@ public class PostItService {
                 MemberErrorCode.NOT_FOUND_MEMBER));
 
         Postit postit = Postit.creator()
-            .request(postItRequest)
+            .danger(postItRequest.getDanger())
+            .subject(postItRequest.getSubject())
+            .coordinate(postItRequest.getCoordinate())
+            .content(postItRequest.getContent())
+            .imageUrl(postItRequest.getImageUrl())
             .expiryDate(postItRequest.getCreateDate().plusDays(7))
             .member(member)
             .build();

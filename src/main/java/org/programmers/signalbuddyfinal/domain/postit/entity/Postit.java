@@ -5,9 +5,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Point;
 import org.programmers.signalbuddyfinal.domain.basetime.BaseTimeEntity;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
@@ -18,6 +20,8 @@ import org.programmers.signalbuddyfinal.domain.postit.dto.PostItRequest;
 @Entity(name = "postits")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
 public class Postit extends BaseTimeEntity {
 
     @Id
@@ -58,12 +62,12 @@ public class Postit extends BaseTimeEntity {
 
 
     @Builder(builderMethodName = "creator")
-    private Postit(PostItRequest request, LocalDateTime expiryDate, Member member) {
-        this.danger = Objects.requireNonNull(request.getDanger());
-        this.coordinate = Objects.requireNonNull(request.getCoordinate());
-        this.subject = Objects.requireNonNull(request.getSubject());
-        this.content = Objects.requireNonNull(request.getContent());
-        this.imageUrl = Objects.requireNonNull(request.getImageUrl());
+    private Postit(Danger danger, Point coordinate, String subject, String content, String imageUrl, LocalDateTime expiryDate, Member member) {
+        this.danger = Objects.requireNonNull(danger);
+        this.coordinate = Objects.requireNonNull(coordinate);
+        this.subject = Objects.requireNonNull(subject);
+        this.content = Objects.requireNonNull(content);
+        this.imageUrl = Objects.requireNonNull(imageUrl);
         this.expiryDate = Objects.requireNonNull(expiryDate);
         this.deletedAt = null;
         this.member = Objects.requireNonNull(member);

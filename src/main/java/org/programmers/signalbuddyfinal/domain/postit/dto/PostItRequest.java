@@ -14,8 +14,6 @@ import org.programmers.signalbuddyfinal.domain.postit.entity.Danger;
 @Getter
 public class PostItRequest {
 
-    private Long postitId;
-
     private Danger danger;
 
     private Point coordinate;
