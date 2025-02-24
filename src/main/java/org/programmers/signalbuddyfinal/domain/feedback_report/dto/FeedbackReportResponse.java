@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.feedback_report.entity.enums.FeedbackReportCategory;
+import org.programmers.signalbuddyfinal.domain.feedback_report.entity.enums.FeedbackReportStatus;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
 
 @Getter
@@ -22,6 +23,10 @@ public class FeedbackReportResponse {
     private String content;
 
     private FeedbackReportCategory category;
+
+    private FeedbackReportStatus status;
+
+    private LocalDateTime processedAt;
 
     private LocalDateTime createdAt;
 
