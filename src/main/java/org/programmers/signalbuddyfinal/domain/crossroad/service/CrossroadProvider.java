@@ -22,7 +22,7 @@ public class CrossroadProvider {
     private String API_KEY;
     @Value("${t-data-api.crossroad-api}")
     private String CROSSROAD_API_URL;
-    @Value("${t-data-api.crossroad-state-api}")
+    @Value("${t-data-api.traffic-light-api}")
     private String SIGNAL_STATE_URL;
 
     private final WebClient webClient;
