@@ -72,4 +72,5 @@ public class Postit extends BaseTimeEntity {
         this.deletedAt = null;
         this.member = Objects.requireNonNull(member);
     }
+
 }
