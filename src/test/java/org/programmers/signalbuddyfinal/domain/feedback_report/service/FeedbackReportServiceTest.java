@@ -14,8 +14,10 @@ import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.FeedbackCat
 import org.programmers.signalbuddyfinal.domain.feedback.repository.FeedbackRepository;
 import org.programmers.signalbuddyfinal.domain.feedback_report.dto.FeedbackReportRequest;
 import org.programmers.signalbuddyfinal.domain.feedback_report.dto.FeedbackReportResponse;
+import org.programmers.signalbuddyfinal.domain.feedback_report.dto.FeedbackReportUpdateRequest;
 import org.programmers.signalbuddyfinal.domain.feedback_report.entity.FeedbackReport;
 import org.programmers.signalbuddyfinal.domain.feedback_report.entity.enums.FeedbackReportCategory;
+import org.programmers.signalbuddyfinal.domain.feedback_report.entity.enums.FeedbackReportStatus;
 import org.programmers.signalbuddyfinal.domain.feedback_report.exception.FeedbackReportErrorCode;
 import org.programmers.signalbuddyfinal.domain.feedback_report.repository.FeedbackReportRepository;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
@@ -82,7 +84,32 @@ class FeedbackReportServiceTest extends ServiceTest {
         });
     }
 
-    @DisplayName("관리자가 피드백 신고를 삭제한다.")
+    @DisplayName("관리자가 피드백 신고를 처리 상태로 변경한다.")
+    @Test
+    void updateFeedbackReportByAdmin_Success() {
+        // Given
+        Long feedbackId = feedback.getFeedbackId();
+        FeedbackReport report = saveFeedbackReport("test", member, feedback);
+        Long reportId = report.getFeedbackReportId();
+
+        FeedbackReportUpdateRequest request = FeedbackReportUpdateRequest.builder()
+            .status(FeedbackReportStatus.PROCESSED).build();
+        CustomUser2Member user = getCurrentMember(admin.getMemberId(), MemberRole.ADMIN);
+
+        // When
+        reportService.updateFeedbackReport(feedbackId, reportId, request, user);
+
+        // Then
+        FeedbackReport actual = reportRepository.findByIdOrThrow(reportId);
+        SoftAssertions.assertSoftly(softAssertions -> {
+            softAssertions.assertThat(actual.getFeedbackReportId()).isEqualTo(reportId);
+            softAssertions.assertThat(actual.getFeedback().getFeedbackId()).isEqualTo(feedbackId);
+            softAssertions.assertThat(actual.getStatus()).isEqualTo(FeedbackReportStatus.PROCESSED);
+            softAssertions.assertThat(actual.getProcessedAt()).isNotNull();
+        });
+    }
+
+    @DisplayName("관리자가 피드백 신고를 처리한다.")
     @Test
     void deleteFeedbackReportByAdmin_Success() {
         // Given
@@ -110,7 +137,7 @@ class FeedbackReportServiceTest extends ServiceTest {
             reportService.deleteFeedbackReport(feedbackId, report.getFeedbackReportId(), user);
         } catch (BusinessException e) {
             assertThat(e.getErrorCode())
-                .isEqualTo(FeedbackReportErrorCode.ELIMINATOR_NOT_AUTHORIZED);
+                .isEqualTo(FeedbackReportErrorCode.REQUEST_NOT_AUTHORIZED);
         }
     }
 
