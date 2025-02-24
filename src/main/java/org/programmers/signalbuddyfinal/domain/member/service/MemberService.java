@@ -12,7 +12,6 @@ import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.programmers.signalbuddyfinal.domain.member.exception.MemberErrorCode;
 import org.programmers.signalbuddyfinal.domain.member.mapper.MemberMapper;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
-import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
 import org.springframework.beans.factory.annotation.Value;
@@ -78,14 +77,15 @@ public class MemberService {
     }
 
     @Transactional
-    public MemberResponse joinMember(MemberJoinRequest memberJoinRequest) {
+    public MemberResponse joinMember(MemberJoinRequest memberJoinRequest, MultipartFile image) {
 
-        // 이미 존재하는 사용자인지 확인
         if (memberRepository.existsByEmail(memberJoinRequest.getEmail())) {
             throw new BusinessException(MemberErrorCode.ALREADY_EXIST_EMAIL);
+        }else if(memberRepository.existsByNickname(memberJoinRequest.getNickname())) {
+            throw new BusinessException(MemberErrorCode.ALREADY_EXIST_NICKNAME);
         }
 
-        String profilePath = saveProfileImageIfPresent(memberJoinRequest.getProfileImageUrl());
+        String profilePath = saveProfileImageIfPresent(image);
 
         Member joinMember = Member.builder().email(memberJoinRequest.getEmail())
             .nickname(memberJoinRequest.getNickname())

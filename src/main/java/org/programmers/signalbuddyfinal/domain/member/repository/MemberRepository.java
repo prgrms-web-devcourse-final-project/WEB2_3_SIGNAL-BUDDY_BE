@@ -27,4 +27,6 @@ public interface MemberRepository extends JpaRepository<Member, Long>, CustomMem
         return findById(id)
             .orElseThrow(() -> new BusinessException(MemberErrorCode.NOT_FOUND_MEMBER));
     }
+
+    boolean existsByNickname(String nickName);
 }

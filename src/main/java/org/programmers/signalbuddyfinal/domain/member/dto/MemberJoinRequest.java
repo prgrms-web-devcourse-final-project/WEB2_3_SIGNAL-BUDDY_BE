@@ -7,7 +7,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.web.multipart.MultipartFile;
 
 @Setter
 @Builder
@@ -15,8 +14,6 @@ import org.springframework.web.multipart.MultipartFile;
 @NoArgsConstructor
 @AllArgsConstructor
 public class MemberJoinRequest {
-
-    private MultipartFile profileImageUrl;
 
     @Email(message = "이메일 형식에 맞지 않습니다.")
     @NotBlank(message = "이메일은 필수 입력 사항입니다.")

@@ -11,6 +11,7 @@ import org.programmers.signalbuddyfinal.domain.bookmark.dto.BookmarkSequenceUpda
 import org.programmers.signalbuddyfinal.domain.bookmark.service.BookmarkService;
 import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackResponse;
 import org.programmers.signalbuddyfinal.domain.feedback.service.FeedbackService;
+import org.programmers.signalbuddyfinal.domain.member.dto.MemberJoinRequest;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberUpdateRequest;
 import org.programmers.signalbuddyfinal.domain.member.service.MemberService;
@@ -24,6 +25,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -159,6 +161,15 @@ public class MemberController {
         @PathVariable Long id) {
         final List<RecentPathResponse> recentPathList = recentPathService.getRecentPathList(id);
         return ResponseEntity.ok(ApiResponse.createSuccess(recentPathList));
+    }
+
+    @PostMapping("/join")
+    public ResponseEntity<ApiResponse<MemberResponse>> joinMember(
+        @Valid @RequestPart("memberJoinRequest") MemberJoinRequest memberJoinRequest,
+        @RequestPart(value = "profileImageUrl", required = false) MultipartFile profileImage
+    ){
+        MemberResponse memberResponse = memberService.joinMember(memberJoinRequest, profileImage);
+        return ResponseEntity.ok(ApiResponse.createSuccess(memberResponse));
     }
 
 }

@@ -16,6 +16,7 @@ import static org.springframework.restdocs.operation.preprocess.Preprocessors.pr
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessResponse;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.prettyPrint;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
+import static org.springframework.restdocs.payload.PayloadDocumentation.requestPartFields;
 import static org.springframework.restdocs.request.RequestDocumentation.partWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.requestParts;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -40,6 +41,7 @@ import org.programmers.signalbuddyfinal.domain.bookmark.service.BookmarkService;
 import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackResponse;
 import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.AnswerStatus;
 import org.programmers.signalbuddyfinal.domain.feedback.service.FeedbackService;
+import org.programmers.signalbuddyfinal.domain.member.dto.MemberJoinRequest;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberUpdateRequest;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
@@ -597,11 +599,14 @@ class MemberControllerTest extends ControllerTest {
 
         final List<RecentPathResponse> list = List.of(
             RecentPathResponse.builder().recentPathId(1L).lat(37.501).lng(127.001)
-                .name("Recent Path").lastAccessedAt(LocalDateTime.now()).isBookmarked(false).build(),
+                .name("Recent Path").lastAccessedAt(LocalDateTime.now()).isBookmarked(false)
+                .build(),
             RecentPathResponse.builder().recentPathId(2L).lat(37.501).lng(127.001)
-                .name("Recent Path").lastAccessedAt(LocalDateTime.now()).isBookmarked(false).build(),
+                .name("Recent Path").lastAccessedAt(LocalDateTime.now()).isBookmarked(false)
+                .build(),
             RecentPathResponse.builder().recentPathId(3L).lat(37.501).lng(127.001)
-                .name("Recent Path").lastAccessedAt(LocalDateTime.now()).isBookmarked(false).build());
+                .name("Recent Path").lastAccessedAt(LocalDateTime.now()).isBookmarked(false)
+                .build());
 
         given(recentPathService.getRecentPathList(memberId)).willReturn(list);
 
@@ -629,4 +634,47 @@ class MemberControllerTest extends ControllerTest {
                                 fieldWithPath("data[].bookmarked").type(JsonFieldType.BOOLEAN)
                                     .description("나의 목적지와의 연관관계 여부"))).build())));
     }
+
+    @DisplayName("기본 회원가입 성공")
+    @Test
+    void successJoin() throws Exception {
+        // given
+        MemberJoinRequest memberJoinRequest = MemberJoinRequest.builder()
+            .email("newtest@test.com")
+            .password("1234")
+            .nickname("newnickname")
+            .build();
+
+        MockMultipartFile file = new MockMultipartFile(
+            "profileImageUrl",
+            "image.png",
+            "image/png",
+            "test".getBytes()
+        );
+
+        MockMultipartFile requestPart = new MockMultipartFile(
+            "memberJoinRequest", "",
+            MediaType.APPLICATION_JSON_VALUE,
+            objectMapper.writeValueAsBytes(memberJoinRequest)
+        );
+
+        // when, then
+        mockMvc.perform(multipart("/api/members/join")
+                .file(requestPart)
+                .file(file))
+            .andExpect(status().isOk())
+            .andDo(document("기본 계정 회원가입", preprocessRequest(prettyPrint()),
+                preprocessResponse(prettyPrint()),
+                requestParts(
+                    partWithName("profileImageUrl").description("프로필 이미지 파일"),
+                    partWithName("memberJoinRequest").description("회원 가입 정보")
+                ),
+                requestPartFields("memberJoinRequest",
+                    fieldWithPath("email").description("이메일"),
+                    fieldWithPath("password").description("비밀번호"),
+                    fieldWithPath("nickname").description("닉네임")
+                    )
+                ));
+    }
+
 }
