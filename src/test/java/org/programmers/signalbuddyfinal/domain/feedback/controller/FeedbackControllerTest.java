@@ -516,7 +516,7 @@ class FeedbackControllerTest extends ControllerTest {
     private FieldDescriptor[] feedbackDetailResponseDocs() {
         FieldDescriptor[] commonDocs = commonResponseFormat();
 
-        FieldDescriptor[] feedbackDetailDocs = new FieldDescriptor[22];
+        FieldDescriptor[] feedbackDetailDocs = new FieldDescriptor[23];
         feedbackDetailDocs[0] = fieldWithPath("data.feedbackId")
             .type(JsonFieldType.NUMBER)
             .description("피드백 ID");
@@ -586,19 +586,22 @@ class FeedbackControllerTest extends ControllerTest {
                 - ACTIVITY : 활동 상태
                 - WITHDRAWAL : 탈퇴 상태
                 """);
-        feedbackDetailDocs[17] = fieldWithPath("data.crossroad.crossroadId")
+        feedbackDetailDocs[17] = fieldWithPath("data.crossroad")
+            .type(JsonFieldType.OBJECT)
+            .description("교차로 정보");
+        feedbackDetailDocs[18] = fieldWithPath("data.crossroad.crossroadId")
             .type(JsonFieldType.NUMBER)
             .description("교차로 ID(PK)");
-        feedbackDetailDocs[18] = fieldWithPath("data.crossroad.lat")
+        feedbackDetailDocs[19] = fieldWithPath("data.crossroad.lat")
             .type(JsonFieldType.NUMBER)
             .description("교차로의 위도 좌표");
-        feedbackDetailDocs[19] = fieldWithPath("data.crossroad.lng")
+        feedbackDetailDocs[20] = fieldWithPath("data.crossroad.lng")
             .type(JsonFieldType.NUMBER)
             .description("교차로의 경도 좌표");
-        feedbackDetailDocs[20] = fieldWithPath("data.crossroad.name")
+        feedbackDetailDocs[21] = fieldWithPath("data.crossroad.name")
             .type(JsonFieldType.STRING)
             .description("교차로 이름");
-        feedbackDetailDocs[21] = fieldWithPath("data.crossroad.status")
+        feedbackDetailDocs[22] = fieldWithPath("data.crossroad.status")
             .type(JsonFieldType.STRING)
             .description("잔여 시간 API 제공 여부");
 
