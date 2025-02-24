@@ -24,6 +24,7 @@ import org.programmers.signalbuddyfinal.domain.postit.repository.PostItRepositor
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.support.ServiceTest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mock.web.MockMultipartFile;
 
 public class PostItServiceTest extends ServiceTest {
 
@@ -36,10 +37,17 @@ public class PostItServiceTest extends ServiceTest {
 
     private static final GeometryFactory geometryFactory = new GeometryFactory();
     private Member member;
+    MockMultipartFile mockImage;
 
     @BeforeEach
     protected void setUp() throws Exception {
         member = createMember();
+        mockImage = new MockMultipartFile(
+            "image",
+            "test-image.jpg",
+            "image/jpeg",
+            "test image content".getBytes()
+        );
     }
 
     @Test
@@ -47,7 +55,8 @@ public class PostItServiceTest extends ServiceTest {
     public void createPostItTest() {
         PostItRequest request = createPostItRequest("제목", "내용", 1L,
             LocalDateTime.of(25, 1, 1, 0, 0, 0));
-        PostItResponse response = postItService.createPostIt(request);
+
+        PostItResponse response = postItService.createPostIt(request, mockImage);
 
         assertThat(response.getContent()).isEqualTo(request.getContent());
         assertThat(response.getSubject()).isEqualTo(request.getSubject());
@@ -60,7 +69,7 @@ public class PostItServiceTest extends ServiceTest {
     public void nonMemberCreatePostItTest() {
         PostItRequest request = createPostItRequest("제목", "내용", 3L,
             LocalDateTime.of(25, 1, 1, 0, 0, 0));
-        assertThrows(BusinessException.class, () -> postItService.createPostIt(request));
+        assertThrows(BusinessException.class, () -> postItService.createPostIt(request,mockImage));
     }
 
     private PostItRequest createPostItRequest(String subject, String content, Long memberId,
