@@ -9,6 +9,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.locationtech.jts.geom.Point;
+import org.programmers.signalbuddyfinal.domain.trafficSignal.dto.TrafficFileResponse;
 
 @Entity(name = "traffic_signals")
 @Getter
@@ -33,4 +34,12 @@ public class TrafficSignal {
 
     @Column(nullable = false)
     private Point coordinate;
+
+    public TrafficSignal(TrafficFileResponse response) {
+        this.serialNumber = response.getSerialNumber();
+        this.district = response.getDistrict();
+        this.signalType = response.getSignalType();
+        this.address = response.getAddress();
+        this.coordinate = response.toPoint();
+    }
 }
