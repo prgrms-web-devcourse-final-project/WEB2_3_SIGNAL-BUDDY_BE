@@ -6,11 +6,14 @@ import org.programmers.signalbuddyfinal.domain.feedback.repository.FeedbackRepos
 import org.programmers.signalbuddyfinal.domain.feedback_report.dto.FeedbackReportRequest;
 import org.programmers.signalbuddyfinal.domain.feedback_report.dto.FeedbackReportResponse;
 import org.programmers.signalbuddyfinal.domain.feedback_report.entity.FeedbackReport;
+import org.programmers.signalbuddyfinal.domain.feedback_report.exception.FeedbackReportErrorCode;
 import org.programmers.signalbuddyfinal.domain.feedback_report.mapper.FeedbackReportMapper;
 import org.programmers.signalbuddyfinal.domain.feedback_report.repository.FeedbackReportRepository;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
+import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
+import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,5 +41,27 @@ public class FeedbackReportService {
         report = reportRepository.save(report);
 
         return FeedbackReportMapper.INSTANCE.toResponse(report);
+    }
+
+    @Transactional
+    public void deleteFeedbackReport(
+        Long feedbackId, Long reportId,
+        CustomUser2Member user
+    ) {
+        // 관리자만 삭제 가능
+        if (MemberRole.USER.equals(user.getRole())) {
+            throw new BusinessException(
+                FeedbackReportErrorCode.ELIMINATOR_NOT_AUTHORIZED
+            );
+        }
+
+        FeedbackReport report = reportRepository.findByIdOrThrow(reportId);
+
+        // 해당 신고와 피드백이 잘못 매칭되어 요청이 들어올 때
+        if (!feedbackId.equals(report.getFeedback().getFeedbackId())) {
+            throw new BusinessException(FeedbackReportErrorCode.FEEDBACK_REPORT_MISMATCH);
+        }
+
+        reportRepository.deleteById(reportId);
     }
 }
