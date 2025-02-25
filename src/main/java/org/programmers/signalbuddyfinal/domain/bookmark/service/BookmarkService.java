@@ -20,6 +20,8 @@ import org.programmers.signalbuddyfinal.domain.bookmark.repository.BookmarkRepos
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.exception.MemberErrorCode;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
+import org.programmers.signalbuddyfinal.domain.recentpath.entity.RecentPath;
+import org.programmers.signalbuddyfinal.domain.recentpath.repository.RecentPathRepository;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.springframework.data.domain.Page;
@@ -35,6 +37,7 @@ public class BookmarkService {
     private final BookmarkRepository bookmarkRepository;
     private final GeometryFactory geometryFactory;
     private final MemberRepository memberRepository;
+    private final RecentPathRepository recentPathRepository;
 
     public PageResponse<BookmarkResponse> findPagedBookmarks(Pageable pageable, Long memberId) {
         final Page<BookmarkResponse> page = bookmarkRepository.findPagedByMember(pageable,
@@ -77,12 +80,17 @@ public class BookmarkService {
     public void deleteBookmark(List<Long> bookmarkIds, Long memberId) {
         final Member member = getMember(memberId);
         final List<Bookmark> bookmarkList = bookmarkRepository.findAllById(bookmarkIds);
+        final List<RecentPath> recentPaths = recentPathRepository.findAllByBookmarkIn(bookmarkList);
+
         bookmarkList.forEach(bookmark -> {
             if (bookmark.isNotOwnedBy(member)) {
                 throw new BusinessException(BookmarkErrorCode.UNAUTHORIZED_MEMBER_ACCESS);
             }
             bookmark.delete();
         });
+
+        // 북마크 삭제 시 최근경로에서 북마크 연관관계 해제
+        recentPaths.forEach(RecentPath::unlinkBookmark);
 
         log.info("Bookmark deleted: {}", bookmarkIds);
     }

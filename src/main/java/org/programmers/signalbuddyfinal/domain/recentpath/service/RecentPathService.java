@@ -5,9 +5,13 @@ import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
+import org.programmers.signalbuddyfinal.domain.bookmark.entity.Bookmark;
+import org.programmers.signalbuddyfinal.domain.bookmark.exception.BookmarkErrorCode;
+import org.programmers.signalbuddyfinal.domain.bookmark.repository.BookmarkRepository;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.exception.MemberErrorCode;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
+import org.programmers.signalbuddyfinal.domain.recentpath.dto.RecentPathLinkRequest;
 import org.programmers.signalbuddyfinal.domain.recentpath.dto.RecentPathRequest;
 import org.programmers.signalbuddyfinal.domain.recentpath.dto.RecentPathResponse;
 import org.programmers.signalbuddyfinal.domain.recentpath.entity.RecentPath;
@@ -25,6 +29,7 @@ public class RecentPathService {
 
     private final RecentPathRepository recentPathRepository;
     private final MemberRepository memberRepository;
+    private final BookmarkRepository bookmarkRepository;
     private final GeometryFactory geometryFactory;
 
     @Transactional
@@ -70,5 +75,18 @@ public class RecentPathService {
             .orElseThrow(() -> new BusinessException(RecentPathErrorCode.NOT_FOUND_RECENT_PATH));
 
         recentPath.unlinkBookmark();
+    }
+
+    @Transactional
+    public RecentPathResponse linkBookmark(Long id, RecentPathLinkRequest recentPathLinkRequest) {
+        final RecentPath recentPath = recentPathRepository.findById(id)
+            .orElseThrow(() -> new BusinessException(RecentPathErrorCode.NOT_FOUND_RECENT_PATH));
+
+        final Long bookmarkId = recentPathLinkRequest.bookmarkId();
+        final Bookmark bookmark = bookmarkRepository.findById(bookmarkId)
+            .orElseThrow(() -> new BusinessException(BookmarkErrorCode.NOT_FOUND_BOOKMARK));
+
+        recentPath.linkBookmark(bookmark);
+        return RecentPathMapper.INSTANCE.toDto(recentPath);
     }
 }

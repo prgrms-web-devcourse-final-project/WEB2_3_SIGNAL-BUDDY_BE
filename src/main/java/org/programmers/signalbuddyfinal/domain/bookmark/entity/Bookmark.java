@@ -8,7 +8,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import lombok.AccessLevel;
@@ -20,7 +19,6 @@ import lombok.ToString;
 import org.locationtech.jts.geom.Point;
 import org.programmers.signalbuddyfinal.domain.basetime.BaseTimeEntity;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
-import org.programmers.signalbuddyfinal.domain.recentpath.entity.RecentPath;
 
 @Entity(name = "bookmarks")
 @Getter
@@ -52,9 +50,6 @@ public class Bookmark extends BaseTimeEntity {
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
-    @OneToOne(mappedBy = "bookmark")
-    private RecentPath recentPath;
-
     @Builder
     public Bookmark(Point coordinate, String address, Member member, String name) {
         this.coordinate = coordinate;
@@ -64,9 +59,6 @@ public class Bookmark extends BaseTimeEntity {
     }
 
     public void delete() {
-        if (this.recentPath != null) {
-            this.recentPath.unlinkBookmark(); // Bookmark 와의 연관관계 제거
-        }
         this.deletedAt = LocalDateTime.now();
     }
 
