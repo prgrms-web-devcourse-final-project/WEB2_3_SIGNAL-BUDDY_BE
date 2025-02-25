@@ -16,7 +16,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.SQLDelete;
-import org.hibernate.annotations.SQLRestriction;
 import org.programmers.signalbuddyfinal.domain.basetime.BaseTimeEntity;
 import org.programmers.signalbuddyfinal.domain.crossroad.entity.Crossroad;
 import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackRequest;
@@ -27,7 +26,6 @@ import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 @Entity(name = "feedbacks")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@SQLRestriction("deleted_at IS NULL")
 @SQLDelete(sql = "UPDATE feedbacks SET deleted_at = now() WHERE feedback_id = ?")
 public class Feedback extends BaseTimeEntity {
 
