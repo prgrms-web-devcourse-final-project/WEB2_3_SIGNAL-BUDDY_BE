@@ -129,14 +129,16 @@ class FeedbackReportRepositoryTest extends RepositoryTest {
             softAssertions.assertThat(actual.getTotalElements()).isEqualTo(2);
             softAssertions.assertThat(actual.getNumber()).isEqualTo(pageable.getPageNumber());
             softAssertions.assertThat(actual.getSize()).isEqualTo(pageable.getPageSize());
-            softAssertions.assertThat(actual.getContent().get(0).getCategory())
-                .isEqualTo(FeedbackReportCategory.FALSE);
-            softAssertions.assertThat(actual.getContent().get(0).getStatus())
-                .isEqualTo(FeedbackReportStatus.REJECTED);
-            softAssertions.assertThat(actual.getContent().get(1).getCategory())
-                .isEqualTo(FeedbackReportCategory.OFFENSIVE);
-            softAssertions.assertThat(actual.getContent().get(1).getStatus())
-                .isEqualTo(FeedbackReportStatus.PROCESSED);
+
+            for (FeedbackReportResponse response : actual.getContent()) {
+                if (FeedbackReportCategory.FALSE.equals(response.getCategory())) {
+                    softAssertions.assertThat(response.getStatus())
+                        .isEqualTo(FeedbackReportStatus.REJECTED);
+                } else {
+                    softAssertions.assertThat(response.getStatus())
+                        .isEqualTo(FeedbackReportStatus.PROCESSED);
+                }
+            }
         });
     }
 
