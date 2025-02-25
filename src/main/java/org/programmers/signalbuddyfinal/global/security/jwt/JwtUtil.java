@@ -1,23 +1,17 @@
 package org.programmers.signalbuddyfinal.global.security.jwt;
 
-import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import java.security.Key;
 import java.util.Date;
 import javax.crypto.SecretKey;
 import lombok.extern.slf4j.Slf4j;
-import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
 import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,12 +42,12 @@ public class JwtUtil {
         CustomUserDetails nowMember = authentication2User(authentication);
 
         return Jwts.builder()
-            .setSubject(String.valueOf(nowMember.getMemberId()))
+            .subject(String.valueOf(nowMember.getMemberId()))
             .claim("status", nowMember.getStatus().name())
             .claim("auth", nowMember.getRole().name())
             .setIssuedAt(new Date())
             .setExpiration(new Date(new Date().getTime() + accessTokenExpiration))
-            .signWith(key, SignatureAlgorithm.HS256)
+            .signWith(key)
             .compact();
     }
 
@@ -63,10 +57,10 @@ public class JwtUtil {
         CustomUserDetails nowMember = authentication2User(authentication);
 
         String refreshToken = Jwts.builder()
-            .setSubject(String.valueOf(nowMember.getMemberId()))
+            .subject(String.valueOf(nowMember.getMemberId()))
             .setIssuedAt(new Date())
-            .setExpiration(new Date(new Date().getTime() + refreshTokenExpiration*1000))
-            .signWith(key, SignatureAlgorithm.HS256)
+            .setExpiration(new Date(new Date().getTime() + refreshTokenExpiration))
+            .signWith(key)
             .compact();
 
         // 리프레시 토큰 저장
@@ -77,21 +71,12 @@ public class JwtUtil {
 
     // 토큰 검증
     public boolean validateToken(String token) {
-        try {
             Jwts.parser()
                 .verifyWith((SecretKey) key)
                 .build()
                 .parseSignedClaims(token);
+
             return true;
-        } catch (MalformedJwtException e) {
-            throw new BusinessException(TokenErrorCode.INVALID_TOKEN);
-        } catch (ExpiredJwtException e) {
-            throw new BusinessException(TokenErrorCode.EXPIRED_TOKEN);
-        } catch (UnsupportedJwtException e) {
-            throw new BusinessException(TokenErrorCode.INVALID_TOKEN);
-        } catch (IllegalArgumentException e) {
-            throw new BusinessException(TokenErrorCode.INVALID_TOKEN);
-        }
     }
 
     public String extractMemberId(String token) {

@@ -1,8 +1,8 @@
 package org.programmers.signalbuddyfinal.domain.auth.service;
 
-import jakarta.servlet.http.HttpServletResponse;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.programmers.signalbuddyfinal.domain.auth.dto.LoginRequest;
 import org.programmers.signalbuddyfinal.domain.auth.dto.NewTokenResponse;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
@@ -16,6 +16,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class AuthService {
@@ -24,7 +25,7 @@ public class AuthService {
     private final JwtUtil jwtUtil;
     private final JwtService jwtService;
 
-    public ResponseEntity<ApiResponse<?>> login(LoginRequest loginRequest) {
+    public ResponseEntity<ApiResponse> login(LoginRequest loginRequest) {
 
         Authentication authentication = authenticationManager.authenticate(
             new UsernamePasswordAuthenticationToken(loginRequest.getId(), loginRequest.getPassword()));
@@ -41,7 +42,7 @@ public class AuthService {
             .body(ApiResponse.createSuccessWithNoData());
     }
 
-    public ResponseEntity<ApiResponse<?>> reissue(String refreshToken) {
+    public ResponseEntity<ApiResponse> reissue(String refreshToken) {
         NewTokenResponse newTokenResponse = jwtService.reissue(refreshToken);
         HttpHeaders headers = new HttpHeaders();
         accessTokenSend2Client(headers, newTokenResponse.getAccessToken());

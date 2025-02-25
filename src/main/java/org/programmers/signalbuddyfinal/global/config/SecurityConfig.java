@@ -1,17 +1,22 @@
 package org.programmers.signalbuddyfinal.global.config;
 
 import java.util.Arrays;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.programmers.signalbuddyfinal.global.security.CustomAuthenticationProvider;
+import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetailsService;
+import org.programmers.signalbuddyfinal.global.security.exception.CustomAuthenticationEntryPoint;
 import org.programmers.signalbuddyfinal.global.security.filter.JwtAuthorizationFilter;
 import org.programmers.signalbuddyfinal.global.security.jwt.JwtUtil;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -25,6 +30,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
     private final JwtUtil jwtUtil;
+    private final CustomUserDetailsService customUserDetailsService;
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
     private static final String ADMIN = "ADMIN";
     private static final String USER = "USER";
@@ -34,17 +41,18 @@ public class SecurityConfig {
         return new JwtAuthorizationFilter(jwtUtil);
     }
 
-
-    @Bean
-    AuthenticationManager authenticationManager(
-        AuthenticationConfiguration authenticationConfiguration)
-        throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
-    }
-
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public CustomAuthenticationProvider customAuthenticationProvider() {
+        return new CustomAuthenticationProvider(customUserDetailsService, bCryptPasswordEncoder());
+    }
+    @Bean
+    AuthenticationManager authenticationManager() {
+        return new ProviderManager(List.of(customAuthenticationProvider()));
     }
 
     @Bean
@@ -87,13 +95,16 @@ public class SecurityConfig {
         http
             .formLogin(auth -> auth.disable())
             .httpBasic(auth -> auth.disable())
-            .sessionManagement(auth -> auth.disable());
+            .sessionManagement(session-> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
 
         // csrf 비활성화
         http.csrf(AbstractHttpConfigurer::disable);
 
         http
             .addFilterAfter(jwtAuthorizationFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
+
+        http.exceptionHandling(exception -> exception.authenticationEntryPoint(customAuthenticationEntryPoint));
 
         return http.build();
     }
@@ -102,7 +113,7 @@ public class SecurityConfig {
     public CorsConfigurationSource configurationSource() {
 
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:8080"));
+        configuration.setAllowedOrigins(Arrays.asList("https://signal-buddy.vercel.app/", "http://localhost:3000"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH"));
         configuration.setAllowedHeaders(
             Arrays.asList("Authorization", "Set-Cookie", "Content-Type"));

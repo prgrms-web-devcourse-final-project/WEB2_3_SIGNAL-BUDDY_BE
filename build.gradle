@@ -89,9 +89,6 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-authorization-server'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 
-    // Session
-    implementation 'org.springframework.session:spring-session-data-redis'
-
     // Monitoring
     implementation ("org.springframework.boot:spring-boot-starter-actuator")
     runtimeOnly ("io.micrometer:micrometer-registry-prometheus")

@@ -1,6 +1,5 @@
 package org.programmers.signalbuddyfinal.domain.auth.controller;
 
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.auth.dto.LoginRequest;
 import org.programmers.signalbuddyfinal.domain.auth.service.AuthService;
@@ -20,12 +19,12 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<?>> login(@RequestBody LoginRequest loginRequest){
+    public ResponseEntity<ApiResponse> login(@RequestBody LoginRequest loginRequest){
         return authService.login(loginRequest);
     }
 
     @PostMapping("/reissue")
-    public ResponseEntity<ApiResponse<?>> reissue(@CookieValue(name = "refresh-token") String refreshToken){
+    public ResponseEntity<ApiResponse> reissue(@CookieValue(name = "refresh-token") String refreshToken){
         return authService.reissue(refreshToken);
     }
 }
