@@ -10,7 +10,7 @@ import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
-import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.commonResponseFormat;
+import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.commonResponseWithMemberFormat;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.getMockImageFile;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.getTokenExample;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.jwtFormat;
@@ -139,10 +139,10 @@ class FeedbackControllerTest extends ControllerTest {
                             .type(JsonFieldType.STRING)
                             .description("""
                                 피드백 유형
-                                - DELAY : 신호 지연
-                                - MALFUNCTION : 오작동
-                                - ADD_SIGNAL : 신호등 추가
-                                - ETC : 기타
+                                - `DELAY` : 신호 지연
+                                - `MALFUNCTION` : 오작동
+                                - `ADD_SIGNAL` : 신호등 추가
+                                - `ETC` : 기타
                                 """),
                         fieldWithPath("secret")
                             .type(JsonFieldType.BOOLEAN)
@@ -223,16 +223,16 @@ class FeedbackControllerTest extends ControllerTest {
                                 parameterWithName("status").type(SimpleType.STRING)
                                     .description("""
                                         피드백 답변 상태 (택 1)
-                                        - before : 답변 전
-                                        - completion : 답변 완료
+                                        - `before` : 답변 전
+                                        - `completion` : 답변 완료
                                         """).optional(),
                                 parameterWithName("category").type(SimpleType.STRING)
                                     .description("""
                                         피드백 유형 (여러 개 선택 가능)
-                                        - delay : 신호 지연
-                                        - malfunction : 오작동
-                                        - add-signal : 신호등 추가
-                                        - etc : 기타
+                                        - `delay` : 신호 지연
+                                        - `malfunction` : 오작동
+                                        - `add-signal` : 신호등 추가
+                                        - `etc` : 기타
                                         """).optional(),
                                 parameterWithName("crossroadId").type(SimpleType.NUMBER)
                                     .description("교차로 ID").optional(),
@@ -240,49 +240,7 @@ class FeedbackControllerTest extends ControllerTest {
                                     .description("검색어").optional()
                             )
                             .responseFields(
-                                ArrayUtils.addAll(
-                                    pageResponseWithMemberFormat(),
-                                    fieldWithPath("data.searchResults[].feedbackId")
-                                        .type(JsonFieldType.NUMBER)
-                                        .description("피드백 ID"),
-                                    fieldWithPath("data.searchResults[].subject")
-                                        .type(JsonFieldType.STRING)
-                                        .description("피드백 제목"),
-                                    fieldWithPath("data.searchResults[].content")
-                                        .type(JsonFieldType.STRING)
-                                        .description("피드백 내용"),
-                                    fieldWithPath("data.searchResults[].category")
-                                        .type(JsonFieldType.STRING)
-                                        .description("""
-                                            피드백 유형
-                                            - DELAY : 신호 지연
-                                            - MALFUNCTION : 오작동
-                                            - ADD_SIGNAL : 신호등 추가
-                                            - ETC : 기타
-                                            """),
-                                    fieldWithPath("data.searchResults[].likeCount")
-                                        .type(JsonFieldType.NUMBER)
-                                        .description("피드백의 좋아요 개수"),
-                                    fieldWithPath("data.searchResults[].secret")
-                                        .type(JsonFieldType.BOOLEAN)
-                                        .description("비밀글 여부"),
-                                    fieldWithPath("data.searchResults[].answerStatus")
-                                        .type(JsonFieldType.STRING)
-                                        .description("""
-                                            피드백의 답변 여부
-                                            - BEFORE : 답변 전
-                                            - COMPLETION : 답변 완료
-                                            """),
-                                    fieldWithPath("data.searchResults[].imageUrl")
-                                        .type(JsonFieldType.STRING)
-                                        .description("이미지 URL"),
-                                    fieldWithPath("data.searchResults[].createdAt")
-                                        .type(JsonFieldType.STRING)
-                                        .description("피드백 작성일"),
-                                    fieldWithPath("data.searchResults[].updatedAt")
-                                        .type(JsonFieldType.STRING)
-                                        .description("피드백 수정일")
-                                )
+                                feedbackPageResponseDocs()
                             )
                             .build()
                     )
@@ -404,47 +362,7 @@ class FeedbackControllerTest extends ControllerTest {
                             )
                             .responseFields(
                                 ArrayUtils.addAll(
-                                    pageResponseWithMemberFormat(),
-                                    fieldWithPath("data.searchResults[].feedbackId")
-                                        .type(JsonFieldType.NUMBER)
-                                        .description("피드백 ID"),
-                                    fieldWithPath("data.searchResults[].subject")
-                                        .type(JsonFieldType.STRING)
-                                        .description("피드백 제목"),
-                                    fieldWithPath("data.searchResults[].content")
-                                        .type(JsonFieldType.STRING)
-                                        .description("피드백 내용"),
-                                    fieldWithPath("data.searchResults[].category")
-                                        .type(JsonFieldType.STRING)
-                                        .description("""
-                                            피드백 유형
-                                            - DELAY : 신호 지연
-                                            - MALFUNCTION : 오작동
-                                            - ADD_SIGNAL : 신호등 추가
-                                            - ETC : 기타
-                                            """),
-                                    fieldWithPath("data.searchResults[].likeCount")
-                                        .type(JsonFieldType.NUMBER)
-                                        .description("피드백의 좋아요 개수"),
-                                    fieldWithPath("data.searchResults[].secret")
-                                        .type(JsonFieldType.BOOLEAN)
-                                        .description("비밀글 여부"),
-                                    fieldWithPath("data.searchResults[].answerStatus")
-                                        .type(JsonFieldType.STRING)
-                                        .description("""
-                                            피드백의 답변 여부
-                                            - BEFORE : 답변 전
-                                            - COMPLETION : 답변 완료
-                                            """),
-                                    fieldWithPath("data.searchResults[].imageUrl")
-                                        .type(JsonFieldType.STRING)
-                                        .description("이미지 URL"),
-                                    fieldWithPath("data.searchResults[].createdAt")
-                                        .type(JsonFieldType.STRING)
-                                        .description("피드백 작성일"),
-                                    fieldWithPath("data.searchResults[].updatedAt")
-                                        .type(JsonFieldType.STRING)
-                                        .description("피드백 수정일"),
+                                    feedbackPageResponseDocs(),
                                     fieldWithPath("data.searchResults[].deletedAt")
                                         .description("피드백 삭제일")
                                 )
@@ -578,10 +496,10 @@ class FeedbackControllerTest extends ControllerTest {
                             .type(JsonFieldType.STRING)
                             .description("""
                                 피드백 유형 (수정되지 않아도 원래 값 담기)
-                                - DELAY : 신호 지연
-                                - MALFUNCTION : 오작동
-                                - ADD_SIGNAL : 신호등 추가
-                                - ETC : 기타
+                                - `DELAY` : 신호 지연
+                                - `MALFUNCTION` : 오작동
+                                - `ADD_SIGNAL` : 신호등 추가
+                                - `ETC` : 기타
                                 """),
                         fieldWithPath("secret")
                             .type(JsonFieldType.BOOLEAN)
@@ -693,9 +611,9 @@ class FeedbackControllerTest extends ControllerTest {
     }
 
     private FieldDescriptor[] feedbackDetailResponseDocs() {
-        FieldDescriptor[] commonDocs = commonResponseFormat();
+        FieldDescriptor[] commonDocs = commonResponseWithMemberFormat();
 
-        FieldDescriptor[] feedbackDetailDocs = new FieldDescriptor[23];
+        FieldDescriptor[] feedbackDetailDocs = new FieldDescriptor[16];
         feedbackDetailDocs[0] = fieldWithPath("data.feedbackId")
             .type(JsonFieldType.NUMBER)
             .description("피드백 ID");
@@ -709,10 +627,10 @@ class FeedbackControllerTest extends ControllerTest {
             .type(JsonFieldType.STRING)
             .description("""
                 피드백 유형
-                - DELAY : 신호 지연
-                - MALFUNCTION : 오작동
-                - ADD_SIGNAL : 신호등 추가
-                - ETC : 기타
+                - `DELAY` : 신호 지연
+                - `MALFUNCTION` : 오작동
+                - `ADD_SIGNAL` : 신호등 추가
+                - `ETC` : 기타
                 """);
         feedbackDetailDocs[4] = fieldWithPath("data.likeCount")
             .type(JsonFieldType.NUMBER)
@@ -724,8 +642,8 @@ class FeedbackControllerTest extends ControllerTest {
             .type(JsonFieldType.STRING)
             .description("""
                 피드백의 답변 여부
-                - BEFORE : 답변 전
-                - COMPLETION : 답변 완료
+                - `BEFORE` : 답변 전
+                - `COMPLETION` : 답변 완료
                 """);
         feedbackDetailDocs[7] = fieldWithPath("data.imageUrl")
             .type(JsonFieldType.STRING)
@@ -736,55 +654,75 @@ class FeedbackControllerTest extends ControllerTest {
         feedbackDetailDocs[9] = fieldWithPath("data.updatedAt")
             .type(JsonFieldType.STRING)
             .description("피드백 수정일");
-        feedbackDetailDocs[10] = fieldWithPath("data.member")
-            .type(JsonFieldType.OBJECT)
-            .description("작성자 정보");
-        feedbackDetailDocs[11] = fieldWithPath("data.member.memberId")
-            .type(JsonFieldType.NUMBER)
-            .description("작성자 ID(PK)");
-        feedbackDetailDocs[12] = fieldWithPath("data.member.email")
-            .type(JsonFieldType.STRING)
-            .description("작성자의 이메일");
-        feedbackDetailDocs[13] = fieldWithPath("data.member.nickname")
-            .type(JsonFieldType.STRING)
-            .description("작성자의 닉네임");
-        feedbackDetailDocs[14] = fieldWithPath("data.member.profileImageUrl")
-            .type(JsonFieldType.STRING)
-            .description("작성자의 프로필 이미지 URL");
-        feedbackDetailDocs[15] = fieldWithPath("data.member.role")
-            .type(JsonFieldType.STRING)
-            .description("""
-                작성자의 권한
-                - USER : 일반 사용자
-                - ADMIN : 관리자
-                """);
-        feedbackDetailDocs[16] = fieldWithPath("data.member.memberStatus")
-            .type(JsonFieldType.STRING)
-            .description("""
-                작성자의 탈퇴 여부
-                - ACTIVITY : 활동 상태
-                - WITHDRAWAL : 탈퇴 상태
-                """);
-        feedbackDetailDocs[17] = fieldWithPath("data.crossroad")
+        feedbackDetailDocs[10] = fieldWithPath("data.crossroad")
             .type(JsonFieldType.OBJECT)
             .description("교차로 정보");
-        feedbackDetailDocs[18] = fieldWithPath("data.crossroad.crossroadId")
+        feedbackDetailDocs[11] = fieldWithPath("data.crossroad.crossroadId")
             .type(JsonFieldType.NUMBER)
             .description("교차로 ID(PK)");
-        feedbackDetailDocs[19] = fieldWithPath("data.crossroad.lat")
+        feedbackDetailDocs[12] = fieldWithPath("data.crossroad.lat")
             .type(JsonFieldType.NUMBER)
             .description("교차로의 위도 좌표");
-        feedbackDetailDocs[20] = fieldWithPath("data.crossroad.lng")
+        feedbackDetailDocs[13] = fieldWithPath("data.crossroad.lng")
             .type(JsonFieldType.NUMBER)
             .description("교차로의 경도 좌표");
-        feedbackDetailDocs[21] = fieldWithPath("data.crossroad.name")
+        feedbackDetailDocs[14] = fieldWithPath("data.crossroad.name")
             .type(JsonFieldType.STRING)
             .description("교차로 이름");
-        feedbackDetailDocs[22] = fieldWithPath("data.crossroad.status")
+        feedbackDetailDocs[15] = fieldWithPath("data.crossroad.status")
             .type(JsonFieldType.STRING)
             .description("잔여 시간 API 제공 여부");
 
         return Stream.concat(Arrays.stream(commonDocs), Arrays.stream(feedbackDetailDocs))
+            .toArray(FieldDescriptor[]::new);
+    }
+
+    private FieldDescriptor[] feedbackPageResponseDocs() {
+        FieldDescriptor[] pageDocs = pageResponseWithMemberFormat();
+
+        FieldDescriptor[] feedbackListDocs = new FieldDescriptor[10];
+        feedbackListDocs[0] = fieldWithPath("data.searchResults[].feedbackId")
+            .type(JsonFieldType.NUMBER)
+            .description("피드백 ID");
+        feedbackListDocs[1] = fieldWithPath("data.searchResults[].subject")
+            .type(JsonFieldType.STRING)
+            .description("피드백 제목");
+        feedbackListDocs[2] = fieldWithPath("data.searchResults[].content")
+            .type(JsonFieldType.STRING)
+            .description("피드백 내용");
+        feedbackListDocs[3] = fieldWithPath("data.searchResults[].category")
+            .type(JsonFieldType.STRING)
+            .description("""
+                피드백 유형
+                - `DELAY` : 신호 지연
+                - `MALFUNCTION` : 오작동
+                - `ADD_SIGNAL` : 신호등 추가
+                - `ETC` : 기타
+                """);
+        feedbackListDocs[4] = fieldWithPath("data.searchResults[].likeCount")
+            .type(JsonFieldType.NUMBER)
+            .description("피드백의 좋아요 개수");
+        feedbackListDocs[5] = fieldWithPath("data.searchResults[].secret")
+            .type(JsonFieldType.BOOLEAN)
+            .description("비밀글 여부");
+        feedbackListDocs[6] = fieldWithPath("data.searchResults[].answerStatus")
+            .type(JsonFieldType.STRING)
+            .description("""
+                피드백의 답변 여부
+                - `BEFORE` : 답변 전
+                - `COMPLETION` : 답변 완료
+                """);
+        feedbackListDocs[7] = fieldWithPath("data.searchResults[].imageUrl")
+            .type(JsonFieldType.STRING)
+            .description("이미지 URL");
+        feedbackListDocs[8] = fieldWithPath("data.searchResults[].createdAt")
+            .type(JsonFieldType.STRING)
+            .description("피드백 작성일");
+        feedbackListDocs[9] = fieldWithPath("data.searchResults[].updatedAt")
+            .type(JsonFieldType.STRING)
+            .description("피드백 수정일");
+
+        return Stream.concat(Arrays.stream(pageDocs), Arrays.stream(feedbackListDocs))
             .toArray(FieldDescriptor[]::new);
     }
 }
