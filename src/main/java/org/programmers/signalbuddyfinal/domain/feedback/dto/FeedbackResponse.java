@@ -37,6 +37,8 @@ public class FeedbackResponse {
 
     private LocalDateTime updatedAt;
 
+    private LocalDateTime deletedAt;
+
     private MemberResponse member;
 
     private CrossroadResponse crossroad;
