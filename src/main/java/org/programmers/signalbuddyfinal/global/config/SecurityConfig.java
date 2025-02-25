@@ -3,7 +3,6 @@ package org.programmers.signalbuddyfinal.global.config;
 import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-
 import org.programmers.signalbuddyfinal.global.security.CustomAuthenticationProvider;
 import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetailsService;
 import org.programmers.signalbuddyfinal.global.security.exception.CustomAuthenticationEntryPoint;
@@ -14,7 +13,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -107,7 +105,7 @@ public class SecurityConfig {
     public CorsConfigurationSource configurationSource() {
 
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("*"));
+        configuration.setAllowedOrigins(Arrays.asList("https://signal-buddy.vercel.app/", "http://localhost:3000"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH"));
         configuration.setAllowedHeaders(
             Arrays.asList("Authorization", "Set-Cookie", "Content-Type"));
