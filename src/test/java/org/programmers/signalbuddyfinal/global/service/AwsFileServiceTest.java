@@ -1,4 +1,4 @@
-package org.programmers.signalbuddyfinal.domain.member.service;
+package org.programmers.signalbuddyfinal.global.service;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
