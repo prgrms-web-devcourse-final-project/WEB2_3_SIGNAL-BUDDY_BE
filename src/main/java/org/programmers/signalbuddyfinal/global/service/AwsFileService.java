@@ -1,4 +1,4 @@
-package org.programmers.signalbuddyfinal.domain.member.service;
+package org.programmers.signalbuddyfinal.global.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
