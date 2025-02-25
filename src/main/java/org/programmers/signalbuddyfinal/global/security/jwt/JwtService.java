@@ -1,5 +1,8 @@
 package org.programmers.signalbuddyfinal.global.security.jwt;
 
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.UnsupportedJwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.programmers.signalbuddyfinal.domain.auth.dto.NewTokenResponse;
@@ -22,7 +25,15 @@ public class JwtService {
 
     public NewTokenResponse reissue(String token) {
 
-        jwtUtil.validateToken(token);
+        try {
+            jwtUtil.validateToken(token);
+        } catch (MalformedJwtException | UnsupportedJwtException | IllegalArgumentException e) {
+            log.info(e.getMessage());
+            throw new BusinessException(TokenErrorCode.INVALID_TOKEN);
+        } catch (ExpiredJwtException e) {
+            log.info(e.getMessage());
+            throw new BusinessException(TokenErrorCode.EXPIRED_REFRESH_TOKEN);
+        }
 
         String memberId = jwtUtil.extractMemberId(token);
         String refreshToken = refreshTokenRepository.findByMemberId(memberId);

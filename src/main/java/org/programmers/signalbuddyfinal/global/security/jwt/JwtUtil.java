@@ -1,17 +1,12 @@
 package org.programmers.signalbuddyfinal.global.security.jwt;
 
-import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import java.security.Key;
 import java.util.Date;
 import javax.crypto.SecretKey;
 import lombok.extern.slf4j.Slf4j;
-import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
 import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Value;
@@ -76,19 +71,12 @@ public class JwtUtil {
 
     // 토큰 검증
     public boolean validateToken(String token) {
-        try {
             Jwts.parser()
                 .verifyWith((SecretKey) key)
                 .build()
                 .parseSignedClaims(token);
+
             return true;
-        } catch (MalformedJwtException | UnsupportedJwtException e) {
-            throw new BusinessException(TokenErrorCode.INVALID_TOKEN);
-        } catch (ExpiredJwtException e) {
-            throw new BusinessException(TokenErrorCode.EXPIRED_TOKEN);
-        } catch (IllegalArgumentException e) {
-            throw new BusinessException(TokenErrorCode.INVALID_TOKEN);
-        }
     }
 
     public String extractMemberId(String token) {

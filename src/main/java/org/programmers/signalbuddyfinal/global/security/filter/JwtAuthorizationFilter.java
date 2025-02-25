@@ -1,5 +1,8 @@
 package org.programmers.signalbuddyfinal.global.security.filter;
 
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.UnsupportedJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -42,19 +45,23 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
             return;
         }
 
-        if (request.getRequestURI().startsWith("/docs")) {
-            log.info(request.getRequestURI());
-            filterChain.doFilter(request, response);
-            return;
-        }
-
         String accessToken = extractAccessToken(request);
         if (accessToken == null || accessToken.isEmpty()) {
-
+            request.setAttribute("exception", "EXPIRED_ACCESS_TOKEN");
             throw new BusinessException(TokenErrorCode.ACCESS_TOKEN_NOT_EXIST);
         }
 
-        jwtUtil.validateToken(accessToken);
+        try {
+            jwtUtil.validateToken(accessToken);
+        } catch (MalformedJwtException | UnsupportedJwtException | IllegalArgumentException e) {
+            log.info(e.getMessage());
+            request.setAttribute("exception", "INVALID_TOKEN");
+            throw new BusinessException(TokenErrorCode.INVALID_TOKEN);
+        } catch (ExpiredJwtException e) {
+            log.info(e.getMessage());
+            request.setAttribute("exception", "EXPIRED_ACCESS_TOKEN");
+            throw new BusinessException(TokenErrorCode.EXPIRED_ACCESS_TOKEN);
+        }
 
         Authentication authentication = jwtUtil.getAuthentication(accessToken);
         SecurityContextHolder.getContext().setAuthentication(authentication);

@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.programmers.signalbuddyfinal.global.security.CustomAuthenticationProvider;
 import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetailsService;
+import org.programmers.signalbuddyfinal.global.security.exception.CustomAuthenticationEntryPoint;
 import org.programmers.signalbuddyfinal.global.security.filter.JwtAuthorizationFilter;
 import org.programmers.signalbuddyfinal.global.security.jwt.JwtUtil;
 import org.springframework.context.annotation.Bean;
@@ -32,6 +33,7 @@ public class SecurityConfig {
 
     private final JwtUtil jwtUtil;
     private final CustomUserDetailsService customUserDetailsService;
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
     @Bean
     public JwtAuthorizationFilter jwtAuthorizationFilter(JwtUtil jwtUtil) {
@@ -96,6 +98,8 @@ public class SecurityConfig {
         http
             .addFilterAfter(jwtAuthorizationFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
 
+        http.exceptionHandling(exception -> exception.authenticationEntryPoint(customAuthenticationEntryPoint));
+
         return http.build();
     }
 
@@ -103,7 +107,7 @@ public class SecurityConfig {
     public CorsConfigurationSource configurationSource() {
 
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:8080"));
+        configuration.setAllowedOrigins(Arrays.asList("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH"));
         configuration.setAllowedHeaders(
             Arrays.asList("Authorization", "Set-Cookie", "Content-Type"));
