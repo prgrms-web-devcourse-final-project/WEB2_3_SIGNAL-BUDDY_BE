@@ -216,7 +216,7 @@ class FeedbackControllerTest extends ControllerTest {
                                 parameterWithName("page").type(SimpleType.NUMBER)
                                     .description("페이지 번호 (기본값 : 0, 0부터 시작)").optional(),
                                 parameterWithName("size").type(SimpleType.NUMBER)
-                                    .description("페이지 크기 (기본값 : 7)").optional(),
+                                    .description("페이지 크기 (기본값 : 10)").optional(),
                                 parameterWithName("status").type(SimpleType.STRING)
                                     .description("""
                                         피드백 답변 상태 (택 1)
