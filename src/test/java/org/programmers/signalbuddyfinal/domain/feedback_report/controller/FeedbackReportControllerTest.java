@@ -249,9 +249,12 @@ class FeedbackReportControllerTest extends ControllerTest {
                                     .description("페이지 번호 (기본값 : `0`, 0부터 시작)").optional(),
                                 parameterWithName("size").type(SimpleType.NUMBER)
                                     .description("페이지 크기 (기본값 : `10`)").optional(),
-                                parameterWithName("sort").type(SimpleType.NUMBER)
+                                parameterWithName("sort").type(SimpleType.STRING)
                                     .description("""
-                                        정렬 지정 (형식 : 정렬할_컬럼,정렬_순서)
+                                        정렬 설정
+                                        - 형식 : `정렬할_컬럼,정렬_순서`
+                                        - ex) createdAt,desc
+                                        
                                         정렬할 컬럼 (기본값 : `createdAt`)
                                         - `feedbackId` : 피드백 ID(PK)
                                         - `feedbackReportId` : 피드백 신고 ID(PK)
@@ -260,6 +263,7 @@ class FeedbackReportControllerTest extends ControllerTest {
                                         - `processedAt` : 처리일
                                         - `createdAt` : 작성일
                                         - `updatedAt` : 수정일
+                                        
                                         정렬 순서 (기본값 : `desc`)
                                         - `asc` : 오름차순
                                         - `desc` : 내림차순
