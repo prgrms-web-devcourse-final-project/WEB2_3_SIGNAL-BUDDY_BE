@@ -147,7 +147,7 @@ class FeedbackReportRepositoryTest extends RepositoryTest {
     void findAllByFilterByKeywordAndDate() {
         // Given
         Pageable pageable = PageRequest.of(0, 7,
-            Direction.DESC, "createdAt");
+            Direction.DESC, "feedback.feedbackId");
         String keyword = "test";
         LocalDate startDate = LocalDate.of(2024, 3, 15);
         LocalDate endDate = LocalDate.of(2024, 7, 15);

@@ -256,7 +256,7 @@ class FeedbackReportControllerTest extends ControllerTest {
                                         - ex) createdAt,desc
                                         
                                         정렬할 컬럼 (기본값 : `createdAt`)
-                                        - `feedbackId` : 피드백 ID(PK)
+                                        - `feedback.feedbackId` : 피드백 ID(PK)
                                         - `feedbackReportId` : 피드백 신고 ID(PK)
                                         - `category` : 신고 유형
                                         - `status` : 신고 처리 상태
