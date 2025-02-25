@@ -1,6 +1,7 @@
 package org.programmers.signalbuddyfinal.domain.feedback.controller;
 
 import jakarta.validation.Valid;
+import java.time.LocalDate;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackRequest;
@@ -13,7 +14,10 @@ import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -60,6 +64,35 @@ public class FeedbackController {
             ApiResponse.createSuccess(
                 feedbackService.searchFeedbackList(
                     pageable, answerStatus, categories, crossroadId, keyword
+                )
+            )
+        );
+    }
+
+    @GetMapping(headers = HttpHeaders.AUTHORIZATION)
+    public ResponseEntity<ApiResponse<PageResponse<FeedbackResponse>>> searchFeedbackListByAdmin(
+        @PageableDefault(sort = {"createdAt"}, direction = Direction.DESC)
+        Pageable pageable,
+        @RequestParam(value = "keyword", required = false)
+        String keyword,
+        @RequestParam(value = "deleted", required = false)
+        Boolean deleted,
+        @RequestParam(value = "status", required = false)
+        AnswerStatus answerStatus,
+        @RequestParam(value = "category", required = false)
+        Set<FeedbackCategory> categories,
+        @RequestParam(name = "start-date", required = false)
+        @DateTimeFormat(pattern = "yyyy-MM-dd")
+        LocalDate startDate,
+        @RequestParam(name = "end-date", required = false)
+        @DateTimeFormat(pattern = "yyyy-MM-dd")
+        LocalDate endDate,
+        @CurrentUser CustomUser2Member user
+    ) {
+        return ResponseEntity.ok(
+            ApiResponse.createSuccess(
+                feedbackService.searchFeedbackListByAdmin(
+                    pageable, keyword, deleted, answerStatus, categories, startDate, endDate, user
                 )
             )
         );
