@@ -1,5 +1,6 @@
 package org.programmers.signalbuddyfinal.domain.feedback.service;
 
+import java.time.LocalDate;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.comment.repository.CommentRepository;
@@ -18,6 +19,7 @@ import org.programmers.signalbuddyfinal.domain.like.repository.LikeRepository;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
+import org.programmers.signalbuddyfinal.global.exception.GlobalErrorCode;
 import org.programmers.signalbuddyfinal.global.service.AwsFileService;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
@@ -48,6 +50,23 @@ public class FeedbackService {
         return new PageResponse<>(
             feedbackRepository.findAllByActiveMembers(
                 pageable, answerStatus, categories, crossroadId, keyword
+            )
+        );
+    }
+
+    public PageResponse<FeedbackResponse> searchFeedbackListByAdmin(
+        Pageable pageable, String keyword,
+        Boolean deleted, AnswerStatus answerStatus,
+        Set<FeedbackCategory> categories,
+        LocalDate startDate, LocalDate endDate,
+        CustomUser2Member user
+    ) {
+        if (!MemberRole.ADMIN.equals(user.getRole())) {
+            throw new BusinessException(GlobalErrorCode.ADMIN_ONLY);
+        }
+        return new PageResponse<>(
+            feedbackRepository.findAllByFilter(
+                pageable, keyword, answerStatus, categories, startDate, endDate,deleted
             )
         );
     }
