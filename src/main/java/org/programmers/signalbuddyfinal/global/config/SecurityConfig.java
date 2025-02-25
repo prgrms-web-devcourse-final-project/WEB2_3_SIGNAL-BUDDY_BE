@@ -1,13 +1,18 @@
 package org.programmers.signalbuddyfinal.global.config;
 
 import java.util.Arrays;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
+
+import org.programmers.signalbuddyfinal.global.security.CustomAuthenticationProvider;
+import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetailsService;
 import org.programmers.signalbuddyfinal.global.security.filter.JwtAuthorizationFilter;
 import org.programmers.signalbuddyfinal.global.security.jwt.JwtUtil;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -26,23 +31,25 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
     private final JwtUtil jwtUtil;
+    private final CustomUserDetailsService customUserDetailsService;
 
     @Bean
     public JwtAuthorizationFilter jwtAuthorizationFilter(JwtUtil jwtUtil) {
         return new JwtAuthorizationFilter(jwtUtil);
     }
 
-
-    @Bean
-    AuthenticationManager authenticationManager(
-        AuthenticationConfiguration authenticationConfiguration)
-        throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
-    }
-
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public CustomAuthenticationProvider customAuthenticationProvider() {
+        return new CustomAuthenticationProvider(customUserDetailsService, bCryptPasswordEncoder());
+    }
+    @Bean
+    AuthenticationManager authenticationManager() {
+        return new ProviderManager(List.of(customAuthenticationProvider()));
     }
 
     @Bean
