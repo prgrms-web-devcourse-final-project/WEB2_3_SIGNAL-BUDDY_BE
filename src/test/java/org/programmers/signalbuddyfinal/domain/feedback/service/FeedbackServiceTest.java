@@ -275,7 +275,7 @@ class FeedbackServiceTest extends ServiceTest {
         feedbackService.deleteFeedback(feedbackId, user);
 
         // Then
-        assertThat(feedbackRepository.findById(feedbackId)).isEmpty();
+        assertThat(feedbackRepository.findById(feedbackId).get().isDeleted()).isTrue();
     }
 
     @DisplayName("작성자가 아닌 일반 사용자가 피드백을 삭제하면 실패한다.")
@@ -307,7 +307,7 @@ class FeedbackServiceTest extends ServiceTest {
         feedbackService.deleteFeedback(feedbackId, user);
 
         // Then
-        assertThat(feedbackRepository.findById(feedbackId)).isEmpty();
+        assertThat(feedbackRepository.findById(feedbackId).get().isDeleted()).isTrue();
     }
 
     private Member saveMember(String email, String nickname) {
