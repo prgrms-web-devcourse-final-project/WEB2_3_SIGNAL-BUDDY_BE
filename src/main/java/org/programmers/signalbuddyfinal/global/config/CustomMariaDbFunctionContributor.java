@@ -8,8 +8,10 @@ import org.hibernate.type.BasicType;
 
 public class CustomMariaDbFunctionContributor implements FunctionContributor {
 
-    private static final String FUNCTION_NAME = "match2_against";
-    private static final String FUNCTION_PATTERN = "match (?1, ?2) against (?3 in boolean mode)";
+    private static final String FUNCTION_NAME = "match_against";
+    private static final String FUNCTION_PATTERN = "match (?1) against (?2 in boolean mode)";
+    private static final String FUNCTION_NAME2 = "match2_against";
+    private static final String FUNCTION_PATTERN2 = "match (?1, ?2) against (?3 in boolean mode)";
 
     @Override
     public void contributeFunctions(final FunctionContributions functionContributions) {
@@ -20,5 +22,7 @@ public class CustomMariaDbFunctionContributor implements FunctionContributor {
 
         functionContributions.getFunctionRegistry()
             .registerPattern(FUNCTION_NAME, FUNCTION_PATTERN, resultType);
+        functionContributions.getFunctionRegistry()
+            .registerPattern(FUNCTION_NAME2, FUNCTION_PATTERN2, resultType);
     }
 }

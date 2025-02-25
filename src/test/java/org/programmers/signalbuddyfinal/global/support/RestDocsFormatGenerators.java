@@ -101,6 +101,45 @@ public final class RestDocsFormatGenerators {
             .toArray(FieldDescriptor[]::new);
     }
 
+    public static FieldDescriptor[] commonResponseWithMemberFormat() {
+        FieldDescriptor[] commonDocs = commonResponseFormat();
+
+        FieldDescriptor[] memberDocs = new FieldDescriptor[7];
+
+        memberDocs[0] = fieldWithPath("data.member")
+            .type(JsonFieldType.OBJECT)
+            .description("작성자 정보");
+        memberDocs[1] = fieldWithPath("data.member.memberId")
+            .type(JsonFieldType.NUMBER)
+            .description("작성자 ID(PK)");
+        memberDocs[2] = fieldWithPath("data.member.email")
+            .type(JsonFieldType.STRING)
+            .description("작성자의 이메일");
+        memberDocs[3] = fieldWithPath("data.member.nickname")
+            .type(JsonFieldType.STRING)
+            .description("작성자의 닉네임");
+        memberDocs[4] = fieldWithPath("data.member.profileImageUrl")
+            .type(JsonFieldType.STRING)
+            .description("작성자의 프로필 이미지 URL");
+        memberDocs[5] = fieldWithPath("data.member.role")
+            .type(JsonFieldType.STRING)
+            .description("""
+                작성자의 권한
+                - `USER` : 일반 사용자
+                - `ADMIN` : 관리자
+                """);
+        memberDocs[6] = fieldWithPath("data.member.memberStatus")
+            .type(JsonFieldType.STRING)
+            .description("""
+                작성자의 탈퇴 여부
+                - `ACTIVITY` : 활동 상태
+                - `WITHDRAWAL` : 탈퇴 상태
+                """);
+
+        return Stream.concat(Arrays.stream(commonDocs), Arrays.stream(memberDocs))
+            .toArray(FieldDescriptor[]::new);
+    }
+
     public static HeaderDescriptorWithType jwtFormat() {
         return headerWithName(HttpHeaders.AUTHORIZATION).type(SimpleType.STRING)
             .description("JWT");

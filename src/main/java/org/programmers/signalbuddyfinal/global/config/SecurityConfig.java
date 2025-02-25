@@ -33,6 +33,9 @@ public class SecurityConfig {
     private final CustomUserDetailsService customUserDetailsService;
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
+    private static final String ADMIN = "ADMIN";
+    private static final String USER = "USER";
+
     @Bean
     public JwtAuthorizationFilter jwtAuthorizationFilter(JwtUtil jwtUtil) {
         return new JwtAuthorizationFilter(jwtUtil);
@@ -72,13 +75,17 @@ public class SecurityConfig {
                     // 댓글
                     .requestMatchers(HttpMethod.GET, "/api/feedbacks/{feedbackId}/comments").permitAll()
                     // 교차로
-                    .requestMatchers("/api/crossroads/save").hasRole("ADMIN")
+                    .requestMatchers("/api/crossroads/save").hasRole(ADMIN)
                     .requestMatchers(HttpMethod.GET,"/api/crossroads/**").permitAll()
                     // 피드백
                     .requestMatchers(HttpMethod.GET, "/api/feedbacks/**").permitAll()
+                    // 피드백 신고
+                    .requestMatchers(HttpMethod.GET, "/api/feedbacks/reports").hasRole(ADMIN)
+                    .requestMatchers(HttpMethod.PATCH, "/api/feedbacks/**/reports/**").hasRole(ADMIN)
+                    .requestMatchers(HttpMethod.DELETE, "/api/feedbacks/**/reports/**").hasRole(ADMIN)
                     // 회원
-                    .requestMatchers("/api/admins/**", "/admins/members/**").hasRole("ADMIN")
-                    .requestMatchers("/api/members/**", "/members/**").hasRole("USER")
+                    .requestMatchers("/api/admins/**", "/admins/members/**").hasRole(ADMIN)
+                    .requestMatchers("/api/members/**", "/members/**").hasRole(USER)
                      // Prometheus 엔드포인트 허용
                     .requestMatchers("/actuator/prometheus").permitAll()
                     .anyRequest().authenticated()
@@ -89,6 +96,7 @@ public class SecurityConfig {
             .formLogin(auth -> auth.disable())
             .httpBasic(auth -> auth.disable())
             .sessionManagement(session-> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
 
         // csrf 비활성화
         http.csrf(AbstractHttpConfigurer::disable);

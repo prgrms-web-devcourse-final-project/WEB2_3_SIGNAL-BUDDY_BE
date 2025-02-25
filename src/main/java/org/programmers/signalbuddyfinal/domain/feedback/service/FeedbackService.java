@@ -13,11 +13,12 @@ import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.FeedbackCat
 import org.programmers.signalbuddyfinal.domain.feedback.exception.FeedbackErrorCode;
 import org.programmers.signalbuddyfinal.domain.feedback.mapper.FeedbackMapper;
 import org.programmers.signalbuddyfinal.domain.feedback.repository.FeedbackRepository;
+import org.programmers.signalbuddyfinal.domain.feedback_report.repository.FeedbackReportRepository;
 import org.programmers.signalbuddyfinal.domain.like.repository.LikeRepository;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
-import org.programmers.signalbuddyfinal.domain.member.service.AwsFileService;
+import org.programmers.signalbuddyfinal.global.service.AwsFileService;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
@@ -36,6 +37,7 @@ public class FeedbackService {
     private final CommentRepository commentRepository;
     private final LikeRepository likeRepository;
     private final CrossroadRepository crossroadRepository;
+    private final FeedbackReportRepository reportRepository;
     private final AwsFileService awsFileService;
 
     public PageResponse<FeedbackResponse> searchFeedbackList(
@@ -141,6 +143,7 @@ public class FeedbackService {
 
         commentRepository.softDeleteAllByFeedbackId(feedbackId);
         likeRepository.deleteAllByFeedbackId(feedbackId);
+        reportRepository.deleteAllByFeedbackId(feedbackId);
         feedbackRepository.deleteById(feedbackId);
     }
 }
