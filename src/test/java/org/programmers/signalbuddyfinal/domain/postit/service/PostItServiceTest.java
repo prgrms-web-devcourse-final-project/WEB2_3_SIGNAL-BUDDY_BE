@@ -71,7 +71,7 @@ public class PostItServiceTest extends ServiceTest {
     }
 
     @Test
-    @DisplayName("포스트잇 등록 테스트")
+    @DisplayName("포스트잇 등록 성공 테스트")
     public void createPostItTest() {
         PostItRequest request = createPostItRequest("제목", "내용", 1L,
             LocalDateTime.of(25, 1, 1, 0, 0, 0));
@@ -85,22 +85,22 @@ public class PostItServiceTest extends ServiceTest {
     }
 
     @Test
-    @DisplayName("비회원 포스트잇 등록 테스트")
+    @DisplayName("비회원 포스트잇 등록시 예외 발생 테스트")
     public void nonMemberCreatePostItTest() {
         PostItRequest request = createPostItRequest("제목", "내용", 3L,
             LocalDateTime.of(25, 1, 1, 0, 0, 0));
+
         assertThrows(BusinessException.class,
             () -> postItService.createPostIt(request, mockImage1));
     }
 
     @Test
-    @DisplayName("포스트잇 수정 테스트")
+    @DisplayName("포스트잇 수정 성공 테스트")
     public void updatePostItTest() {
 
         postItRepository.save(
             createPostIt(Danger.NOTICE, PointUtil.toPoint(1.0203, 1.3048), "제목1",
                 "제목1", "img1", LocalDateTime.of(2025, 1, 1, 0, 0, 0), member1));
-
         PostItRequest request = createPostItRequest("제목", "내용", 1L,
             LocalDateTime.of(25, 1, 1, 0, 0, 0));
 
@@ -111,7 +111,7 @@ public class PostItServiceTest extends ServiceTest {
     }
 
     @Test
-    @DisplayName("포스트잇 수정시 작성자와 수정자가 다른 경우")
+    @DisplayName("포스트잇 수정시 작성자와 수정자가 다른 경우 예외 발생 테스트")
     public void otherUserUpdatePostItTest() {
 
         postItRepository.save(
@@ -122,6 +122,32 @@ public class PostItServiceTest extends ServiceTest {
 
         assertThrows(BusinessException.class,
             () -> postItService.updatePostIt(1L, request, mockImage2, user2));
+    }
+
+    @Test
+    @DisplayName("포스트잇 삭제 성공 테스트")
+    public void deletePostItSuccessTest(){
+        postItRepository.save(
+            createPostIt(Danger.NOTICE, PointUtil.toPoint(1.0203, 1.3048), "제목1",
+                "제목1", "img1", LocalDateTime.of(2025, 1, 1, 0, 0, 0), member1));
+
+        postItService.deletePostIt(1L, user1);
+
+        assertThat(postItRepository.findById(1L).get().getDeletedAt()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("포스트잇 삭제시 작성자와 수정자가 다른 경우 예외 발생 테스트")
+    public void otherUserDeletePostItTest() {
+
+        postItRepository.save(
+            createPostIt(Danger.NOTICE, PointUtil.toPoint(1.0203, 1.3048), "제목1",
+                "제목1", "img1", LocalDateTime.of(2025, 1, 1, 0, 0, 0), member1));
+        PostItRequest request = createPostItRequest("제목", "내용", 1L,
+            LocalDateTime.of(25, 1, 1, 0, 0, 0));
+
+        assertThrows(BusinessException.class,
+            () -> postItService.deletePostIt(1L, user2));
     }
 
     private PostItRequest createPostItRequest(String subject, String content, Long memberId,
