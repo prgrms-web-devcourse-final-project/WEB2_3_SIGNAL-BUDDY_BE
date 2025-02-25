@@ -29,6 +29,7 @@ public class PostItService {
     private final MemberRepository memberRepository;
     private final AwsFileService awsFileService;
 
+    @Transactional
     public PostItResponse createPostIt(PostItRequest postItRequest, MultipartFile image) {
 
         Member member = memberRepository.findByIdOrThrow(postItRequest.getMemberId());
@@ -50,6 +51,7 @@ public class PostItService {
         return PostItMapper.INSTANCE.toResponse(postit);
     }
 
+    @Transactional
     public PostItResponse updatePostIt(Long postitId, PostItRequest postItRequest,
         MultipartFile image, CustomUser2Member user) {
 
@@ -60,6 +62,17 @@ public class PostItService {
         }
         postit.updatePostIt(postItRequest, convertImageFile(image));
         return PostItMapper.INSTANCE.toResponse(postit);
+    }
+
+    @Transactional
+    public void deletePostIt(Long postitId, CustomUser2Member user){
+
+        Postit postit = postItRepository.findByIdOrThrow(postitId);
+
+        if(Member.isNotSameMember(user, postit.getMember())){
+            throw new BusinessException(PostItErrorCode.POSTIT_MODIFIER_NOT_AUTHORIZED);
+        }
+        postit.delete();
     }
 
     private String convertImageFile(MultipartFile image) {

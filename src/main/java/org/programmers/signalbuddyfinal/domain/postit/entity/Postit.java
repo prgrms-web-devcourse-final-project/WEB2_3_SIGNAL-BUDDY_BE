@@ -90,5 +90,4 @@ public class Postit extends BaseTimeEntity {
             this.imageUrl = imageUrl;
         }
     }
-
 }

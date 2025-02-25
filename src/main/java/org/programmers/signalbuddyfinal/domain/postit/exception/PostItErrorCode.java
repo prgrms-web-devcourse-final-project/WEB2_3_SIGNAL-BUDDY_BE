@@ -12,7 +12,7 @@ import org.springframework.http.HttpStatus;
 public enum PostItErrorCode implements ErrorCode {
 
     NOT_FOUND_POSTIT(HttpStatus.NOT_FOUND, "11000", "해당 포스트잇을 찾을 수 없습니다."),
-    POSTIT_MODIFIER_NOT_AUTHORIZED(HttpStatus.FORBIDDEN, "11001", "해당 포스트잇 작성자와 수정자가 다릅니다.");
+    POSTIT_MODIFIER_NOT_AUTHORIZED(HttpStatus.FORBIDDEN, "11001", "해당 포스트잇 작성자와 사용자가 다릅니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

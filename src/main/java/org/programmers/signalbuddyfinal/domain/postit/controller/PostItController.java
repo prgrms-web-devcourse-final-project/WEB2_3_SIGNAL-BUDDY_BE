@@ -8,6 +8,7 @@ import org.programmers.signalbuddyfinal.global.annotation.CurrentUser;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -42,5 +43,15 @@ public class PostItController {
         return ResponseEntity.ok(
             ApiResponse.createSuccess(
                 postItService.updatePostIt(postitId, postItRequest, image, user)));
+    }
+
+    @DeleteMapping("/{postit-id}")
+    public ResponseEntity<ApiResponse> deletePostIt(
+        @PathVariable(value = "postit-id") final Long postitId,
+        @CurrentUser CustomUser2Member user
+    ) {
+        postItService.deletePostIt(postitId, user);
+        return ResponseEntity.ok(
+            ApiResponse.createSuccessWithNoData());
     }
 }
