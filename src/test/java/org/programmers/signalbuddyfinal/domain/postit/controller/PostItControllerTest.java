@@ -1,14 +1,17 @@
 package org.programmers.signalbuddyfinal.domain.postit.controller;
 
 import static com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper.document;
+import static com.epages.restdocs.apispec.ResourceDocumentation.parameterWithName;
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doNothing;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.commonResponseFormat;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.getMockImageFile;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.getTokenExample;
+import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.jwtFormat;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessRequest;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessResponse;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.prettyPrint;
@@ -16,14 +19,17 @@ import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWit
 import static org.springframework.restdocs.payload.PayloadDocumentation.requestPartFields;
 import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
 import static org.springframework.restdocs.request.RequestDocumentation.partWithName;
+import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
 import static org.springframework.restdocs.request.RequestDocumentation.requestParts;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.epages.restdocs.apispec.ResourceSnippetParameters;
+import com.epages.restdocs.apispec.SimpleType;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -95,7 +101,7 @@ public class PostItControllerTest extends ControllerTest {
             multipart("/api/postits")
                 .file(imageFile)
                 .file(requestPart)
-                .with(csrf())  // CSRF 토큰 포함
+                .with(csrf())
                 .header(HttpHeaders.AUTHORIZATION, getTokenExample())
                 .contentType(MediaType.MULTIPART_FORM_DATA)
         );
@@ -218,11 +224,12 @@ public class PostItControllerTest extends ControllerTest {
         CustomUser2Member user = new CustomUser2Member(customUserDetails);
         PostItResponse postItResponse = createResponse(user.getMemberId());
 
-        given(postItService.updatePostIt(anyLong(),any(PostItRequest.class), any(MultipartFile.class),
+        given(postItService.updatePostIt(anyLong(), any(PostItRequest.class),
+            any(MultipartFile.class),
             any(CustomUser2Member.class))).willReturn(postItResponse);
 
         final ResultActions result = mockMvc.perform(
-            multipart(HttpMethod.PATCH,"/api/postits/{postit-id}",1L)
+            multipart(HttpMethod.PATCH, "/api/postits/{postitId}", 1L)
                 .file(imageFile)
                 .file(requestPart)
                 .with(csrf())
@@ -241,7 +248,11 @@ public class PostItControllerTest extends ControllerTest {
                     resource(
                         ResourceSnippetParameters.builder()
                             .tag(tag)
-                            .description("포스트잇을 수정하는 API")
+                            .summary("포스트잇을 수정하는 API")
+                            .pathParameters(
+                                parameterWithName("postitId").type(SimpleType.NUMBER)
+                                    .description("수정하려는 포스트잇 ID")
+                            )
                             .build()
                     ),
                     requestParts(
@@ -274,7 +285,7 @@ public class PostItControllerTest extends ControllerTest {
                             .description("포스트잇 내용 (수정되지 않아도 원래 값 담기)"),
                         fieldWithPath("imageUrl")
                             .type(JsonFieldType.STRING)
-                                .description("이미지 url (수정되지 않아도 원래 값 담기)")
+                            .description("이미지 url (수정되지 않아도 원래 값 담기)")
                     ),
                     responseFields(
                         ArrayUtils.addAll(
@@ -316,6 +327,45 @@ public class PostItControllerTest extends ControllerTest {
                                 .type(JsonFieldType.NUMBER)
                                 .description("등록한 사용자 ID")
                         )
+                    )
+                )
+            );
+    }
+
+    @Test
+    @DisplayName("포스트잇 삭제")
+    @WithMockCustomUser
+    public void deletePostIt() throws Exception {
+
+        CustomUserDetails customUserDetails = new CustomUserDetails(1L, "user1@gmamil.com", "1234",
+            "url2.jpg", "user1", MemberRole.USER, MemberStatus.ACTIVITY);
+        CustomUser2Member user = new CustomUser2Member(customUserDetails);
+
+        doNothing().when(postItService).deletePostIt(anyLong(), any(CustomUser2Member.class));
+
+        final ResultActions result = mockMvc.perform(
+            delete("/api/postits/{postitId}", 1L)
+                .with(csrf())
+                .header(HttpHeaders.AUTHORIZATION, getTokenExample())
+        );
+
+        result.andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andDo(
+                document(
+                    "포스트잇 삭제",
+                    preprocessRequest(prettyPrint()),
+                    preprocessResponse(prettyPrint()),
+                    resource(
+                        ResourceSnippetParameters.builder()
+                            .tag(tag)
+                            .summary("포스트잇을 삭제하는 API")
+                            .requestHeaders(jwtFormat())
+                            .pathParameters(
+                                parameterWithName("postitId").type(SimpleType.NUMBER)
+                                    .description("삭제하려는 포스트잇 ID")
+                            )
+                            .build()
                     )
                 )
             );

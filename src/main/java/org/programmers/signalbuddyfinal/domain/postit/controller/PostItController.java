@@ -37,9 +37,9 @@ public class PostItController {
             ApiResponse.createSuccess(postItService.createPostIt(postItCreateRequest, image, user)));
     }
 
-    @PatchMapping("/{postit-id}")
+    @PatchMapping("/{postitId}")
     public ResponseEntity<ApiResponse<PostItResponse>> updatePostIt(
-        @PathVariable(value = "postit-id") final Long postitId,
+        @PathVariable(value = "postitId") final Long postitId,
         @Valid @RequestPart("request") PostItRequest postItRequest,
         @RequestPart(value = "imageFile", required = false) MultipartFile image,
         @CurrentUser CustomUser2Member user
@@ -49,9 +49,9 @@ public class PostItController {
                 postItService.updatePostIt(postitId, postItRequest, image, user)));
     }
 
-    @DeleteMapping("/{postit-id}")
+    @DeleteMapping("/{postitId}")
     public ResponseEntity<ApiResponse> deletePostIt(
-        @PathVariable(value = "postit-id") final Long postitId,
+        @PathVariable(value = "postitId") final Long postitId,
         @CurrentUser CustomUser2Member user
     ) {
         postItService.deletePostIt(postitId, user);
