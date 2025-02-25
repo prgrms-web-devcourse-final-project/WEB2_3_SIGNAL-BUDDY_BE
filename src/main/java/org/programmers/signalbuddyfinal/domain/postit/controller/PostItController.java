@@ -1,6 +1,8 @@
 package org.programmers.signalbuddyfinal.domain.postit.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.programmers.signalbuddyfinal.domain.postit.dto.PostItCreateRequest;
 import org.programmers.signalbuddyfinal.domain.postit.dto.PostItRequest;
 import org.programmers.signalbuddyfinal.domain.postit.dto.PostItResponse;
 import org.programmers.signalbuddyfinal.domain.postit.service.PostItService;
@@ -27,16 +29,18 @@ public class PostItController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<PostItResponse>> createPostIt(
-        @RequestBody final PostItRequest postItRequest,
-        @RequestPart(value = "imageFile", required = false) MultipartFile image) {
+        @Valid @RequestPart("request") final PostItCreateRequest postItCreateRequest,
+        @RequestPart(value = "imageFile", required = false) MultipartFile image,
+        @CurrentUser CustomUser2Member user
+    ) {
         return ResponseEntity.ok(
-            ApiResponse.createSuccess(postItService.createPostIt(postItRequest, image)));
+            ApiResponse.createSuccess(postItService.createPostIt(postItCreateRequest, image, user)));
     }
 
     @PatchMapping("/{postit-id}")
     public ResponseEntity<ApiResponse<PostItResponse>> updatePostIt(
         @PathVariable(value = "postit-id") final Long postitId,
-        @RequestBody final PostItRequest postItRequest,
+        @Valid @RequestPart("request") PostItRequest postItRequest,
         @RequestPart(value = "imageFile", required = false) MultipartFile image,
         @CurrentUser CustomUser2Member user
     ) {

@@ -7,6 +7,7 @@ import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.exception.MemberErrorCode;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
 import org.programmers.signalbuddyfinal.domain.member.service.AwsFileService;
+import org.programmers.signalbuddyfinal.domain.postit.dto.PostItCreateRequest;
 import org.programmers.signalbuddyfinal.domain.postit.dto.PostItRequest;
 import org.programmers.signalbuddyfinal.domain.postit.dto.PostItResponse;
 import org.programmers.signalbuddyfinal.domain.postit.entity.Postit;
@@ -30,20 +31,20 @@ public class PostItService {
     private final AwsFileService awsFileService;
 
     @Transactional
-    public PostItResponse createPostIt(PostItRequest postItRequest, MultipartFile image) {
+    public PostItResponse createPostIt(PostItCreateRequest postItCreateRequest, MultipartFile image, CustomUser2Member user) {
 
-        Member member = memberRepository.findByIdOrThrow(postItRequest.getMemberId());
+        Member member = memberRepository.findByIdOrThrow(user.getMemberId());
 
         String imageUrl = convertImageFile(image);
-        Point coordinate = PointUtil.toPoint(postItRequest.getLat(), postItRequest.getLng());
+        Point coordinate = PointUtil.toPoint(postItCreateRequest.getLat(), postItCreateRequest.getLng());
 
         Postit postit = Postit.creator()
-            .danger(postItRequest.getDanger())
-            .subject(postItRequest.getSubject())
+            .danger(postItCreateRequest.getDanger())
+            .subject(postItCreateRequest.getSubject())
             .coordinate(coordinate)
-            .content(postItRequest.getContent())
+            .content(postItCreateRequest.getContent())
             .imageUrl(imageUrl)
-            .expiryDate(postItRequest.getCreateDate().plusDays(7))
+            .expiryDate(postItCreateRequest.getCreateDate().plusDays(7))
             .member(member)
             .build();
         postItRepository.save(postit);

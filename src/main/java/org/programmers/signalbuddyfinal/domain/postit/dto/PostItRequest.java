@@ -1,5 +1,6 @@
 package org.programmers.signalbuddyfinal.domain.postit.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -7,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.locationtech.jts.geom.Point;
 import org.programmers.signalbuddyfinal.domain.postit.entity.Danger;
+import org.springframework.format.annotation.DateTimeFormat;
 
 @Builder
 @NoArgsConstructor
@@ -25,9 +27,5 @@ public class PostItRequest {
     private String content;
 
     private String imageUrl;
-
-    private Long memberId;
-
-    private LocalDateTime createDate;
 
 }
