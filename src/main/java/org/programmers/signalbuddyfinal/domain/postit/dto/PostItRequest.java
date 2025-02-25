@@ -16,7 +16,9 @@ public class PostItRequest {
 
     private Danger danger;
 
-    private Point coordinate;
+    private double lat;
+
+    private double lng;
 
     private String subject;
 

@@ -1,17 +1,15 @@
 package org.programmers.signalbuddyfinal.domain.postit.entity;
 
 import jakarta.persistence.*;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Point;
 import org.programmers.signalbuddyfinal.domain.basetime.BaseTimeEntity;
+import org.programmers.signalbuddyfinal.domain.crossroad.service.PointUtil;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 
 import java.time.LocalDateTime;
@@ -71,6 +69,26 @@ public class Postit extends BaseTimeEntity {
         this.expiryDate = Objects.requireNonNull(expiryDate);
         this.deletedAt = null;
         this.member = Objects.requireNonNull(member);
+    }
+
+    public void updatePostIt(PostItRequest postItRequest, String imageUrl) {
+        Point coordinate= PointUtil.toPoint(postItRequest.getLat(), postItRequest.getLng());
+
+        if(!this.danger.equals(postItRequest.getDanger())) {
+            this.danger = postItRequest.getDanger();
+        }
+        if(!this.coordinate.equals(coordinate)) {
+            this.coordinate = coordinate;
+        }
+        if(!this.subject.equals(postItRequest.getSubject())) {
+            this.subject = postItRequest.getSubject();
+        }
+        if(!this.content.equals(postItRequest.getContent())) {
+            this.content = postItRequest.getContent();
+        }
+        if(!this.imageUrl.equals(imageUrl)) {
+            this.imageUrl = imageUrl;
+        }
     }
 
 }
