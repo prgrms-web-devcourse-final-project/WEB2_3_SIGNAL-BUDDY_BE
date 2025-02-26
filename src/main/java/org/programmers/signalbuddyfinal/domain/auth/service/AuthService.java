@@ -5,7 +5,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.programmers.signalbuddyfinal.domain.auth.dto.LoginRequest;
 import org.programmers.signalbuddyfinal.domain.auth.dto.NewTokenResponse;
+import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
+import org.programmers.signalbuddyfinal.domain.member.entity.Member;
+import org.programmers.signalbuddyfinal.domain.member.mapper.MemberMapper;
+import org.programmers.signalbuddyfinal.global.annotation.CurrentUser;
+import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
+import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
 import org.programmers.signalbuddyfinal.global.security.jwt.JwtService;
 import org.programmers.signalbuddyfinal.global.security.jwt.JwtUtil;
 import org.springframework.http.HttpHeaders;
@@ -39,7 +45,7 @@ public class AuthService {
 
         return ResponseEntity.ok()
             .headers(headers)
-            .body(ApiResponse.createSuccessWithNoData());
+            .body(ApiResponse.createSuccess(createResponseBody(authentication)));
     }
 
     public ResponseEntity<ApiResponse> reissue(String refreshToken) {
@@ -67,5 +73,19 @@ public class AuthService {
             .build();
 
         headers.add(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
+    }
+
+    private MemberResponse createResponseBody(Authentication authentication){
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        Member loginMember = Member.builder()
+            .memberId(userDetails.getMemberId())
+            .email(userDetails.getEmail())
+            .nickname(userDetails.getNickname())
+            .profileImageUrl(userDetails.getProfileImageUrl())
+            .role(userDetails.getRole())
+            .memberStatus(userDetails.getStatus())
+            .build();
+
+        return MemberMapper.INSTANCE.toDto(loginMember);
     }
 }
