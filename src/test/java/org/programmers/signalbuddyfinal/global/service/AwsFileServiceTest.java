@@ -87,18 +87,12 @@ class AwsFileServiceTest {
         // bucket 과 profileImageDir에 값 넣기
         ReflectionTestUtils.setField(awsFileService, "bucket", bucketName);
 
-        // Spy AwsFileService, mock UrlResource 생성
+        // Spy AwsFileService
         AwsFileService spyService = spy(awsFileService);
-        UrlResource mockResource = mock(UrlResource.class);
-        when(mockResource.exists()).thenReturn(true);
-        when(mockResource.isReadable()).thenReturn(true);
-        doReturn(mockResource).when(spyService).createUrlResource(mockUrl);
 
-        Resource resource = spyService.getFileFromS3(fileName, dir);
+        URL resource = spyService.getFileFromS3(fileName, dir);
 
         assertNotNull(resource);
-        assertTrue(resource.exists());
-        assertTrue(resource.isReadable());
     }
 
     @Test

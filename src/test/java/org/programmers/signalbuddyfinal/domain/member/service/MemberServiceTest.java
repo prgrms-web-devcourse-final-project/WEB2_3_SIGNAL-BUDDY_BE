@@ -8,6 +8,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.net.URL;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -119,15 +120,15 @@ class MemberServiceTest {
         ReflectionTestUtils.setField(memberService, "defaultProfileImage", "test-path");
         ReflectionTestUtils.setField(memberService, "memberDir", "test-dir");
 
-        Resource mockResource = mock(UrlResource.class);
+        URL mockURL = mock(URL.class);
         when(awsFileService.uploadFileToS3(any(MockMultipartFile.class), anyString())).thenReturn(profileImage.getName());
-        when(awsFileService.getFileFromS3(anyString(), anyString())).thenReturn(mockResource);
+        when(awsFileService.getFileFromS3(anyString(), anyString())).thenReturn(mockURL);
 
         //given
         final MemberJoinRequest request = MemberJoinRequest.builder().email("test2@example.com")
             .nickname("TestUser2").password("password123").build();
         final Member expectedMember = Member.builder().memberId(id).email("test2@example.com")
-            .nickname("TestUser2").profileImageUrl(mockResource.toString()).memberStatus(MemberStatus.ACTIVITY)
+            .nickname("TestUser2").profileImageUrl(mockURL.toString()).memberStatus(MemberStatus.ACTIVITY)
             .role(MemberRole.USER).build();
 
         when(memberRepository.save(any(Member.class))).thenReturn(expectedMember);
