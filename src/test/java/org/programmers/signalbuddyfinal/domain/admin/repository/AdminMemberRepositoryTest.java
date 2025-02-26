@@ -108,12 +108,6 @@ class AdminMemberRepositoryTest extends RepositoryTest {
                 .getTotalElements()).isEqualTo(9);
     }
 
-    @DisplayName("시작-종료 기간 필터링 조회")
-    @Test
-    public void 시작_종료_기간_필터링_조회_테스트() {
-
-    }
-
     @Test
     public void 회원_검색_성공_테스트() {
         assertThat(memberRepository.findMemberByEmailOrNickname(pageable, "user1").getTotalElements())

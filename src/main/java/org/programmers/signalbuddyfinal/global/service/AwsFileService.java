@@ -121,7 +121,7 @@ public class AwsFileService {
      *
      * @param url 생성할 URL
      * @return UrlResource 객체
-     * @throws MalformedURLException URL이 잘못된 경우
+     * @throws MalformedURLException URL이 잘못된 경우.
      */
     protected UrlResource createUrlResource(URL url) throws MalformedURLException {
         return new UrlResource(url);
