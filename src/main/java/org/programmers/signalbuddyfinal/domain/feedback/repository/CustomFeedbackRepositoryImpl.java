@@ -1,6 +1,7 @@
 package org.programmers.signalbuddyfinal.domain.feedback.repository;
 
 import static com.querydsl.core.types.dsl.Expressions.numberTemplate;
+import static org.programmers.signalbuddyfinal.domain.crossroad.entity.QCrossroad.crossroad;
 import static org.programmers.signalbuddyfinal.domain.feedback.entity.QFeedback.feedback;
 import static org.programmers.signalbuddyfinal.domain.member.entity.QMember.member;
 import static org.programmers.signalbuddyfinal.global.util.QueryDSLUtil.betweenDates;
@@ -20,10 +21,13 @@ import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackResponse;
+import org.programmers.signalbuddyfinal.domain.feedback.entity.Feedback;
 import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.AnswerStatus;
 import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.FeedbackCategory;
+import org.programmers.signalbuddyfinal.domain.feedback.exception.FeedbackErrorCode;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
+import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -41,7 +45,7 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
         FeedbackResponse.class, feedback.feedbackId, feedback.subject, feedback.content,
         feedback.category, feedback.imageUrl, feedback.likeCount, feedback.secret,
         feedback.answerStatus, memberResponseDto.as("member"),
-        feedback.createdAt, feedback.updatedAt);
+        feedback.createdAt, feedback.updatedAt, feedback.deletedAt);
 
     private static final QBean<FeedbackResponse> feedbackNoMemberDto = Projections.fields(
         FeedbackResponse.class, feedback.feedbackId, feedback.subject, feedback.content,
@@ -60,7 +64,7 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
     ) {
         BooleanExpression activityMember = member.memberStatus.eq(MemberStatus.ACTIVITY);
         BooleanExpression answerStatusCondition = answerStatusCondition(answerStatus);
-        BooleanExpression feedbackCategoriesCondition = feedbackCategoriesCondition(categories);
+        BooleanExpression categoriesCondition = categoriesCondition(categories);
         BooleanExpression crossroadIdCondition = crossroadIdCondition(crossroadId);
         BooleanExpression fulltextSearch = fulltextSearch(keyword, feedback.subject, feedback.content);
 
@@ -71,7 +75,7 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
             .where(
                 activityMember
                     .and(answerStatusCondition)
-                    .and(feedbackCategoriesCondition)
+                    .and(categoriesCondition)
                     .and(crossroadIdCondition)
                     .and(fulltextSearch)
                     .and(isNotDeletedFeedback)
@@ -88,7 +92,7 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
                 .where(
                     activityMember
                         .and(answerStatusCondition)
-                        .and(feedbackCategoriesCondition)
+                        .and(categoriesCondition)
                         .and(crossroadIdCondition)
                         .and(fulltextSearch)
                         .and(isNotDeletedFeedback)
@@ -114,27 +118,60 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
     }
 
     @Override
-    public Page<FeedbackResponse> findAll(
-        Pageable pageable,
+    public Page<FeedbackResponse> findAllByFilter(
+        Pageable pageable, String keyword,
+        AnswerStatus answerStatus,
+        Set<FeedbackCategory> categories,
         LocalDate startDate, LocalDate endDate,
-        AnswerStatus answerStatus
+        Boolean deleted
     ) {
-        final BooleanExpression betweenDates = betweenDates(feedback.createdAt, startDate, endDate);
+        BooleanExpression fulltextSearch = fulltextSearch(keyword, feedback.subject, feedback.content);
         BooleanExpression answerStatusCondition = answerStatusCondition(answerStatus);
+        BooleanExpression categoriesCondition = categoriesCondition(categories);
+        BooleanExpression betweenDates = betweenDates(feedback.createdAt, startDate, endDate);
+        BooleanExpression deletedCondition = deletedCondition(deleted);
 
-        final List<FeedbackResponse> results = jpaQueryFactory.select(feedbackResponseDto)
-            .from(feedback).join(member).on(feedback.member.eq(member)).fetchJoin()
-            .where(betweenDates.and(answerStatusCondition))
+        List<FeedbackResponse> results = jpaQueryFactory
+            .select(feedbackResponseDto)
+            .from(feedback)
+            .join(member).on(feedback.member.eq(member)).fetchJoin()
+            .where(
+                deletedCondition
+                    .and(answerStatusCondition)
+                    .and(fulltextSearch)
+                    .and(categoriesCondition)
+                    .and(betweenDates)
+            )
             .offset(pageable.getOffset()).limit(pageable.getPageSize())
             .orderBy(getOrderSpecifiers(pageable, feedback.getType(), "feedback")).fetch();
 
         long count = Optional.ofNullable(
-            jpaQueryFactory.select(feedback.count()).from(feedback).join(member)
-                .on(feedback.member.eq(member)).fetchJoin()
-                .where(betweenDates.and(answerStatusCondition)).fetchOne()
+            jpaQueryFactory
+                .select(feedback.count())
+                .from(feedback)
+                .join(member).on(feedback.member.eq(member)).fetchJoin()
+                .where(
+                    deletedCondition
+                        .and(answerStatusCondition)
+                        .and(fulltextSearch)
+                        .and(categoriesCondition)
+                        .and(betweenDates)
+                ).fetchOne()
         ).orElse(0L);
 
         return new PageImpl<>(results, pageable, count);
+    }
+
+    @Override
+    public Feedback findByIdOrThrow(Long id ) {
+        return Optional.ofNullable(
+            jpaQueryFactory
+                .selectFrom(feedback)
+                .join(member).on(feedback.member.eq(member))
+                .join(crossroad).on(feedback.crossroad.eq(crossroad))
+                .where(feedback.feedbackId.eq(id).and(isNotDeletedFeedback))
+                .fetchOne()
+        ).orElseThrow(() -> new BusinessException(FeedbackErrorCode.NOT_FOUND_FEEDBACK));
     }
 
     private BooleanExpression answerStatusCondition(AnswerStatus answerStatus) {
@@ -151,7 +188,7 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
         return feedback.crossroad.crossroadId.eq(crossroadId);
     }
 
-    private BooleanExpression feedbackCategoriesCondition(Set<FeedbackCategory> categories) {
+    private BooleanExpression categoriesCondition(Set<FeedbackCategory> categories) {
         if (categories == null || categories.isEmpty()) {
             return Expressions.TRUE;
         }
@@ -177,5 +214,16 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
             Double.class, "function('match2_against', {0}, {1}, {2})",
             target1, target2, formattedSearchWord
         ).gt(0);
+    }
+
+    private BooleanExpression deletedCondition(Boolean deleted) {
+        if (deleted == null) {
+            return Expressions.TRUE;
+        }
+
+        if (Boolean.TRUE.equals(deleted)) {
+            return feedback.deletedAt.isNotNull();
+        }
+        return feedback.deletedAt.isNull();
     }
 }

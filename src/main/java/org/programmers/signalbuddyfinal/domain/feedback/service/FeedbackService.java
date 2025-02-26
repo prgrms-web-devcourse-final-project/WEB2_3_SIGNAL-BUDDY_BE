@@ -1,15 +1,13 @@
 package org.programmers.signalbuddyfinal.domain.feedback.service;
 
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.comment.repository.CommentRepository;
 import org.programmers.signalbuddyfinal.domain.crossroad.entity.Crossroad;
 import org.programmers.signalbuddyfinal.domain.crossroad.repository.CrossroadRepository;
 import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackRequest;
 import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackResponse;
+import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackSearchRequest;
 import org.programmers.signalbuddyfinal.domain.feedback.entity.Feedback;
-import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.AnswerStatus;
-import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.FeedbackCategory;
 import org.programmers.signalbuddyfinal.domain.feedback.exception.FeedbackErrorCode;
 import org.programmers.signalbuddyfinal.domain.feedback.mapper.FeedbackMapper;
 import org.programmers.signalbuddyfinal.domain.feedback.repository.FeedbackRepository;
@@ -18,10 +16,10 @@ import org.programmers.signalbuddyfinal.domain.like.repository.LikeRepository;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
-import org.programmers.signalbuddyfinal.global.service.AwsFileService;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
+import org.programmers.signalbuddyfinal.global.service.AwsFileService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,12 +40,13 @@ public class FeedbackService {
 
     public PageResponse<FeedbackResponse> searchFeedbackList(
         Pageable pageable,
-        AnswerStatus answerStatus, Set<FeedbackCategory> categories,
-        Long crossroadId, String keyword
+        FeedbackSearchRequest request,
+        Long crossroadId
     ) {
         return new PageResponse<>(
             feedbackRepository.findAllByActiveMembers(
-                pageable, answerStatus, categories, crossroadId, keyword
+                pageable, request.getStatus(), request.getCategory(),
+                crossroadId, request.getKeyword()
             )
         );
     }

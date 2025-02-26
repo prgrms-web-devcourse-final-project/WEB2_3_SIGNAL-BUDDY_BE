@@ -1,6 +1,8 @@
 package org.programmers.signalbuddyfinal.domain.feedback.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.time.LocalDate;
 import java.util.Set;
@@ -15,10 +17,12 @@ import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackResponse;
 import org.programmers.signalbuddyfinal.domain.feedback.entity.Feedback;
 import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.AnswerStatus;
 import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.FeedbackCategory;
+import org.programmers.signalbuddyfinal.domain.feedback.exception.FeedbackErrorCode;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
+import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.support.RepositoryTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -26,10 +30,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 class FeedbackRepositoryImplTest extends RepositoryTest {
 
-    @Autowired
+    @MockitoSpyBean
     private FeedbackRepository feedbackRepository;
 
     @Autowired
@@ -180,27 +185,74 @@ class FeedbackRepositoryImplTest extends RepositoryTest {
         });
     }
 
-    @DisplayName("활동 중인 회원들의 날짜 조건을 추가한 피드백 목록을 조회한다.")
+    @DisplayName("날짜를 조건으로 설정하고 Soft Delete 처리된 피드백도 함께 가져온다. (쿼리만 확인)")
     @Test
-    void getFeedbacksWithDate() {
-        // 정렬 기준: "createdAt" 컬럼 기준 내림차순 (DESC)
+    void findAllByDate() {
+        // Given
         Sort sort = Sort.by(Sort.Order.desc("createdAt"));
-
-        // 페이지 번호 0, 사이즈 10, 정렬 포함
         Pageable pageable = PageRequest.of(0, 10, sort);
-        final Page<FeedbackResponse> page = feedbackRepository.findAll(pageable, LocalDate.MIN, LocalDate.MAX, AnswerStatus.BEFORE);
+        String keyword = "test";
+        Set<FeedbackCategory> categories = Set.of(FeedbackCategory.DELAY, FeedbackCategory.ETC);
+        LocalDate startDate = LocalDate.of(2024, 11, 12);
+        LocalDate endDate = LocalDate.of(2025, 2, 12);
 
-        assertThat(page).isNotNull();
-//        assertThat(page.getTotalElements()).isEqualTo(3);
-        // TODO : 조회 결과 0으로 출력 추후 수정 필요
-        assertThat(page.getTotalElements()).isZero();
-        assertThat(page.getTotalPages()).isZero();
+        // When
+        feedbackRepository.findAllByFilter(
+            pageable, keyword,
+            AnswerStatus.BEFORE, categories,
+            startDate, endDate,
+            Boolean.FALSE
+        );
 
-//        assertThat(page.getContent()).isNotEmpty().allSatisfy(
-//            feedback -> assertThat(feedback.getMember().getMemberStatus()).isEqualTo(
-//                MemberStatus.ACTIVITY));
+        // Then
+        verify(feedbackRepository, times(1))
+            .findAllByFilter(
+                pageable, keyword,
+                AnswerStatus.BEFORE, categories,
+                startDate, endDate,
+                Boolean.FALSE
+            );
     }
 
+    @DisplayName("Soft Delete 된 피드백만 가져온다.")
+    @Test
+    void findAllByDeleted() {
+        // Given
+        Sort sort = Sort.by(Sort.Order.desc("createdAt"));
+        Pageable pageable = PageRequest.of(0, 10, sort);
+        feedbackRepository.deleteById(1L);
+        feedbackRepository.deleteById(2L);
+
+        // When
+        Page<FeedbackResponse> actual = feedbackRepository.findAllByFilter(
+            pageable, null,
+            null, null,
+            null, null,
+            Boolean.TRUE
+        );
+
+        // Then
+        assertThat(actual.getTotalElements()).isEqualTo(2);
+    }
+
+    @DisplayName("Soft Delete가 되지 않은 피드백 데이터를 가져온다.")
+    @Test
+    void findByIdOrThrow_Success() {
+        // When & Then
+        assertThat(feedbackRepository.findByIdOrThrow(1L).getFeedbackId()).isOne();
+    }
+
+    @DisplayName("Soft Delete가 된 피드백 데이터를 가져오게 되면 실패한다.")
+    @Test
+    void findByIdOrThrow_Failure() {
+        // When & Then
+        try {
+            feedbackRepository.deleteById(1L);
+            feedbackRepository.findByIdOrThrow(1L);
+        } catch (BusinessException e) {
+            assertThat(e.getErrorCode()).isEqualTo(FeedbackErrorCode.NOT_FOUND_FEEDBACK);
+        }
+    }
 
     private Member saveMember(String email, String nickname) {
         return memberRepository.save(

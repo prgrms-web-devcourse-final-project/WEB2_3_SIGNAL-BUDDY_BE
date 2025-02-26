@@ -24,11 +24,11 @@ import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
-import org.programmers.signalbuddyfinal.global.service.AwsFileService;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
+import org.programmers.signalbuddyfinal.global.service.AwsFileService;
 import org.programmers.signalbuddyfinal.global.support.ServiceTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -275,7 +275,7 @@ class FeedbackServiceTest extends ServiceTest {
         feedbackService.deleteFeedback(feedbackId, user);
 
         // Then
-        assertThat(feedbackRepository.findById(feedbackId)).isEmpty();
+        assertThat(feedbackRepository.findById(feedbackId).get().isDeleted()).isTrue();
     }
 
     @DisplayName("작성자가 아닌 일반 사용자가 피드백을 삭제하면 실패한다.")
@@ -307,7 +307,7 @@ class FeedbackServiceTest extends ServiceTest {
         feedbackService.deleteFeedback(feedbackId, user);
 
         // Then
-        assertThat(feedbackRepository.findById(feedbackId)).isEmpty();
+        assertThat(feedbackRepository.findById(feedbackId).get().isDeleted()).isTrue();
     }
 
     private Member saveMember(String email, String nickname) {
