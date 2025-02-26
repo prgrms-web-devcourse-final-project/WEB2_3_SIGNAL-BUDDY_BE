@@ -188,10 +188,9 @@ class MemberControllerTest extends ControllerTest {
 
         // When
         ResultActions result = mockMvc.perform(
-            multipart(HttpMethod.PATCH, "/api/members/{id}/profile-image", memberId).file(
+            multipart(HttpMethod.POST, "/api/members/{id}/profile-image", memberId).file(
                 profileImage).contentType(MediaType.MULTIPART_FORM_DATA));
 
-        // TODO : Request Part 알아봐야함.
         result.andExpect(status().isOk()).andDo(
             document("유저 프로필 이미지 변경", preprocessRequest(prettyPrint()),
                 preprocessResponse(prettyPrint()),

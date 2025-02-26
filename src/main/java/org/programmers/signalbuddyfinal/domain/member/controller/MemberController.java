@@ -25,7 +25,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -63,7 +62,7 @@ public class MemberController {
         return ResponseEntity.ok(ApiResponse.createSuccess(updated));
     }
 
-    @PatchMapping("{id}/profile-image")
+    @PostMapping("{id}/profile-image")
     public ResponseEntity<ApiResponse<String>> updateProfileImage(@PathVariable Long id,
         @RequestPart("imageFile") MultipartFile imageFile) {
         final String saveProfileImage = memberService.saveProfileImage(id, imageFile);
@@ -166,8 +165,7 @@ public class MemberController {
     @PostMapping("/join")
     public ResponseEntity<ApiResponse<MemberResponse>> joinMember(
         @Valid @RequestPart("memberJoinRequest") MemberJoinRequest memberJoinRequest,
-        @RequestPart(value = "profileImageUrl", required = false) MultipartFile profileImage
-    ){
+        @RequestPart(value = "profileImageUrl", required = false) MultipartFile profileImage) {
         MemberResponse memberResponse = memberService.joinMember(memberJoinRequest, profileImage);
         return ResponseEntity.ok(ApiResponse.createSuccess(memberResponse));
     }
