@@ -82,19 +82,6 @@ public class MemberController {
         return ResponseEntity.ok(ApiResponse.createSuccess(verified));
     }
 
-    /**
-     * ApiResponse 는 JSON 형태의 응답을 생성하는데 사용되므로 <br> 이미지 파일을 직접 반환하기 위해
-     * {@code ResponseEntity<Resource>}를 사용.
-     *
-     * @param id Member ID
-     * @return Resource 객체
-     */
-    @GetMapping("{id}/profile-image")
-    public ResponseEntity<Resource> getImageFile(@PathVariable Long id) {
-        final Resource profileImage = memberService.getProfileImage(id);
-        return ResponseEntity.ok(profileImage);
-    }
-
     @GetMapping("{id}/feedbacks")
     public ResponseEntity<ApiResponse<PageResponse<FeedbackResponse>>> getFeedbacks(
         @PathVariable Long id, @PageableDefault(page = 0, size = 10) Pageable pageable) {

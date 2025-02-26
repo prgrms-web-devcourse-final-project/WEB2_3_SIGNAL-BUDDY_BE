@@ -14,6 +14,7 @@ import org.programmers.signalbuddyfinal.domain.postit.repository.PostItRepositor
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.service.AwsFileService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,6 +28,9 @@ public class PostItService {
     private final PostItRepository postItRepository;
     private final MemberRepository memberRepository;
     private final AwsFileService awsFileService;
+
+    @Value("${cloud.aws.s3.folder.post-it}")
+    private String postItDir;
 
     @Transactional
     public PostItResponse createPostIt(PostItCreateRequest postItCreateRequest, MultipartFile image, CustomUser2Member user) {
@@ -77,8 +81,8 @@ public class PostItService {
     private String convertImageFile(MultipartFile image) {
         String imageUrl = null;
         if (image != null) {
-            String fileName = awsFileService.saveProfileImage(image);
-            imageUrl = awsFileService.getProfileImage(fileName).toString();
+            String fileName = awsFileService.uploadFileToS3(image, postItDir);
+            imageUrl = awsFileService.getFileFromS3(fileName, postItDir).toString();
         }
         return imageUrl;
     }

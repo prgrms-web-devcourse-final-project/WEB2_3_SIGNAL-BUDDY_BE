@@ -22,9 +22,11 @@ import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
 import org.programmers.signalbuddyfinal.global.service.AwsFileService;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class MemberServiceTest {
@@ -110,12 +112,14 @@ class MemberServiceTest {
 
         MockMultipartFile profileImage = new MockMultipartFile("profileImage", "", "image/jpeg",
             new byte[0]);
+        ReflectionTestUtils.setField(memberService, "defaultProfileImagePath", "test-path");
 
         //given
         final MemberJoinRequest request = MemberJoinRequest.builder().email("test2@example.com")
             .nickname("TestUser2").password("password123").build();
+        final String defaultProfileImageUrl = new ClassPathResource("test-path").toString();
         final Member expectedMember = Member.builder().memberId(id).email("test2@example.com")
-            .nickname("TestUser2").profileImageUrl(null).memberStatus(MemberStatus.ACTIVITY)
+            .nickname("TestUser2").profileImageUrl(defaultProfileImageUrl).memberStatus(MemberStatus.ACTIVITY)
             .role(MemberRole.USER).build();
 
         when(memberRepository.save(any(Member.class))).thenReturn(expectedMember);

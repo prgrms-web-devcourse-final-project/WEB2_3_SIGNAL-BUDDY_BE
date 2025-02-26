@@ -85,9 +85,9 @@ class FeedbackServiceTest extends ServiceTest {
 
         // When
         Resource mockResource = mock(UrlResource.class);
-        when(awsFileService.saveProfileImage(any(MockMultipartFile.class)))
+        when(awsFileService.uploadFileToS3(any(MockMultipartFile.class), anyString()))
             .thenReturn(imageFile.getName());
-        when(awsFileService.getProfileImage(anyString())).thenReturn(mockResource);
+        when(awsFileService.getFileFromS3(anyString(), anyString())).thenReturn(mockResource);
         FeedbackResponse actual = feedbackService.writeFeedback(request, imageFile, user);
 
         // Then
@@ -227,9 +227,9 @@ class FeedbackServiceTest extends ServiceTest {
 
         // When
         Resource mockResource = mock(UrlResource.class);
-        when(awsFileService.saveProfileImage(any(MockMultipartFile.class)))
+        when(awsFileService.uploadFileToS3(any(MockMultipartFile.class), anyString()))
             .thenReturn(updatedImageFile.getName());
-        when(awsFileService.getProfileImage(anyString())).thenReturn(mockResource);
+        when(awsFileService.getFileFromS3(anyString(), anyString())).thenReturn(mockResource);
         FeedbackResponse actual = feedbackService.updateFeedback(
             feedbackId, request, updatedImageFile, user
         );

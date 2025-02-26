@@ -1,13 +1,30 @@
 package org.programmers.signalbuddyfinal.global.service;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.programmers.signalbuddyfinal.domain.member.exception.MemberErrorCode;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
+import org.programmers.signalbuddyfinal.global.exception.GlobalErrorCode;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -17,16 +34,6 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3Utilities;
 import software.amazon.awssdk.services.s3.model.GetUrlRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class AwsFileServiceTest {
@@ -41,6 +48,7 @@ class AwsFileServiceTest {
     @DisplayName("프로필 이미지 저장 성공 테스트")
     void saveProfileImage_Success() throws IOException {
         String fileName = "test-image.png";
+        String dir = "test-dir";
         MultipartFile mockFile = mock(MultipartFile.class);
         InputStream mockInputStream = new ByteArrayInputStream("dummy content".getBytes());
 
@@ -50,10 +58,10 @@ class AwsFileServiceTest {
         when(mockFile.getSize()).thenReturn((long) "dummy content".length());
 
         // Mock S3Client의 동작 설정
-        when(s3Client.putObject(any(PutObjectRequest.class), any(RequestBody.class)))
-            .thenReturn(null); // putObject의 반환값을 지정
+        when(s3Client.putObject(any(PutObjectRequest.class), any(RequestBody.class))).thenReturn(
+            null); // putObject의 반환값을 지정
 
-        String result = awsFileService.saveProfileImage(mockFile);
+        String result = awsFileService.uploadFileToS3(mockFile, dir);
 
         assertNotNull(result);
         assertTrue(result.contains(fileName));
@@ -66,6 +74,7 @@ class AwsFileServiceTest {
         String fileName = "test-image.png";
         String key = "profiles/" + fileName;
         String bucketName = "test-bucket";
+        String dir = "test-dir";
 
         // Mock S3Utilities
         S3Utilities mockUtilities = mock(S3Utilities.class);
@@ -77,7 +86,6 @@ class AwsFileServiceTest {
 
         // bucket 과 profileImageDir에 값 넣기
         ReflectionTestUtils.setField(awsFileService, "bucket", bucketName);
-        ReflectionTestUtils.setField(awsFileService, "profileImageDir", "profiles/");
 
         // Spy AwsFileService, mock UrlResource 생성
         AwsFileService spyService = spy(awsFileService);
@@ -86,7 +94,7 @@ class AwsFileServiceTest {
         when(mockResource.isReadable()).thenReturn(true);
         doReturn(mockResource).when(spyService).createUrlResource(mockUrl);
 
-        Resource resource = spyService.getProfileImage(fileName);
+        Resource resource = spyService.getFileFromS3(fileName, dir);
 
         assertNotNull(resource);
         assertTrue(resource.exists());
@@ -98,6 +106,7 @@ class AwsFileServiceTest {
     void saveProfileImage_Fail() throws IOException {
         // Given
         String fileName = "test-image.png";
+        String dir = "test-dir";
         MultipartFile mockFile = mock(MultipartFile.class);
         InputStream mockInputStream = new ByteArrayInputStream("dummy content".getBytes());
 
@@ -107,14 +116,14 @@ class AwsFileServiceTest {
         when(mockFile.getSize()).thenReturn((long) "dummy content".length());
 
         // S3Client가 예외를 던지도록 설정
-        doThrow(new RuntimeException("S3 upload failed"))
-            .when(s3Client).putObject(any(PutObjectRequest.class), any(RequestBody.class));
+        doThrow(new RuntimeException("S3 upload failed")).when(s3Client)
+            .putObject(any(PutObjectRequest.class), any(RequestBody.class));
 
         BusinessException exception = assertThrows(BusinessException.class, () -> {
-            awsFileService.saveProfileImage(mockFile);
+            awsFileService.uploadFileToS3(mockFile, dir);
         });
 
-        assertTrue(exception.getMessage().contains(MemberErrorCode.S3_UPLOAD_FAILURE.getMessage()));
+        assertTrue(exception.getMessage().contains(GlobalErrorCode.S3_UPLOAD_FAILURE.getMessage()));
 
     }
 }
