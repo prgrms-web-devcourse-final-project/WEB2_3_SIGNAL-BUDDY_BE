@@ -12,11 +12,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.programmers.signalbuddyfinal.domain.admin.dto.AdminMemberResponse;
 import org.programmers.signalbuddyfinal.domain.admin.dto.MemberFilterRequest;
 import org.programmers.signalbuddyfinal.domain.admin.dto.WithdrawalMemberResponse;
-import org.programmers.signalbuddyfinal.domain.admin.dto.enums.Ago;
-import org.programmers.signalbuddyfinal.domain.member.entity.Member;
+import org.programmers.signalbuddyfinal.domain.admin.dto.enums.Periods;
 import org.programmers.signalbuddyfinal.domain.member.entity.QMember;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
+import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -38,7 +38,8 @@ public class CustomMemberRepositoryImpl implements CustomMemberRepository {
         member.createdAt, member.updatedAt);
 
     private static final QBean<AdminMemberResponse> adminMemberResponseDto = Projections.fields(
-        AdminMemberResponse.class, member.memberId.as("memberId"), member.email, member.nickname, member.role,
+        AdminMemberResponse.class, member.memberId.as("memberId"), member.email, member.nickname,
+        member.role,
         member.memberStatus.as("status"), member.createdAt,
         socialProvider.oauthProvider.as("oauthProvider")
     );
@@ -48,25 +49,23 @@ public class CustomMemberRepositoryImpl implements CustomMemberRepository {
     private final JPAQueryFactory jpaQueryFactory;
 
     @Override
-    public Page<Member> findAllMembers(Pageable pageable) {
-        List<Member> members = jpaQueryFactory
-            .select(qmember)
+    public PageResponse<AdminMemberResponse> findAllMembers(Pageable pageable) {
+        List<AdminMemberResponse> members = jpaQueryFactory
+            .select(adminMemberResponseDto)
             .from(member)
-            .where(member.role.eq(MemberRole.USER))
+            .leftJoin(socialProvider).on(socialProvider.member.memberId.eq(member.memberId))
             .offset(pageable.getOffset())
             .limit(pageable.getPageSize())
             .orderBy(member.email.asc())
             .fetch();
 
         long total = jpaQueryFactory
-            .select(qmember)
+            .select(adminMemberResponseDto)
             .from(member)
-            .where(member.role.eq(MemberRole.USER))
             .fetchCount();
 
-        return new PageImpl<>(members, pageable, total);
+        return new PageResponse<>(new PageImpl<>(members, pageable, total));
     }
-
     @Override
     public Page<WithdrawalMemberResponse> findAllWithdrawMembers(Pageable pageable) {
         List<WithdrawalMemberResponse> members = jpaQueryFactory
@@ -88,30 +87,7 @@ public class CustomMemberRepositoryImpl implements CustomMemberRepository {
     }
 
     @Override
-    public Page<AdminMemberResponse> findMemberByEmailOrNickname(Pageable pageable, String content) {
-        List<AdminMemberResponse> members = jpaQueryFactory
-            .select(adminMemberResponseDto)
-            .from(member)
-            .leftJoin(socialProvider).on(socialProvider.member.memberId.eq(member.memberId))
-            .where(
-                member.email.eq(content).or(member.nickname.eq(content))
-            )
-            .offset(pageable.getOffset())
-            .limit(pageable.getPageSize())
-            .orderBy(member.email.asc())
-            .fetch();
-
-        long total = jpaQueryFactory
-            .select(adminMemberResponseDto)
-            .from(member)
-            .where(member.email.eq(content).or(member.nickname.eq(content)))
-            .fetchCount();
-
-        return new PageImpl<>(members, pageable, total);
-    }
-
-    @Override
-    public Page<AdminMemberResponse> findAllMemberWithFilter(Pageable pageable,
+    public PageResponse<AdminMemberResponse> findAllMemberWithFilter(Pageable pageable,
         MemberFilterRequest filter) {
 
         List<AdminMemberResponse> members = jpaQueryFactory
@@ -119,11 +95,12 @@ public class CustomMemberRepositoryImpl implements CustomMemberRepository {
             .from(member)
             .leftJoin(socialProvider).on(socialProvider.member.memberId.eq(member.memberId))
             .where(
+                eqSearch(filter.getSearch()),
                 eqStatus(filter.getStatus()),
                 eqRole(filter.getRole()),
                 eqOAuthProvider(filter.getOAuthProvider()),
                 betweenCreatedAt(filter.getStartDate(), filter.getEndDate()),
-                withinSignupPeriod(filter.getAgo())
+                withinSignupPeriod(filter.getPeriods())
             )
             .offset(pageable.getOffset())
             .limit(pageable.getPageSize())
@@ -135,15 +112,16 @@ public class CustomMemberRepositoryImpl implements CustomMemberRepository {
             .from(member)
             .leftJoin(socialProvider).on(socialProvider.member.memberId.eq(member.memberId))
             .where(
+                eqSearch(filter.getSearch()),
                 eqStatus(filter.getStatus()),
                 eqRole(filter.getRole()),
                 eqOAuthProvider(filter.getOAuthProvider()),
                 betweenCreatedAt(filter.getStartDate(), filter.getEndDate()),
-                withinSignupPeriod(filter.getAgo())
+                withinSignupPeriod(filter.getPeriods())
             )
             .fetchCount();
 
-        return new PageImpl<>(members, pageable, total);
+        return new PageResponse<>(new PageImpl<>(members, pageable, total));
     }
 
     private BooleanExpression eqStatus(MemberStatus status) {
@@ -159,28 +137,29 @@ public class CustomMemberRepositoryImpl implements CustomMemberRepository {
             ? socialProvider.oauthProvider.eq(oauthProvider) : Expressions.TRUE);
     }
 
+    // 검색
+    private BooleanExpression eqSearch(String search) {
+        return ((search != null && !search.isEmpty()) ? member.email.eq(search)
+            .or(member.nickname.eq(search)) : Expressions.TRUE);
+    }
+
     // 기간 조회
     private BooleanExpression betweenCreatedAt(LocalDateTime startDate, LocalDateTime endDate) {
-        if (startDate != null && endDate != null) {
+        if (startDate != null && endDate != null)
             return member.createdAt.between(startDate, endDate);
-        } else if (startDate != null) {
-            return member.createdAt.goe(startDate);
-        } else if (endDate != null) {
-            return member.createdAt.loe(endDate);
-        }
         return Expressions.TRUE;
     }
 
     // 이전 날짜 조회
-    private BooleanExpression withinSignupPeriod(Ago ago) {
+    private BooleanExpression withinSignupPeriod(Periods period) {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime startDate;
 
-        if (ago == null) {
+        if (period == null) {
             return Expressions.TRUE;
         }
 
-        switch (ago) {
+        switch (period) {
             case TODAY:
                 startDate = now.truncatedTo(ChronoUnit.DAYS);
                 break;

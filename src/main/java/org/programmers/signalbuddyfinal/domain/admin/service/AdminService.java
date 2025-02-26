@@ -19,6 +19,7 @@ import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.programmers.signalbuddyfinal.domain.member.exception.MemberErrorCode;
 import org.programmers.signalbuddyfinal.domain.member.mapper.MemberMapper;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
+import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -36,20 +37,10 @@ public class AdminService {
     private final BookmarkRepository bookmarkRepository;
     private BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
 
-    public Page<AdminMemberDetailResponse> getAllMembers(Pageable pageable) {
-        Page<Member> membersPage = memberRepository.findAllMembers(pageable);
+    public PageResponse<AdminMemberResponse> getAllMembers(Pageable pageable) {
+        PageResponse<AdminMemberResponse> membersPage = memberRepository.findAllMembers(pageable);
 
-        Page<AdminMemberDetailResponse> adminMemberResponses = membersPage.map(member -> {
-
-            List<AdminBookmarkResponse> adminBookmarkResponses = bookmarkRepository.findBookmarkByMember(
-                member.getMemberId());
-            AdminMemberDetailResponse response = AdminMapper.INSTANCE.toAdminMemberResponse(member,
-                adminBookmarkResponses);
-
-            return response;
-        });
-
-        return adminMemberResponses;
+        return membersPage;
     }
 
     public AdminMemberDetailResponse getMember(Long id) {
@@ -71,21 +62,16 @@ public class AdminService {
        return membersPage;
     }
 
-    // 회원 필터링
-    public Page<AdminMemberResponse> getAllMemberWithFilter(Pageable pageable, MemberFilterRequest memberFilterRequest) {
+    public PageResponse<AdminMemberResponse> getAllMemberWithFilter(Pageable pageable,
+        MemberFilterRequest memberFilterRequest) {
 
-        if((memberFilterRequest.getStartDate() != null && memberFilterRequest.getEndDate() != null)&& memberFilterRequest.getAgo() !=null){
-            throw new BusinessException(AdminErrorCode.DUPLICATED_DATE);
-        }
-        Page<AdminMemberResponse> members = memberRepository.findAllMemberWithFilter(pageable,
+        checkFilterException(memberFilterRequest);
+
+        PageResponse<AdminMemberResponse> members = memberRepository.findAllMemberWithFilter(
+            pageable,
             memberFilterRequest);
 
         return members;
-    }
-
-    // 회원 검색
-    public Page<AdminMemberResponse> searchMember (Pageable pageable,String content){
-        return memberRepository.findMemberByEmailOrNickname(pageable,content);
     }
 
     @Transactional
@@ -106,5 +92,26 @@ public class AdminService {
 
         memberRepository.save(joinMember);
         return MemberMapper.INSTANCE.toDto(joinMember);
+    }
+
+    private void checkFilterException(MemberFilterRequest memberFilterRequest) {
+        if ((memberFilterRequest.getStartDate() != null && memberFilterRequest.getEndDate() != null)
+            && memberFilterRequest.getPeriods() != null) {
+            throw new BusinessException(AdminErrorCode.DUPLICATED_PERIOD);
+        }
+
+        if (memberFilterRequest.getStartDate() != null
+            && memberFilterRequest.getEndDate() == null) {
+            throw new BusinessException(AdminErrorCode.END_DATE_NOT_SELECTED);
+        }
+
+        if (memberFilterRequest.getStartDate() == null
+            && memberFilterRequest.getEndDate() != null) {
+            throw new BusinessException(AdminErrorCode.START_DATE_NOT_SELECTED);
+        }
+
+        if (memberFilterRequest.getStartDate().isAfter(memberFilterRequest.getEndDate())) {
+            throw new BusinessException(AdminErrorCode.START_DATE_AFTER_END_DATE);
+        }
     }
 }

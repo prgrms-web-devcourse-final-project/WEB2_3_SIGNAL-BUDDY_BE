@@ -1,6 +1,5 @@
 package org.programmers.signalbuddyfinal.domain.admin.controller;
 
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.admin.dto.AdminJoinRequest;
 import org.programmers.signalbuddyfinal.domain.admin.dto.AdminMemberDetailResponse;
@@ -9,6 +8,7 @@ import org.programmers.signalbuddyfinal.domain.admin.dto.MemberFilterRequest;
 import org.programmers.signalbuddyfinal.domain.admin.dto.WithdrawalMemberResponse;
 import org.programmers.signalbuddyfinal.domain.admin.service.AdminService;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
+import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,11 +31,11 @@ public class AdminController {
     private final AdminService adminService;
 
     @GetMapping("/members")
-    public ResponseEntity<Page<AdminMemberDetailResponse>> getAllMembers(
+    public ResponseEntity<ApiResponse<PageResponse<AdminMemberResponse>>> getAllMembers(
         @PageableDefault(page = 0, size = 10, sort = "email") Pageable pageable) {
 
-        Page<AdminMemberDetailResponse> members = adminService.getAllMembers(pageable);
-        return ResponseEntity.ok(members);
+        PageResponse<AdminMemberResponse> members = adminService.getAllMembers(pageable);
+        return ResponseEntity.ok(ApiResponse.createSuccess(members));
     }
 
     @GetMapping("members-detail/{id}")
@@ -53,22 +53,14 @@ public class AdminController {
     }
 
     @GetMapping("members/filter")
-    public ResponseEntity<ApiResponse<Page<AdminMemberResponse>>> getAllFilteredMembers(
+    public ResponseEntity<ApiResponse<PageResponse<AdminMemberResponse>>> getAllFilteredMembers(
         @PageableDefault(page = 0, size = 10, sort = "email") Pageable pageable,
         @ModelAttribute MemberFilterRequest memberFilterRequest) {
 
-        Page<AdminMemberResponse> members = adminService.getAllMemberWithFilter(pageable,
+        PageResponse<AdminMemberResponse> members = adminService.getAllMemberWithFilter(pageable,
             memberFilterRequest);
 
         return ResponseEntity.ok(ApiResponse.createSuccess(members));
-    }
-
-    @GetMapping("members/{content}")
-    public ResponseEntity<ApiResponse<Page<AdminMemberResponse>>> searchMember(
-        @PageableDefault(page = 0, size = 10, sort = "email") Pageable pageable,
-        @PathVariable String content) {
-        return ResponseEntity.ok(
-            ApiResponse.createSuccess(adminService.searchMember(pageable, content)));
     }
 
     @PostMapping("/join")
