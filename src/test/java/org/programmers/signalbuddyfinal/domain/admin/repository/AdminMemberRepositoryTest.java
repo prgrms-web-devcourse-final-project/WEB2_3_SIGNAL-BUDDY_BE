@@ -4,12 +4,11 @@ package org.programmers.signalbuddyfinal.domain.admin.repository;
 import static org.assertj.core.api.Assertions.*;
 
 import java.time.LocalDateTime;
-import java.time.Period;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.programmers.signalbuddyfinal.domain.admin.dto.MemberFilterRequest;
-import org.programmers.signalbuddyfinal.domain.admin.dto.enums.Ago;
+import org.programmers.signalbuddyfinal.domain.admin.dto.enums.Periods;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
@@ -22,8 +21,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 class AdminMemberRepositoryTest extends RepositoryTest {
-
-    Member member;
 
     private Pageable pageable;
     @Autowired
@@ -46,14 +43,22 @@ class AdminMemberRepositoryTest extends RepositoryTest {
         pageable = PageRequest.of(0, 10);
     }
 
+    @DisplayName("회원 전체 조회 테스트")
+    @Test
+    public void getAllMEmberTest() {
+
+        assertThat(memberRepository.findAllMembers(pageable).getTotalElements()).isEqualTo(9);
+    }
+
+
     @DisplayName("한개의 조건이 설정된 사용자 필더링 조회")
     @Test
     public void 한개의_조건이_설정된_사용자_필터링_조회() {
         MemberFilterRequest roleFilter = createFilter(null, MemberRole.USER, null, null, null,
-            null);
-        MemberFilterRequest statusFilter = createFilter(MemberStatus.ACTIVITY, null, null, null,
             null, null);
-        MemberFilterRequest oAuthFilter = createFilter(null, null, "naver", null, null, null);
+        MemberFilterRequest statusFilter = createFilter(MemberStatus.ACTIVITY, null, null, null,
+            null, null, null);
+        MemberFilterRequest oAuthFilter = createFilter(null, null, "naver", null, null, null, null);
 
         assertThat(memberRepository.findAllMemberWithFilter(pageable, roleFilter)
             .getTotalElements()).isEqualTo(8);
@@ -67,7 +72,7 @@ class AdminMemberRepositoryTest extends RepositoryTest {
     @Test
     public void 사용자_활성_null_조회() {
         MemberFilterRequest roleAndActivityFilter = createFilter(MemberStatus.ACTIVITY,
-            MemberRole.USER, null, null, null, null);
+            MemberRole.USER, null, null, null, null, null);
 
         assertThat(memberRepository.findAllMemberWithFilter(pageable, roleAndActivityFilter)
             .getTotalElements()).isEqualTo(4);
@@ -78,7 +83,7 @@ class AdminMemberRepositoryTest extends RepositoryTest {
     public void 사용자_비활성_null_조회() {
 
         MemberFilterRequest roleAndWithdrawalFilter = createFilter(MemberStatus.WITHDRAWAL,
-            MemberRole.USER, null, null, null, null);
+            MemberRole.USER, null, null, null, null, null);
 
         assertThat(memberRepository.findAllMemberWithFilter(pageable, roleAndWithdrawalFilter)
             .getTotalElements()).isEqualTo(4);
@@ -89,7 +94,7 @@ class AdminMemberRepositoryTest extends RepositoryTest {
     public void 사용자_활성_oAuth_조회() {
 
         MemberFilterRequest roleAndActivityWithOAuthAFilter = createFilter(MemberStatus.ACTIVITY,
-            MemberRole.USER, "naver", null, null, null);
+            MemberRole.USER, "naver", null, null, null, null);
 
         assertThat(
             memberRepository.findAllMemberWithFilter(pageable, roleAndActivityWithOAuthAFilter)
@@ -101,27 +106,11 @@ class AdminMemberRepositoryTest extends RepositoryTest {
     public void 전체_null_조회() {
 
         MemberFilterRequest roleAndActivityWithOAuthAFilter = createFilter(null, null, null, null,
-            null, null);
+            null, null, null);
 
         assertThat(
             memberRepository.findAllMemberWithFilter(pageable, roleAndActivityWithOAuthAFilter)
                 .getTotalElements()).isEqualTo(9);
-    }
-
-    @Test
-    public void 회원_검색_성공_테스트() {
-        assertThat(memberRepository.findMemberByEmailOrNickname(pageable, "user1").getTotalElements())
-            .isEqualTo(1);
-        assertThat(memberRepository.findMemberByEmailOrNickname(pageable, "user2@test.com").getTotalElements())
-            .isEqualTo(1);
-    }
-
-    @Test
-    public void 회원_검색_실패_테스트() {
-        assertThat(memberRepository.findMemberByEmailOrNickname(pageable, "user")).size()
-            .isEqualTo(0);
-        assertThat(memberRepository.findMemberByEmailOrNickname(pageable, "us@test.com")).size()
-            .isEqualTo(0);
     }
 
     private void createMember(String email, String nickname, MemberRole role, MemberStatus status,
@@ -148,14 +137,16 @@ class AdminMemberRepositoryTest extends RepositoryTest {
     }
 
     private MemberFilterRequest createFilter(MemberStatus status, MemberRole role,
-        String oAuthProvider, LocalDateTime startDate, LocalDateTime endDate, Ago ago) {
+        String oAuthProvider, LocalDateTime startDate, LocalDateTime endDate, Periods period,
+        String search) {
         return MemberFilterRequest.builder()
             .role(role)
             .status(status)
             .oAuthProvider(oAuthProvider)
             .startDate(startDate)
             .endDate(endDate)
-            .ago(ago)
+            .periods(period)
+            .search(search)
             .build();
     }
 }
