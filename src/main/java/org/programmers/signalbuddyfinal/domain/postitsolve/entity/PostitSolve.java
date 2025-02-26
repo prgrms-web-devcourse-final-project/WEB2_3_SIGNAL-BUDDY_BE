@@ -9,11 +9,15 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.locationtech.jts.geom.Point;
 import org.programmers.signalbuddyfinal.domain.basetime.BaseTimeEntity;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
+import org.programmers.signalbuddyfinal.domain.postit.entity.Danger;
 import org.programmers.signalbuddyfinal.domain.postit.entity.Postit;
 
 @Entity(name = "postits_solves")
@@ -49,4 +53,13 @@ public class PostitSolve extends BaseTimeEntity {
     public boolean isDeleted() {
         return deletedAt != null;
     } // 삭제 확인
+
+    @Builder(builderMethodName = "creator")
+    private PostitSolve(String content, String imageUrl, LocalDateTime deletedAt, Member member, Postit postit) {
+        this.content = Objects.requireNonNull(content);
+        this.imageUrl = Objects.requireNonNull(imageUrl);
+        this.deletedAt = Objects.requireNonNull(deletedAt);
+        this.member = Objects.requireNonNull(member);
+        this.postit = Objects.requireNonNull(postit);
+    }
 }
