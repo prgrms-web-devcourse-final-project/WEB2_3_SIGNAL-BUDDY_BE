@@ -27,6 +27,7 @@ public class Postit extends BaseTimeEntity {
     private Long postitId;
 
     @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
     private Danger danger;
 
     @Column(nullable = false)
