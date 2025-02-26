@@ -6,8 +6,6 @@ import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anySet;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.commonResponseWithMemberFormat;
@@ -42,6 +40,7 @@ import org.junit.jupiter.api.Test;
 import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadResponse;
 import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackRequest;
 import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackResponse;
+import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackSearchRequest;
 import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.AnswerStatus;
 import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.FeedbackCategory;
 import org.programmers.signalbuddyfinal.domain.feedback.service.FeedbackService;
@@ -183,7 +182,7 @@ class FeedbackControllerTest extends ControllerTest {
 
         given(
             feedbackService.searchFeedbackList(
-                any(Pageable.class), any(AnswerStatus.class), anySet(), anyLong(), anyString()
+                any(Pageable.class), any(FeedbackSearchRequest.class),  anyLong()
             )
         ).willReturn(response);
 
@@ -267,7 +266,7 @@ class FeedbackControllerTest extends ControllerTest {
 
         given(
             feedbackService.searchFeedbackListByAdmin(
-                any(Pageable.class), anyString(), anyBoolean(), any(AnswerStatus.class), anySet(),
+                any(Pageable.class), any(FeedbackSearchRequest.class), anyBoolean(),
                 any(LocalDate.class), any(LocalDate.class), any(CustomUser2Member.class)
             )
         ).willReturn(response);

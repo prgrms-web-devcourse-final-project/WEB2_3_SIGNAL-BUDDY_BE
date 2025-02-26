@@ -2,12 +2,10 @@ package org.programmers.signalbuddyfinal.domain.feedback.controller;
 
 import jakarta.validation.Valid;
 import java.time.LocalDate;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackRequest;
 import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackResponse;
-import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.AnswerStatus;
-import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.FeedbackCategory;
+import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackSearchRequest;
 import org.programmers.signalbuddyfinal.domain.feedback.service.FeedbackService;
 import org.programmers.signalbuddyfinal.global.annotation.CurrentUser;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
@@ -22,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -55,15 +54,13 @@ public class FeedbackController {
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<FeedbackResponse>>> searchFeedbackList(
         @PageableDefault Pageable pageable,
-        @RequestParam(value = "status", required = false) AnswerStatus answerStatus,
-        @RequestParam(value = "category", required = false) Set<FeedbackCategory> categories,
-        @RequestParam(value = "crossroadId", required = false) Long crossroadId,
-        @RequestParam(value = "keyword", required = false) String keyword
+        @ModelAttribute FeedbackSearchRequest request,
+        @RequestParam(value = "crossroadId", required = false) Long crossroadId
     ) {
         return ResponseEntity.ok(
             ApiResponse.createSuccess(
                 feedbackService.searchFeedbackList(
-                    pageable, answerStatus, categories, crossroadId, keyword
+                    pageable, request, crossroadId
                 )
             )
         );
@@ -73,14 +70,9 @@ public class FeedbackController {
     public ResponseEntity<ApiResponse<PageResponse<FeedbackResponse>>> searchFeedbackListByAdmin(
         @PageableDefault(sort = {"createdAt"}, direction = Direction.DESC)
         Pageable pageable,
-        @RequestParam(value = "keyword", required = false)
-        String keyword,
+        @ModelAttribute FeedbackSearchRequest request,
         @RequestParam(value = "deleted", required = false)
         Boolean deleted,
-        @RequestParam(value = "status", required = false)
-        AnswerStatus answerStatus,
-        @RequestParam(value = "category", required = false)
-        Set<FeedbackCategory> categories,
         @RequestParam(name = "start-date", required = false)
         @DateTimeFormat(pattern = "yyyy-MM-dd")
         LocalDate startDate,
@@ -92,7 +84,7 @@ public class FeedbackController {
         return ResponseEntity.ok(
             ApiResponse.createSuccess(
                 feedbackService.searchFeedbackListByAdmin(
-                    pageable, keyword, deleted, answerStatus, categories, startDate, endDate, user
+                    pageable, request, deleted, startDate, endDate, user
                 )
             )
         );
