@@ -70,7 +70,7 @@ public class MemberService {
         final String profileImage = saveProfileImageIfPresent(file);
         final String imageUrl = awsFileService.getFileFromS3(profileImage, memberDir).toString();
         member.saveProfileImage(imageUrl);
-        return profileImage;
+        return imageUrl;
     }
 
     @Transactional
