@@ -30,7 +30,7 @@ public class PostItController {
     @PostMapping
     public ResponseEntity<ApiResponse<PostItResponse>> createPostIt(
         @Valid @RequestPart("request") final PostItCreateRequest postItCreateRequest,
-        @RequestPart(value = "imageFile", required = false) MultipartFile image,
+        @RequestPart(value = "imageFile") MultipartFile image,
         @CurrentUser CustomUser2Member user
     ) {
         return ResponseEntity.ok(
@@ -41,7 +41,7 @@ public class PostItController {
     public ResponseEntity<ApiResponse<PostItResponse>> updatePostIt(
         @PathVariable(value = "postitId") final Long postitId,
         @Valid @RequestPart("request") PostItRequest postItRequest,
-        @RequestPart(value = "imageFile", required = false) MultipartFile image,
+        @RequestPart(value = "imageFile") MultipartFile image,
         @CurrentUser CustomUser2Member user
     ) {
         return ResponseEntity.ok(
