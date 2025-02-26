@@ -24,7 +24,7 @@ public class AdminMemberServiceTest extends ServiceTest {
 
     private Pageable pageable;
     @Autowired
-    AdminService adminService;
+    AdminMemberService adminService;
 
     @Autowired
     MemberRepository memberRepository;

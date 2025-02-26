@@ -3,7 +3,6 @@ package org.programmers.signalbuddyfinal.domain.admin.controller;
 import static com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper.document;
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
 import static org.mockito.ArgumentMatchers.any;
-import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.commonResponseFormat;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.pageResponseFormat;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessResponse;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.prettyPrint;
@@ -18,16 +17,14 @@ import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.programmers.signalbuddyfinal.domain.admin.controller.AdminController;
 import org.programmers.signalbuddyfinal.domain.admin.dto.AdminMemberResponse;
 import org.programmers.signalbuddyfinal.domain.admin.dto.MemberFilterRequest;
-import org.programmers.signalbuddyfinal.domain.admin.service.AdminService;
+import org.programmers.signalbuddyfinal.domain.admin.service.AdminMemberService;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.programmers.signalbuddyfinal.global.support.ControllerTest;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -39,13 +36,13 @@ import static org.mockito.BDDMockito.*;
 
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessRequest;
 
-@WebMvcTest(AdminController.class)
-public class AdminControllerTest extends ControllerTest {
+@WebMvcTest(AdminMemberController.class)
+public class AdminMemberControllerTest extends ControllerTest {
 
     private final String tag = "Admin API";
 
     @MockitoBean
-    private AdminService adminService;
+    private AdminMemberService adminService;
 
     @DisplayName("전체 회원 조회")
     @Test
@@ -66,7 +63,7 @@ public class AdminControllerTest extends ControllerTest {
         given(adminService.getAllMembers(any(Pageable.class))).willReturn(response);
 
         final ResultActions result = mockMvc.perform(
-                get("/api/admins/members", content).param("page", "0")
+                get("/api/admin/members", content).param("page", "0")
                     .param("size", "10"))
             .andExpect(status().isOk())
             .andDo(print())
@@ -128,7 +125,7 @@ public class AdminControllerTest extends ControllerTest {
             .willReturn(page);
 
         final ResultActions result = mockMvc.perform(
-                get("/api/admins/members/filter")
+                get("/api/admin/members/filter")
                     .param("page", "0")
                     .param("size", "10")
                     .param("role", filter.getRole().toString())

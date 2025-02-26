@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.programmers.signalbuddyfinal.domain.admin.dto.AdminMemberDetailResponse;
 import org.programmers.signalbuddyfinal.domain.admin.dto.AdminMemberResponse;
 import org.programmers.signalbuddyfinal.domain.admin.dto.WithdrawalMemberResponse;
+import org.programmers.signalbuddyfinal.domain.admin.service.AdminMemberService;
 import org.programmers.signalbuddyfinal.domain.admin.service.AdminService;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.springframework.data.domain.Page;
@@ -23,7 +24,7 @@ import org.springframework.web.servlet.ModelAndView;
 @RequestMapping("/admins")
 public class AdminWebController {
 
-    private final AdminService adminService;
+    private final AdminMemberService adminService;
 
     @GetMapping()
     public ModelAndView adminsMain() {

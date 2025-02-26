@@ -30,49 +30,10 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class AdminService {
 
     private final MemberRepository memberRepository;
-    private final BookmarkRepository bookmarkRepository;
     private BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
-
-    public PageResponse<AdminMemberResponse> getAllMembers(Pageable pageable) {
-        PageResponse<AdminMemberResponse> membersPage = memberRepository.findAllMembers(pageable);
-
-        return membersPage;
-    }
-
-    public AdminMemberDetailResponse getMember(Long id) {
-        Member member = memberRepository.findById(id).orElseThrow(() -> new BusinessException(
-            MemberErrorCode.NOT_FOUND_MEMBER));
-
-        List<AdminBookmarkResponse> adminBookmarkResponses = bookmarkRepository.findBookmarkByMember(
-            member.getMemberId());
-
-        AdminMemberDetailResponse response = AdminMapper.INSTANCE.toAdminMemberResponse(member,
-            adminBookmarkResponses);
-
-        return response;
-    }
-
-    public Page<WithdrawalMemberResponse> getAllWithdrawalMembers(Pageable pageable) {
-        Page<WithdrawalMemberResponse> membersPage = memberRepository.findAllWithdrawMembers(pageable);
-
-       return membersPage;
-    }
-
-    public PageResponse<AdminMemberResponse> getAllMemberWithFilter(Pageable pageable,
-        MemberFilterRequest memberFilterRequest) {
-
-        checkFilterException(memberFilterRequest);
-
-        PageResponse<AdminMemberResponse> members = memberRepository.findAllMemberWithFilter(
-            pageable,
-            memberFilterRequest);
-
-        return members;
-    }
 
     @Transactional
     public MemberResponse joinAdminMember(AdminJoinRequest adminJoinRequest) {
@@ -92,26 +53,5 @@ public class AdminService {
 
         memberRepository.save(joinMember);
         return MemberMapper.INSTANCE.toDto(joinMember);
-    }
-
-    private void checkFilterException(MemberFilterRequest memberFilterRequest) {
-        if ((memberFilterRequest.getStartDate() != null && memberFilterRequest.getEndDate() != null)
-            && memberFilterRequest.getPeriods() != null) {
-            throw new BusinessException(AdminErrorCode.DUPLICATED_PERIOD);
-        }
-
-        if (memberFilterRequest.getStartDate() != null
-            && memberFilterRequest.getEndDate() == null) {
-            throw new BusinessException(AdminErrorCode.END_DATE_NOT_SELECTED);
-        }
-
-        if (memberFilterRequest.getStartDate() == null
-            && memberFilterRequest.getEndDate() != null) {
-            throw new BusinessException(AdminErrorCode.START_DATE_NOT_SELECTED);
-        }
-
-        if (memberFilterRequest.getStartDate().isAfter(memberFilterRequest.getEndDate())) {
-            throw new BusinessException(AdminErrorCode.START_DATE_AFTER_END_DATE);
-        }
     }
 }

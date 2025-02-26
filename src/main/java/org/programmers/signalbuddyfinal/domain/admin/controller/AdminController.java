@@ -30,39 +30,6 @@ public class AdminController {
 
     private final AdminService adminService;
 
-    @GetMapping("/members")
-    public ResponseEntity<ApiResponse<PageResponse<AdminMemberResponse>>> getAllMembers(
-        @PageableDefault(page = 0, size = 10, sort = "email") Pageable pageable) {
-
-        PageResponse<AdminMemberResponse> members = adminService.getAllMembers(pageable);
-        return ResponseEntity.ok(ApiResponse.createSuccess(members));
-    }
-
-    @GetMapping("members-detail/{id}")
-    public ResponseEntity<AdminMemberDetailResponse> getMember(@PathVariable Long id) {
-        final AdminMemberDetailResponse member = adminService.getMember(id);
-        return ResponseEntity.ok(member);
-    }
-
-    @GetMapping("/members-withdrawal")
-    public ResponseEntity<Page<WithdrawalMemberResponse>> getAllWithdrawMembers(
-        @PageableDefault(page = 0, size = 10, sort = "email") Pageable pageable) {
-
-        Page<WithdrawalMemberResponse> members = adminService.getAllWithdrawalMembers(pageable);
-        return ResponseEntity.ok(members);
-    }
-
-    @GetMapping("members/filter")
-    public ResponseEntity<ApiResponse<PageResponse<AdminMemberResponse>>> getAllFilteredMembers(
-        @PageableDefault(page = 0, size = 10, sort = "email") Pageable pageable,
-        @ModelAttribute MemberFilterRequest memberFilterRequest) {
-
-        PageResponse<AdminMemberResponse> members = adminService.getAllMemberWithFilter(pageable,
-            memberFilterRequest);
-
-        return ResponseEntity.ok(ApiResponse.createSuccess(members));
-    }
-
     @PostMapping("/join")
     public ResponseEntity<MemberResponse> joinMember(
         @Validated @RequestBody AdminJoinRequest memberJoinRequest) {
