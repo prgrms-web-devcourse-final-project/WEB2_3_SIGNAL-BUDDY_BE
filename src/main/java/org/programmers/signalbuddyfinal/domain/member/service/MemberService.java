@@ -16,7 +16,6 @@ import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
 import org.programmers.signalbuddyfinal.global.service.AwsFileService;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
@@ -96,7 +95,8 @@ public class MemberService {
             profileImageUrl = awsFileService.getFileFromS3(profilePath, memberDir).toString();
         } else {
             // 프로필 이미지를 저장하지 않았을 경우 기본 이미지
-            profileImageUrl = awsFileService.getFileFromS3(defaultProfileImage, memberDir).toString();
+            profileImageUrl = awsFileService.getFileFromS3(defaultProfileImage, memberDir)
+                .toString();
         }
 
         Member joinMember = Member.builder().email(memberJoinRequest.getEmail())

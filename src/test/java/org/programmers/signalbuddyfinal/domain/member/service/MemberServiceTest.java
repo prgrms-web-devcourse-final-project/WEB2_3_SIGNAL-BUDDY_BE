@@ -2,6 +2,8 @@ package org.programmers.signalbuddyfinal.domain.member.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -23,6 +25,8 @@ import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
 import org.programmers.signalbuddyfinal.global.service.AwsFileService;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.mock.web.MockMultipartFile;
@@ -112,14 +116,18 @@ class MemberServiceTest {
 
         MockMultipartFile profileImage = new MockMultipartFile("profileImage", "", "image/jpeg",
             new byte[0]);
-        ReflectionTestUtils.setField(memberService, "defaultProfileImagePath", "test-path");
+        ReflectionTestUtils.setField(memberService, "defaultProfileImage", "test-path");
+        ReflectionTestUtils.setField(memberService, "memberDir", "test-dir");
+
+        Resource mockResource = mock(UrlResource.class);
+        when(awsFileService.uploadFileToS3(any(MockMultipartFile.class), anyString())).thenReturn(profileImage.getName());
+        when(awsFileService.getFileFromS3(anyString(), anyString())).thenReturn(mockResource);
 
         //given
         final MemberJoinRequest request = MemberJoinRequest.builder().email("test2@example.com")
             .nickname("TestUser2").password("password123").build();
-        final String defaultProfileImageUrl = new ClassPathResource("test-path").toString();
         final Member expectedMember = Member.builder().memberId(id).email("test2@example.com")
-            .nickname("TestUser2").profileImageUrl(defaultProfileImageUrl).memberStatus(MemberStatus.ACTIVITY)
+            .nickname("TestUser2").profileImageUrl(mockResource.toString()).memberStatus(MemberStatus.ACTIVITY)
             .role(MemberRole.USER).build();
 
         when(memberRepository.save(any(Member.class))).thenReturn(expectedMember);
