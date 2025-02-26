@@ -82,8 +82,8 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.GET, "/api/admin/feedbacks").hasRole(ADMIN)
                     // 피드백 신고
                     .requestMatchers(HttpMethod.GET, "/api/feedbacks/reports").hasRole(ADMIN)
-                    .requestMatchers(HttpMethod.PATCH, "/api/feedbacks/**/reports/**").hasRole(ADMIN)
-                    .requestMatchers(HttpMethod.DELETE, "/api/feedbacks/**/reports/**").hasRole(ADMIN)
+                    .requestMatchers(HttpMethod.PATCH, "/api/feedbacks/{feedbackId}/reports/{reportId}").hasRole(ADMIN)
+                    .requestMatchers(HttpMethod.DELETE, "/api/feedbacks/{feedbackId}/reports/{reportId}").hasRole(ADMIN)
                     // 회원
                     .requestMatchers("/api/admins/**", "/admins/members/**").hasRole(ADMIN)
                     .requestMatchers("/api/members/**", "/members/**").hasRole(USER)
