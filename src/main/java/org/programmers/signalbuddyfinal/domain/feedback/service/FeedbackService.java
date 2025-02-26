@@ -20,6 +20,7 @@ import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.service.AwsFileService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +38,9 @@ public class FeedbackService {
     private final CrossroadRepository crossroadRepository;
     private final FeedbackReportRepository reportRepository;
     private final AwsFileService awsFileService;
+
+    @Value("${cloud.aws.s3.folder.feedback}")
+    private String feedbackDir;
 
     public PageResponse<FeedbackResponse> searchFeedbackList(
         Pageable pageable,
@@ -85,8 +89,8 @@ public class FeedbackService {
 
         String imageUrl = null;
         if (image != null) {
-            String fileName = awsFileService.saveProfileImage(image);
-            imageUrl = awsFileService.getProfileImage(fileName).toString();
+            String fileName = awsFileService.uploadFileToS3(image, feedbackDir);
+            imageUrl = awsFileService.getFileFromS3(fileName, feedbackDir).toString();
         }
 
         Feedback feedback = Feedback.create()
@@ -120,8 +124,8 @@ public class FeedbackService {
         }
 
         if (image != null) {
-            String fileName = awsFileService.saveProfileImage(image);
-            String imageUrl = awsFileService.getProfileImage(fileName).toString();
+            String fileName = awsFileService.uploadFileToS3(image, feedbackDir);
+            String imageUrl = awsFileService.getFileFromS3(fileName, feedbackDir).toString();
             feedback.updateImageUrl(imageUrl);
         }
 

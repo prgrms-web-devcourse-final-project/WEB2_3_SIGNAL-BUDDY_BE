@@ -7,6 +7,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.getMockImageFile;
 
+import java.net.URL;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -84,10 +85,10 @@ class FeedbackServiceTest extends ServiceTest {
         CustomUser2Member user = getCurrentMember(member.getMemberId(), MemberRole.USER);
 
         // When
-        Resource mockResource = mock(UrlResource.class);
-        when(awsFileService.saveProfileImage(any(MockMultipartFile.class)))
+        URL mockURL = mock(URL.class);
+        when(awsFileService.uploadFileToS3(any(MockMultipartFile.class), anyString()))
             .thenReturn(imageFile.getName());
-        when(awsFileService.getProfileImage(anyString())).thenReturn(mockResource);
+        when(awsFileService.getFileFromS3(anyString(), anyString())).thenReturn(mockURL);
         FeedbackResponse actual = feedbackService.writeFeedback(request, imageFile, user);
 
         // Then
@@ -226,10 +227,10 @@ class FeedbackServiceTest extends ServiceTest {
         CustomUser2Member user = getCurrentMember(member.getMemberId(), MemberRole.USER);
 
         // When
-        Resource mockResource = mock(UrlResource.class);
-        when(awsFileService.saveProfileImage(any(MockMultipartFile.class)))
+        URL mockURL = mock(URL.class);
+        when(awsFileService.uploadFileToS3(any(MockMultipartFile.class), anyString()))
             .thenReturn(updatedImageFile.getName());
-        when(awsFileService.getProfileImage(anyString())).thenReturn(mockResource);
+        when(awsFileService.getFileFromS3(anyString(), anyString())).thenReturn(mockURL);
         FeedbackResponse actual = feedbackService.updateFeedback(
             feedbackId, request, updatedImageFile, user
         );
@@ -239,7 +240,7 @@ class FeedbackServiceTest extends ServiceTest {
             softAssertions.assertThat(actual.getFeedbackId()).isEqualTo(feedbackId);
             softAssertions.assertThat(actual.getContent()).isEqualTo(updatedContent);
             softAssertions.assertThat(actual.getCategory()).isEqualTo(updatedCategory);
-            softAssertions.assertThat(actual.getImageUrl()).isEqualTo(mockResource.toString());
+            softAssertions.assertThat(actual.getImageUrl()).isEqualTo(mockURL.toString());
         });
     }
 

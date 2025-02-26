@@ -16,8 +16,6 @@ import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
 import org.programmers.signalbuddyfinal.global.service.AwsFileService;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
@@ -37,7 +35,11 @@ public class MemberService {
     private BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
 
     @Value("${default.profile.image.path}")
-    private String defaultProfileImagePath;
+    private String defaultProfileImage;
+
+    @Value("${cloud.aws.s3.folder.member}")
+    private String memberDir;
+
 
     public MemberResponse getMember(Long id) {
         final Member member = memberRepository.findById(id)
@@ -66,7 +68,8 @@ public class MemberService {
     public String saveProfileImage(Long id, MultipartFile file) {
         final Member member = findMemberById(id);
         final String profileImage = saveProfileImageIfPresent(file);
-        member.saveProfileImage(profileImage);
+        final String imageUrl = awsFileService.getFileFromS3(profileImage, memberDir).toString();
+        member.saveProfileImage(imageUrl);
         return profileImage;
     }
 
@@ -82,34 +85,28 @@ public class MemberService {
 
         if (memberRepository.existsByEmail(memberJoinRequest.getEmail())) {
             throw new BusinessException(MemberErrorCode.ALREADY_EXIST_EMAIL);
-        }else if(memberRepository.existsByNickname(memberJoinRequest.getNickname())) {
+        } else if (memberRepository.existsByNickname(memberJoinRequest.getNickname())) {
             throw new BusinessException(MemberErrorCode.ALREADY_EXIST_NICKNAME);
         }
 
         String profilePath = saveProfileImageIfPresent(image);
+        String profileImageUrl = null;
+        if (profilePath != null) {
+            profileImageUrl = awsFileService.getFileFromS3(profilePath, memberDir).toString();
+        } else {
+            // 프로필 이미지를 저장하지 않았을 경우 기본 이미지
+            profileImageUrl = awsFileService.getFileFromS3(defaultProfileImage, memberDir)
+                .toString();
+        }
 
         Member joinMember = Member.builder().email(memberJoinRequest.getEmail())
             .nickname(memberJoinRequest.getNickname())
             .password(bCryptPasswordEncoder.encode(memberJoinRequest.getPassword()))
-            .profileImageUrl(profilePath).memberStatus(MemberStatus.ACTIVITY).role(MemberRole.USER)
-            .build();
+            .profileImageUrl(profileImageUrl).memberStatus(MemberStatus.ACTIVITY)
+            .role(MemberRole.USER).build();
 
         memberRepository.save(joinMember);
         return MemberMapper.INSTANCE.toDto(joinMember);
-    }
-
-    @Transactional(readOnly = true)
-    public Resource getProfileImage(Long id) {
-        final Member member = findMemberById(id);
-        final String profileImage = member.getProfileImageUrl();
-        try {
-            if (profileImage.isEmpty()) {
-                return new ClassPathResource(defaultProfileImagePath);
-            }
-            return awsFileService.getProfileImage(profileImage);
-        } catch (BusinessException e) {
-            return new ClassPathResource(defaultProfileImagePath);
-        }
     }
 
     public boolean verifyPassword(String password, Long id) {
@@ -127,7 +124,7 @@ public class MemberService {
         if (imageFile == null) {
             return null;
         }
-        return awsFileService.saveProfileImage(imageFile);
+        return awsFileService.uploadFileToS3(imageFile, memberDir);
     }
 
     private String encodedPassword(String password) {

@@ -202,30 +202,6 @@ class MemberControllerTest extends ControllerTest {
                         .build())));
     }
 
-    @DisplayName("유저 프로필 이미지 조회")
-    @Test
-    void getProfileImage() throws Exception {
-        final Long memberId = 1L;
-
-        // 가상의 이미지 데이터를 가진 ByteArrayResource 생성
-        byte[] imageData = "dummy image data".getBytes();
-        Resource imageResource = new ByteArrayResource(imageData);
-
-        given(memberService.getProfileImage(memberId)).willReturn(imageResource);
-
-        ResultActions result = mockMvc.perform(get("/api/members/{id}/profile-image", memberId));
-
-        result.andExpect(status().isOk()).andDo(
-            document("유저 프로필 이미지 조회", preprocessRequest(prettyPrint()),
-                preprocessResponse(prettyPrint()), resource(
-                    ResourceSnippetParameters.builder().tag(tag).summary("유저 프로필 이미지 조회")
-                        .pathParameters(
-                            parameterWithName("id").type(SimpleType.NUMBER).description("유저 ID"))
-                        .responseHeaders(
-                            headerWithName(HttpHeaders.CONTENT_TYPE).description("응답 콘텐츠 타입"))
-                        .build())));
-    }
-
     @DisplayName("유저 탈퇴")
     @Test
     void deleteMember() throws Exception {
