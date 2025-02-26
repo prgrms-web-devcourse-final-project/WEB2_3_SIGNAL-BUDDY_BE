@@ -1,6 +1,5 @@
 package org.programmers.signalbuddyfinal.domain.feedback.service;
 
-import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.comment.repository.CommentRepository;
 import org.programmers.signalbuddyfinal.domain.crossroad.entity.Crossroad;
@@ -20,7 +19,6 @@ import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepositor
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
-import org.programmers.signalbuddyfinal.global.exception.GlobalErrorCode;
 import org.programmers.signalbuddyfinal.global.service.AwsFileService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -49,23 +47,6 @@ public class FeedbackService {
             feedbackRepository.findAllByActiveMembers(
                 pageable, request.getStatus(), request.getCategory(),
                 crossroadId, request.getKeyword()
-            )
-        );
-    }
-
-    public PageResponse<FeedbackResponse> searchFeedbackListByAdmin(
-        Pageable pageable,
-        FeedbackSearchRequest request, Boolean deleted,
-        LocalDate startDate, LocalDate endDate,
-        CustomUser2Member user
-    ) {
-        if (!MemberRole.ADMIN.equals(user.getRole())) {
-            throw new BusinessException(GlobalErrorCode.ADMIN_ONLY);
-        }
-        return new PageResponse<>(
-            feedbackRepository.findAllByFilter(
-                pageable, request.getKeyword(), request.getStatus(),
-                request.getCategory(), startDate, endDate,deleted
             )
         );
     }

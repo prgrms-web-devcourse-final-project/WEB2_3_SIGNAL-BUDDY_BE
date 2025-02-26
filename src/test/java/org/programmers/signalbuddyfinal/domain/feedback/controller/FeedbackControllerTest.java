@@ -4,7 +4,6 @@ import static com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper.docume
 import static com.epages.restdocs.apispec.ResourceDocumentation.parameterWithName;
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
@@ -29,7 +28,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.epages.restdocs.apispec.ResourceSnippetParameters;
 import com.epages.restdocs.apispec.SimpleType;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -55,7 +53,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort.Direction;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -65,7 +62,6 @@ import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.web.multipart.MultipartFile;
-import org.testcontainers.shaded.org.apache.commons.lang3.ArrayUtils;
 
 @WebMvcTest(FeedbackController.class)
 class FeedbackControllerTest extends ControllerTest {
@@ -240,131 +236,6 @@ class FeedbackControllerTest extends ControllerTest {
                             )
                             .responseFields(
                                 feedbackPageResponseDocs()
-                            )
-                            .build()
-                    )
-                )
-            );
-    }
-
-    @DisplayName("관리자가 피드백을 검색한다.")
-    @Test
-    @WithMockCustomUser(roleType = "ROLE_ADMIN")
-    void searchFeedbackListByAdmin() throws Exception {
-        // Given
-        Pageable pageable = PageRequest.of(
-            1, 10, Direction.DESC, "createdAt"
-        );
-        List<FeedbackResponse> feedbacks = new ArrayList<>();
-        MemberResponse member = makeMemberResponse();
-        for (int i = 1; i <= 10; i++) {
-            feedbacks.add(makeDeletedFeedbackResponse(member, i));
-        }
-        PageResponse<FeedbackResponse> response = new PageResponse<>(
-            new PageImpl<>(feedbacks, pageable, 23)
-        );
-
-        given(
-            feedbackService.searchFeedbackListByAdmin(
-                any(Pageable.class), any(FeedbackSearchRequest.class), anyBoolean(),
-                any(LocalDate.class), any(LocalDate.class), any(CustomUser2Member.class)
-            )
-        ).willReturn(response);
-
-        // When
-        ResultActions result = mockMvc.perform(
-            get("/api/feedbacks")
-                .header(HttpHeaders.AUTHORIZATION, getTokenExample())
-                .queryParam("page", String.valueOf(pageable.getPageNumber()))
-                .queryParam("size", String.valueOf(pageable.getPageSize()))
-                .queryParam("sort", "createdAt", "desc")
-                .queryParam("keyword", "test")
-                .queryParam("deleted", "true")
-                .queryParam("status", "before")
-                .queryParam("category", "etc", "delay")
-                .queryParam("start-date", "2024-10-10")
-                .queryParam("end-date", "2025-01-01")
-        );
-
-        // Then
-        result.andExpect(status().isOk())
-            .andExpect(
-                jsonPath("$.data.searchResults[2].feedbackId")
-                    .value(response.getSearchResults().get(2).getFeedbackId())
-            )
-            .andDo(
-                document(
-                    "관리자용 피드백 목록 조회",
-                    preprocessRequest(prettyPrint()),
-                    preprocessResponse(prettyPrint()),
-                    resource(
-                        ResourceSnippetParameters.builder()
-                            .tag(tag)
-                            .summary("관리자용 피드백 목록 조회")
-                            .queryParameters(
-                                parameterWithName("page").type(SimpleType.NUMBER)
-                                    .description("페이지 번호 (기본값 : `0`, 0부터 시작)").optional(),
-                                parameterWithName("size").type(SimpleType.NUMBER)
-                                    .description("페이지 크기 (기본값 : `10`)").optional(),
-                                parameterWithName("sort").type(SimpleType.STRING)
-                                    .description("""
-                                        정렬 설정
-                                        - 형식 : `정렬할_컬럼,정렬_순서`
-                                        - ex) createdAt,desc
-                                        
-                                        정렬할 컬럼 (기본값 : `createdAt`)
-                                        - `feedbackId` : 피드백 ID(PK)
-                                        - `subject` : 피드백 제목
-                                        - `content` : 피드백 내용
-                                        - `category` : 피드백 유형
-                                        - `status` : 피드백 답변 상태
-                                        - `createdAt` : 작성일
-                                        - `updatedAt` : 수정일
-                                        - `deletedAt` : 삭제일
-                                        
-                                        정렬 순서 (기본값 : `desc`)
-                                        - `asc` : 오름차순
-                                        - `desc` : 내림차순
-                                        """).optional(),
-                                parameterWithName("keyword").type(SimpleType.STRING)
-                                    .description("검색어").optional(),
-                                parameterWithName("deleted").type(SimpleType.BOOLEAN)
-                                    .description("""
-                                        삭제된 데이터 표시 여부 (택 1)
-                                        - `true` : 삭제된 데이터만 가져오기
-                                        - `false` : 삭제된 데이터 제외
-                                        """).optional(),
-                                parameterWithName("status").type(SimpleType.STRING)
-                                    .description("""
-                                        피드백 답변 상태 (택 1)
-                                        - `before` : 답변 전
-                                        - `completion` : 답변 완료
-                                        """).optional(),
-                                parameterWithName("category").type(SimpleType.STRING)
-                                    .description("""
-                                        피드백 유형 (여러 개 선택 가능)
-                                        - `delay` : 신호 지연
-                                        - `malfunction` : 오작동
-                                        - `add-signal` : 신호등 추가
-                                        - `etc` : 기타
-                                        """).optional(),
-                                parameterWithName("start-date").type(SimpleType.STRING)
-                                    .description("""
-                                        시작 날짜 범위 (피드백 작성일 기준)
-                                        형식 : `yyyy-MM-dd`
-                                        """).optional(),
-                                parameterWithName("end-date").type(SimpleType.STRING)
-                                    .description("""
-                                        종료 날짜 범위 (피드백 작성일 기준)
-                                        형식 : `yyyy-MM-dd`
-                                        """).optional()
-                            )
-                            .responseFields(
-                                ArrayUtils.addAll(
-                                    feedbackPageResponseDocs(),
-                                    fieldWithPath("data.searchResults[].deletedAt")
-                                        .description("피드백 삭제일")
-                                )
                             )
                             .build()
                     )
@@ -587,17 +458,6 @@ class FeedbackControllerTest extends ControllerTest {
             .subject("test subject" + num).content("test content" + num)
             .answerStatus(AnswerStatus.BEFORE).category(FeedbackCategory.ETC)
             .createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now())
-            .imageUrl("https://image.com/dfsdfsdf").member(member).likeCount(21L % num)
-            .build();
-    }
-
-    private FeedbackResponse makeDeletedFeedbackResponse(MemberResponse member, int num) {
-        return FeedbackResponse.builder()
-            .feedbackId((long) num).secret(Boolean.FALSE)
-            .subject("test subject" + num).content("test content" + num)
-            .answerStatus(AnswerStatus.BEFORE).category(FeedbackCategory.ETC)
-            .createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now())
-            .deletedAt(LocalDateTime.now().plusDays(21 % num))
             .imageUrl("https://image.com/dfsdfsdf").member(member).likeCount(21L % num)
             .build();
     }
