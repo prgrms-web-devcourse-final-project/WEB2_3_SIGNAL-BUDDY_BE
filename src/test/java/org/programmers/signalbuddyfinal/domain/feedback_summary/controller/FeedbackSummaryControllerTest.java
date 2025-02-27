@@ -20,7 +20,6 @@ import com.epages.restdocs.apispec.ResourceSnippetParameters;
 import com.epages.restdocs.apispec.SimpleType;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -30,6 +29,7 @@ import org.programmers.signalbuddyfinal.domain.feedback_summary.dto.FeedbackSumm
 import org.programmers.signalbuddyfinal.domain.feedback_summary.entity.CrossroadFeedbackCount;
 import org.programmers.signalbuddyfinal.domain.feedback_summary.entity.FeedbackCategoryCount;
 import org.programmers.signalbuddyfinal.domain.feedback_summary.service.FeedbackSummaryService;
+import org.programmers.signalbuddyfinal.global.anotation.WithMockCustomUser;
 import org.programmers.signalbuddyfinal.global.support.ControllerTest;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.HttpHeaders;
@@ -48,9 +48,10 @@ class FeedbackSummaryControllerTest extends ControllerTest {
 
     @DisplayName("피드백 데이터의 통계 데이터를 가져온다.")
     @Test
+    @WithMockCustomUser(roleType = "ROLE_ADMIN")
     void getFeedbackSummary() throws Exception {
         // Given
-        LocalDate now = LocalDate.now();
+        LocalDate date = LocalDate.of(2025, 2, 2);
 
         List<FeedbackCategoryCount> categoryRanks = new ArrayList<>();
         categoryRanks.add(
@@ -77,7 +78,7 @@ class FeedbackSummaryControllerTest extends ControllerTest {
             );
         }
         FeedbackSummaryResponse response = FeedbackSummaryResponse.builder()
-            .date(now).todayCount(6L).categoryRanks(categoryRanks).crossroadRanks(crossroadRanks)
+            .date(date).todayCount(6L).categoryRanks(categoryRanks).crossroadRanks(crossroadRanks)
             .createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now())
             .build();
 
@@ -88,14 +89,13 @@ class FeedbackSummaryControllerTest extends ControllerTest {
         ResultActions result = mockMvc.perform(
             get("/api/feedback-summary")
                 .header(HttpHeaders.AUTHORIZATION, getTokenExample())
-                .queryParam("date", now.format(DateTimeFormatter.ISO_DATE))
+                .queryParam("date", "2025-02-02")
         );
 
         // Then
         result.andExpect(status().isOk())
             .andExpect(
-                jsonPath("$.data.date")
-                    .value(now.format(DateTimeFormatter.ISO_DATE))
+                jsonPath("$.data.date").value("2025-02-02")
             )
             .andDo(
                 document(
