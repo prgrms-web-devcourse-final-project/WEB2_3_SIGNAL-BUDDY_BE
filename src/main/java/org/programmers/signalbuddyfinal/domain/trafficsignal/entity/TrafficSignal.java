@@ -36,7 +36,7 @@ public class TrafficSignal {
     private Point coordinate;
 
     public TrafficSignal(TrafficFileResponse response) {
-        this.serialNumber = response.getSerialNumber();
+        this.serialNumber = response.getSerial();
         this.district = response.getDistrict();
         this.signalType = response.getSignalType();
         this.address = response.getAddress();
