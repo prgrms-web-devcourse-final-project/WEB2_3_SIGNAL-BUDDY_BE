@@ -1,7 +1,6 @@
 package org.programmers.signalbuddyfinal.domain.feedback_summary.batch;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 
 import java.time.LocalDate;
 import org.assertj.core.api.SoftAssertions;
@@ -21,8 +20,6 @@ import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
 import org.programmers.signalbuddyfinal.global.support.BatchTest;
-import org.springframework.batch.core.StepContribution;
-import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.beans.factory.annotation.Autowired;
 
 class FeedbackSummaryTaskletTest extends BatchTest {
@@ -79,7 +76,7 @@ class FeedbackSummaryTaskletTest extends BatchTest {
     void execute() {
         // When
         try {
-            feedbackSummaryTasklet.execute(any(StepContribution.class), any(ChunkContext.class));
+            feedbackSummaryTasklet.execute(null, null);
         } catch (Exception e) {
             assertThat(e).isNull();
         }
