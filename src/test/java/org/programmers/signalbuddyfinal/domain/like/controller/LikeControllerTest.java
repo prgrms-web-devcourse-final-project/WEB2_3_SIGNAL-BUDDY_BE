@@ -94,6 +94,7 @@ class LikeControllerTest extends ControllerTest {
         // When
         ResultActions result = mockMvc.perform(
             get("/api/feedbacks/{feedbackId}/like/exist", feedbackId)
+                .header(HttpHeaders.AUTHORIZATION, getTokenExample())
         );
 
         // Then
@@ -107,6 +108,9 @@ class LikeControllerTest extends ControllerTest {
                         ResourceSnippetParameters.builder()
                             .tag(tag)
                             .summary("좋아요 여부 확인")
+                            .requestHeaders(
+                                jwtFormat()
+                            )
                             .pathParameters(
                                 parameterWithName("feedbackId").type(SimpleType.NUMBER)
                                     .description("좋아요 여부를 확인할 피드백 ID")
