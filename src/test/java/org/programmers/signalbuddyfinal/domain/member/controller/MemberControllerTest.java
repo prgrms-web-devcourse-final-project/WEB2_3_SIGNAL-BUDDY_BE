@@ -1,7 +1,6 @@
 package org.programmers.signalbuddyfinal.domain.member.controller;
 
 import static com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper.document;
-import static com.epages.restdocs.apispec.ResourceDocumentation.headerWithName;
 import static com.epages.restdocs.apispec.ResourceDocumentation.parameterWithName;
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
 import static com.epages.restdocs.apispec.Schema.schema;
@@ -29,7 +28,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.epages.restdocs.apispec.ResourceSnippetParameters;
 import com.epages.restdocs.apispec.SimpleType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -56,13 +54,10 @@ import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.programmers.signalbuddyfinal.global.support.ControllerTest;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -137,8 +132,8 @@ class MemberControllerTest extends ControllerTest {
             .memberStatus(MemberStatus.ACTIVITY).role(MemberRole.USER).email(request.getEmail())
             .nickname(request.getNickname()).build();
 
-        given(memberService.updateMember(eq(memberId), any(MemberUpdateRequest.class),
-            any(HttpServletRequest.class))).willReturn(memberResponse);
+        given(memberService.updateMember(eq(memberId), any(MemberUpdateRequest.class)
+        )).willReturn(memberResponse);
 
         // When
         ResultActions result = mockMvc.perform(patch("/api/members/{id}", memberId).contentType(
