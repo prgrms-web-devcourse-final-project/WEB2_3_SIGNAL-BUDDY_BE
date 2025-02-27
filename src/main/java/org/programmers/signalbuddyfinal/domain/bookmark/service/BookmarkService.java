@@ -45,6 +45,7 @@ public class BookmarkService {
         return new PageResponse<>(page);
     }
 
+    @Transactional
     public BookmarkResponse createBookmark(BookmarkRequest request, Long memberId) {
         final Member member = getMember(memberId);
 
@@ -63,6 +64,9 @@ public class BookmarkService {
     public BookmarkResponse updateBookmark(BookmarkRequest request, Long id, Long memberId) {
         final Member member = getMember(memberId);
 
+        // TODO : 성능 개선
+//        final Bookmark bookmark = bookmarkRepository.findByBookmarkIdAndMemberMemberId(id, memberId)
+//            .orElseThrow(() -> new BusinessException(BookmarkErrorCode.NOT_FOUND_BOOKMARK));
         final Bookmark bookmark = bookmarkRepository.findById(id)
             .orElseThrow(() -> new BusinessException(BookmarkErrorCode.NOT_FOUND_BOOKMARK));
 
@@ -78,16 +82,12 @@ public class BookmarkService {
 
     @Transactional
     public void deleteBookmark(List<Long> bookmarkIds, Long memberId) {
-        final Member member = getMember(memberId);
-        final List<Bookmark> bookmarkList = bookmarkRepository.findAllById(bookmarkIds);
+        final List<Bookmark> bookmarkList = bookmarkRepository.findAllByBookmarkIdInAndMemberMemberId(
+            bookmarkIds, memberId);
+
         final List<RecentPath> recentPaths = recentPathRepository.findAllByBookmarkIn(bookmarkList);
 
-        bookmarkList.forEach(bookmark -> {
-            if (bookmark.isNotOwnedBy(member)) {
-                throw new BusinessException(BookmarkErrorCode.UNAUTHORIZED_MEMBER_ACCESS);
-            }
-            bookmark.delete();
-        });
+        bookmarkList.forEach(Bookmark::delete);
 
         // 북마크 삭제 시 최근경로에서 북마크 연관관계 해제
         recentPaths.forEach(RecentPath::unlinkBookmark);
