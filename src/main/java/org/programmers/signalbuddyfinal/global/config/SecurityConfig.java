@@ -30,9 +30,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Value("${api.front-url}")
+    @Value("${url.front-url}")
     private String frontendUrl;
-    @Value("${api.back-url}")
+    @Value("${url.back-url}")
     private String backendUrl;
 
     private final JwtUtil jwtUtil;
