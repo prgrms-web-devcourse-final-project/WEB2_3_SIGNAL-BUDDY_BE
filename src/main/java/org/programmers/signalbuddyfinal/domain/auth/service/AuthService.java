@@ -69,7 +69,7 @@ public class AuthService {
             .secure(true)
             .path("/")
             .maxAge(Duration.ofDays(7))
-            .sameSite("Strict")
+            .sameSite("None")
             .build();
 
         headers.add(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
