@@ -1,4 +1,4 @@
-package org.programmers.signalbuddyfinal.domain.trafficsignal.entity;
+package org.programmers.signalbuddyfinal.domain.trafficSignal.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
