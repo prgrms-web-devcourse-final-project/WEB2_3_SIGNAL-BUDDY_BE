@@ -10,9 +10,7 @@ import org.programmers.signalbuddyfinal.domain.trafficSignal.repository.TrafficR
 import org.programmers.signalbuddyfinal.domain.trafficSignal.service.TrafficCsvService;
 import org.programmers.signalbuddyfinal.global.support.ServiceTest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.net.URISyntaxException;
