@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Point;
+import org.programmers.signalbuddyfinal.domain.admin.service.AdminPostItService;
 import org.programmers.signalbuddyfinal.domain.crossroad.service.PointUtil;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
@@ -27,6 +28,7 @@ import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
 import org.programmers.signalbuddyfinal.global.support.ServiceTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.transaction.annotation.Transactional;
 
 public class PostItServiceTest extends ServiceTest {
 
@@ -38,6 +40,8 @@ public class PostItServiceTest extends ServiceTest {
     private MemberRepository memberRepository;
     @Autowired
     private PostitSolveRepository postitSolveRepository;
+    @Autowired
+    private AdminPostItService adminPostItService;
 
     private Member member1;
     private Member member2;
@@ -105,7 +109,7 @@ public class PostItServiceTest extends ServiceTest {
 
         postItRepository.save(
             createPostIt(Danger.NOTICE, PointUtil.toPoint(1.0203, 1.3048), "제목1",
-                "제목1", "img1", LocalDateTime.of(2025, 1, 1, 0, 0), member1));
+                "제목1", "img1", LocalDateTime.of(2025, 1, 1, 0, 0), null, member1));
         PostItRequest request = createPostItRequest("제목", "내용");
 
         PostItResponse response = postItService.updatePostIt(1L, request, mockImage2, user1);
@@ -120,7 +124,7 @@ public class PostItServiceTest extends ServiceTest {
 
         postItRepository.save(
             createPostIt(Danger.NOTICE, PointUtil.toPoint(1.0203, 1.3048), "제목1",
-                "제목1", "img1", LocalDateTime.of(2025, 1, 1, 0, 0), member1));
+                "제목1", "img1", LocalDateTime.of(2025, 1, 1, 0, 0), null, member1));
         PostItRequest request = createPostItRequest("제목", "내용");
 
         assertThrows(BusinessException.class,
@@ -132,7 +136,7 @@ public class PostItServiceTest extends ServiceTest {
     public void deletePostItSuccessTest() {
         postItRepository.save(
             createPostIt(Danger.NOTICE, PointUtil.toPoint(1.0203, 1.3048), "제목1",
-                "제목1", "img1", LocalDateTime.of(2025, 1, 1, 0, 0), member1));
+                "제목1", "img1", LocalDateTime.of(2025, 1, 1, 0, 0), null, member1));
 
         postItService.deletePostIt(1L, user1);
 
@@ -145,24 +149,35 @@ public class PostItServiceTest extends ServiceTest {
 
         postItRepository.save(
             createPostIt(Danger.NOTICE, PointUtil.toPoint(1.0203, 1.3048), "제목1",
-                "제목1", "img1", LocalDateTime.of(2025, 1, 1, 0, 0), member1));
+                "제목1", "img1", LocalDateTime.of(2025, 1, 1, 0, 0), null, member1));
         PostItRequest request = createPostItRequest("제목", "내용");
 
         assertThrows(BusinessException.class,
             () -> postItService.deletePostIt(1L, user2));
     }
 
-
     @Test
     @DisplayName("포스트잇 해결 상태 변경 성공 테스트")
     public void completePostItTest() {
         postItRepository.save(
             createPostIt(Danger.NOTICE, PointUtil.toPoint(1.0203, 1.3048), "제목1",
-                "제목1", "img1", LocalDateTime.of(2025, 1, 1, 0, 0), member1));
+                "제목1", "img1", LocalDateTime.of(2025, 1, 1, 0, 0), null, member1));
 
         postItService.completePostIt(1L);
         assertThat(postitSolveRepository.findById(1L).get().getDeletedAt()).isNotNull();
     }
+
+    @Test
+    @DisplayName("이미 해결된 포스트잇 변경 예외 발생 테스트")
+    public void alreadyCompletePostItExceptionTest() {
+        postItRepository.save(
+            createPostIt(Danger.NOTICE, PointUtil.toPoint(1.0203, 1.3048), "제목1",
+                "제목1", "img1", LocalDateTime.of(2025, 1, 1, 0, 0),
+                LocalDateTime.of(2025, 1, 9, 0, 0), member1));
+
+        assertThrows(BusinessException.class, () -> postItService.completePostIt(1L));
+    }
+
     private PostItRequest createPostItRequest(String subject, String content) {
 
         return PostItRequest.builder()
@@ -189,7 +204,7 @@ public class PostItServiceTest extends ServiceTest {
     }
 
     private Postit createPostIt(Danger danger, Point coordinate, String subject,
-        String content, String imageURl, LocalDateTime expiryDate,
+        String content, String imageURl, LocalDateTime expiryDate, LocalDateTime deletedDate,
         Member member) {
         Postit postit = Postit.builder()
             .danger(danger)
@@ -198,7 +213,7 @@ public class PostItServiceTest extends ServiceTest {
             .content(content)
             .imageUrl(imageURl)
             .expiryDate(expiryDate)
-            .deletedAt(null)
+            .deletedAt(deletedDate)
             .member(member)
             .build();
         return postItRepository.save(postit);
