@@ -338,7 +338,7 @@ public class PostItControllerTest extends ControllerTest {
     @WithMockCustomUser
     public void deletePostIt() throws Exception {
 
-        CustomUserDetails customUserDetails = new CustomUserDetails(1L, "user1@gmamil.com", "1234",
+        CustomUserDetails customUserDetails = new CustomUserDetails(1L, "user1@gmamil.com", "12345",
             "url2.jpg", "user1", MemberRole.USER, MemberStatus.ACTIVITY);
         CustomUser2Member user = new CustomUser2Member(customUserDetails);
 
