@@ -1,6 +1,5 @@
 package org.programmers.signalbuddyfinal.domain.member.service;
 
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberJoinRequest;
@@ -13,13 +12,8 @@ import org.programmers.signalbuddyfinal.domain.member.exception.MemberErrorCode;
 import org.programmers.signalbuddyfinal.domain.member.mapper.MemberMapper;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
-import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
 import org.programmers.signalbuddyfinal.global.service.AwsFileService;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,14 +47,20 @@ public class MemberService {
     }
 
     @Transactional
-    public MemberResponse updateMember(Long id, MemberUpdateRequest memberUpdateRequest,
-        HttpServletRequest request) {
+    public MemberResponse updateMember(Long id, MemberUpdateRequest memberUpdateRequest) {
         final Member member = findMemberById(id);
+        if (!member.getEmail().equalsIgnoreCase(memberUpdateRequest.getEmail())
+            && memberRepository.existsByEmail(memberUpdateRequest.getEmail())) {
+            throw new BusinessException(MemberErrorCode.ALREADY_EXIST_EMAIL);
+        } else if (!member.getNickname().equalsIgnoreCase(memberUpdateRequest.getNickname())
+                   && memberRepository.existsByNickname(memberUpdateRequest.getNickname())) {
+            throw new BusinessException(MemberErrorCode.ALREADY_EXIST_NICKNAME);
+        }
+
         final String encodedPassword = encodedPassword(memberUpdateRequest.getPassword());
 
         member.updateMember(memberUpdateRequest, encodedPassword);
         log.info("Member updated: {}", member);
-//        updateSecurityContext(member, request); // TODO : JWT 구현 완료 후 수정
         return MemberMapper.INSTANCE.toDto(member);
     }
 
@@ -131,29 +131,5 @@ public class MemberService {
             return null;
         }
         return bCryptPasswordEncoder.encode(password);
-    }
-
-    private void updateSecurityContext(Member member, HttpServletRequest request) {
-        // CustomUserDetails 생성
-        final CustomUserDetails userDetails = new CustomUserDetails(member.getMemberId(),
-            member.getEmail(), member.getPassword(), member.getProfileImageUrl(),
-            member.getNickname(), member.getRole(), member.getMemberStatus());
-
-        // Authentication 객체 생성
-        final Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails,
-            null, // 비밀번호는 이미 인증되었으므로 null
-            userDetails.getAuthorities());
-
-        // SecurityContext 생성 및 Authentication 설정
-        final SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
-        securityContext.setAuthentication(authentication);
-
-        // SecurityContextHolder에 설정
-        SecurityContextHolder.setContext(securityContext);
-
-        // HttpSession에 SecurityContext 저장
-        request.getSession().setAttribute("SPRING_SECURITY_CONTEXT", securityContext);
-        // HttpSession 갱신
-        request.getSession().setAttribute("user", userDetails);
     }
 }
