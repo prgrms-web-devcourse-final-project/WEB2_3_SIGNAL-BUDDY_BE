@@ -8,7 +8,6 @@ import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.programmers.signalbuddyfinal.domain.crossroad.service.PointUtil;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
@@ -21,6 +20,7 @@ import org.programmers.signalbuddyfinal.domain.postit.dto.PostItResponse;
 import org.programmers.signalbuddyfinal.domain.postit.entity.Danger;
 import org.programmers.signalbuddyfinal.domain.postit.entity.Postit;
 import org.programmers.signalbuddyfinal.domain.postit.repository.PostItRepository;
+import org.programmers.signalbuddyfinal.domain.postitsolve.repository.PostitSolveRepository;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
@@ -36,6 +36,8 @@ public class PostItServiceTest extends ServiceTest {
     private PostItService postItService;
     @Autowired
     private MemberRepository memberRepository;
+    @Autowired
+    private PostitSolveRepository postitSolveRepository;
 
     private Member member1;
     private Member member2;
@@ -150,6 +152,17 @@ public class PostItServiceTest extends ServiceTest {
             () -> postItService.deletePostIt(1L, user2));
     }
 
+
+    @Test
+    @DisplayName("포스트잇 해결 상태 변경 성공 테스트")
+    public void completePostItTest() {
+        postItRepository.save(
+            createPostIt(Danger.NOTICE, PointUtil.toPoint(1.0203, 1.3048), "제목1",
+                "제목1", "img1", LocalDateTime.of(2025, 1, 1, 0, 0), member1));
+
+        postItService.completePostIt(1L);
+        assertThat(postitSolveRepository.findById(1L).get().getDeletedAt()).isNotNull();
+    }
     private PostItRequest createPostItRequest(String subject, String content) {
 
         return PostItRequest.builder()

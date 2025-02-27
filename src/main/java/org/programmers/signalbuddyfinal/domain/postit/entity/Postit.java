@@ -91,4 +91,11 @@ public class Postit extends BaseTimeEntity {
             this.imageUrl = imageUrl;
         }
     }
+
+    public void completePostIt(LocalDateTime deletedAt){
+        this.deletedAt = deletedAt;
+    }
+    public void returnPostIt(){
+        this.deletedAt = null;
+    }
 }

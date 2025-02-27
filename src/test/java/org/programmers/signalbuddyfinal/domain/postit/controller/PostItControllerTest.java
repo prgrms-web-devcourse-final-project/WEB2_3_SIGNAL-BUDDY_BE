@@ -24,6 +24,7 @@ import static org.springframework.restdocs.request.RequestDocumentation.requestP
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -337,7 +338,7 @@ public class PostItControllerTest extends ControllerTest {
     @WithMockCustomUser
     public void deletePostIt() throws Exception {
 
-        CustomUserDetails customUserDetails = new CustomUserDetails(1L, "user1@gmamil.com", "1234",
+        CustomUserDetails customUserDetails = new CustomUserDetails(1L, "user1@gmamil.com", "12345",
             "url2.jpg", "user1", MemberRole.USER, MemberStatus.ACTIVITY);
         CustomUser2Member user = new CustomUser2Member(customUserDetails);
 
@@ -366,6 +367,81 @@ public class PostItControllerTest extends ControllerTest {
                                     .description("삭제하려는 포스트잇 ID")
                             )
                             .build()
+                    )
+                )
+            );
+    }
+
+    @Test
+    @DisplayName("포스트잇 해결")
+    @WithMockCustomUser
+    public void completePostIt() throws Exception {
+        PostItResponse postItResponse = createResponse(1L);
+
+        given(postItService.completePostIt(anyLong())).willReturn(postItResponse);
+
+        final ResultActions result = mockMvc.perform(patch("/api/postits/complete/{postitId}",1L)
+                .with(csrf())
+                .header(HttpHeaders.AUTHORIZATION, getTokenExample())
+        );
+
+        result.andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andDo(
+                document(
+                    "포스트잇 해결",
+                    preprocessRequest(prettyPrint()),
+                    preprocessResponse(prettyPrint()),
+                    resource(
+                        ResourceSnippetParameters.builder()
+                            .tag(tag)
+                            .summary("포스트잇을 해결상태로 변경하는 API")
+                            .pathParameters(
+                                parameterWithName("postitId").type(SimpleType.NUMBER)
+                                    .description("해결하려는 포스트잇 ID")
+                            )
+                            .build()
+                    ),
+                    responseFields(
+                        ArrayUtils.addAll(
+                            commonResponseFormat(),
+                            fieldWithPath("data.postitId")
+                                .type(JsonFieldType.NUMBER)
+                                .description("생성된 포스트잇 ID"),
+                            fieldWithPath("data.danger")
+                                .type(JsonFieldType.STRING)
+                                .description("포스트잇 위험도"),
+                            fieldWithPath("data.lat")
+                                .type(JsonFieldType.NUMBER)
+                                .description("등록 위도"),
+                            fieldWithPath("data.lng")
+                                .type(JsonFieldType.NUMBER)
+                                .description("등록 경도"),
+                            fieldWithPath("data.subject")
+                                .type(JsonFieldType.STRING)
+                                .description("포스트잇 제목"),
+                            fieldWithPath("data.content")
+                                .type(JsonFieldType.STRING)
+                                .description("포스트잇 내용"),
+                            fieldWithPath("data.imageUrl")
+                                .type(JsonFieldType.STRING)
+                                .description("등록된 이미지 URL"),
+                            fieldWithPath("data.expiryDate")
+                                .type(JsonFieldType.STRING)
+                                .description("""
+                                    포스트잇 삭제 예정일
+                                    형식 : YYYY-MM-dd HH-mm
+                                    """),
+                            fieldWithPath("data.createDate")
+                                .type(JsonFieldType.STRING)
+                                .description("""
+                                    포스트잇 등록일
+                                    형식 : YYYY-MM-dd HH-mm
+                                    """),
+                            fieldWithPath("data.memberId")
+                                .type(JsonFieldType.NUMBER)
+                                .description("등록한 사용자 ID")
+                        )
                     )
                 )
             );

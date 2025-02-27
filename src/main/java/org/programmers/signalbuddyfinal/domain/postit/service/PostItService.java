@@ -1,5 +1,6 @@
 package org.programmers.signalbuddyfinal.domain.postit.service;
 
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.crossroad.service.PointUtil;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
@@ -11,6 +12,7 @@ import org.programmers.signalbuddyfinal.domain.postit.entity.Postit;
 import org.programmers.signalbuddyfinal.domain.postit.exception.PostItErrorCode;
 import org.programmers.signalbuddyfinal.domain.postit.mapper.PostItMapper;
 import org.programmers.signalbuddyfinal.domain.postit.repository.PostItRepository;
+import org.programmers.signalbuddyfinal.domain.postitsolve.repository.PostitSolveRepository;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.service.AwsFileService;
@@ -28,6 +30,8 @@ public class PostItService {
     private final PostItRepository postItRepository;
     private final MemberRepository memberRepository;
     private final AwsFileService awsFileService;
+    private final PostitSolveRepository postitSolveRepository;
+    private final PostItComplete postItComplete;
 
     @Value("${cloud.aws.s3.folder.post-it}")
     private String postItDir;
@@ -76,6 +80,17 @@ public class PostItService {
             throw new BusinessException(PostItErrorCode.POSTIT_MODIFIER_NOT_AUTHORIZED);
         }
         postit.delete();
+    }
+
+    @Transactional
+    public PostItResponse completePostIt(Long postitId) {
+
+        Postit postit = postItRepository.findByIdOrThrow(postitId);
+        LocalDateTime deletedAt = LocalDateTime.now();
+
+        postItComplete.completePostIt(postit,deletedAt);
+
+        return PostItMapper.INSTANCE.toResponse(postit);
     }
 
     private String convertImageFile(MultipartFile image) {
