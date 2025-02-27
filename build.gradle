@@ -62,6 +62,9 @@ dependencies {
     // Hibernate-spatial
     implementation 'org.hibernate:hibernate-spatial:6.6.3.Final'
 
+    // Hibernate-util
+    implementation 'io.hypersistence:hypersistence-utils-hibernate-63:3.9.2'
+
     // Mapstuct
     implementation 'org.mapstruct:mapstruct:1.6.3'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
@@ -250,7 +253,7 @@ openapi3 {
     format = "yaml"
 }
 
-// openapi3가 먼저 실행 - doFrist를 통한 Header 설정
+// openapi3가 먼저 실행 - doFirst를 통한 Header 설정
 tasks.withType(GenerateSwaggerUI) {
     dependsOn 'openapi3'
     doFirst {
