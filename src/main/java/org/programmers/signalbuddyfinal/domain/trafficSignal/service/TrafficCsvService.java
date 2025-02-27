@@ -1,5 +1,6 @@
 package org.programmers.signalbuddyfinal.domain.trafficSignal.service;
 
+import com.opencsv.CSVReader;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
 import lombok.RequiredArgsConstructor;
@@ -12,12 +13,9 @@ import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,18 +28,29 @@ public class TrafficCsvService {
     private final TrafficRepository trafficRepository;
 
     @Transactional
-    public void saveCsvData(MultipartFile file) throws IOException {
+    public void saveCsvData(File file) throws IOException {
 
-        List<TrafficSignal> entityList = new ArrayList<>();
-        Reader reader = new BufferedReader( new InputStreamReader(file.getInputStream() ) );
+        try (Reader reader = new BufferedReader( new InputStreamReader(new FileInputStream(file)) ) ){
 
-        try {
-            CsvToBean<TrafficFileResponse> csvToBean = new CsvToBeanBuilder<TrafficFileResponse>(reader)
+            List<TrafficSignal> entityList = new ArrayList<>();
+
+            CsvToBean<TrafficFileResponse> csvBean = new CsvToBeanBuilder<TrafficFileResponse>(reader)
                     .withType(TrafficFileResponse.class)
                     .withIgnoreLeadingWhiteSpace(true)
+                    .withSkipLines(0)
+                    .withEscapeChar('\n')
                     .build();
 
-            List<TrafficFileResponse> traffics = csvToBean.parse();
+            List<TrafficFileResponse> traffics = csvBean.parse();
+
+            traffics.forEach(traffic -> {
+                System.out.println("serialNumber: " + traffic.getSerial());
+                System.out.println("district: " + traffic.getDistrict());
+                System.out.println("signalType: " + traffic.getSignalType());
+                System.out.println("lat: " + traffic.getLat());
+                System.out.println("lng: " + traffic.getLng());
+                System.out.println("address: " + traffic.getAddress());
+            });
 
             for(TrafficFileResponse trafficRes : traffics) {
                 entityList.add(new TrafficSignal(trafficRes));
@@ -50,9 +59,8 @@ public class TrafficCsvService {
             trafficRepository.saveAll(entityList);
 
         } catch (DataIntegrityViolationException e) {
+            log.error("❌ Data Integrity Violation: {}", e.getMessage(), e);
             throw new BusinessException(TrafficErrorCode.ALREADY_EXIST_TRAFFIC_SIGNAL);
-        } catch (Exception e){
-            log.error(e.getMessage());
         }
 
     }

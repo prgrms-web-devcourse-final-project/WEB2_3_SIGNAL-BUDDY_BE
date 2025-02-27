@@ -1,36 +1,36 @@
 package org.programmers.signalbuddyfinal.domain.trafficSignal.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.opencsv.bean.CsvBindByName;
+import com.opencsv.bean.CsvNumber;
 import lombok.*;
 import org.locationtech.jts.geom.Point;
 import org.programmers.signalbuddyfinal.global.util.PointUtil;
 
 @Getter
 @Builder
-@JsonIgnoreProperties(ignoreUnknown = true)
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
+@NoArgsConstructor
 public class TrafficFileResponse {
 
-    @CsvBindByName
-    private Long serialNumber;
+    @CsvBindByName(column = "serial")
+    @CsvNumber("#")
+    private Long serial;
 
-    @CsvBindByName
+    @CsvBindByName(column = "district")
     private String district;
 
-    @CsvBindByName
+    @CsvBindByName(column = "signalType")
     private String signalType;
 
-    @CsvBindByName
+    @CsvBindByName(column = "lat")
     private Double lat;
 
-    @CsvBindByName
+    @CsvBindByName(column = "lng")
     private Double lng;
 
-    @CsvBindByName
+    @CsvBindByName(column = "address")
     private String address;
 
-    public Point toPoint() { return PointUtil.toPoint(this.lat, this.lng); }
 
+    public Point toPoint() { return PointUtil.toPoint(this.lat, this.lng); }
 }
