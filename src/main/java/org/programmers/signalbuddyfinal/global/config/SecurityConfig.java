@@ -114,10 +114,10 @@ public class SecurityConfig {
     public CorsConfigurationSource configurationSource() {
 
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("https://signal-buddy.vercel.app/", "http://localhost:3000"));
+        configuration.setAllowedOriginPatterns(Arrays.asList("https://signal-buddy.vercel.app", "http://localhost:3000"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH"));
-        configuration.setAllowedHeaders(
-            Arrays.asList("Authorization", "Set-Cookie", "Content-Type"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
+        configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 
