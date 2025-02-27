@@ -35,9 +35,6 @@ public class TrafficControllerTest extends ControllerTest {
     private final String tag = "Traffic API";
 
     @MockitoBean
-    private TrafficRepository trafficRepository;
-
-    @MockitoBean
     private TrafficCsvService trafficCsvService;
 
     private File testCsvFile;
@@ -77,11 +74,12 @@ public class TrafficControllerTest extends ControllerTest {
                                     fieldWithPath("filePath").description("CSV 파일의 절대 경로")
                             )
                             .responseFields(
-                                    fieldWithPath("message").description("요청 처리 결과 메세지")
+                                    fieldWithPath("status").description("성공 여부"),
+                                    fieldWithPath("data").description("응답 데이터"),
+                                    fieldWithPath("message").description("응답 메시지 내용")
                             )
                             .build()
                     )
             ));
-
     }
 }
