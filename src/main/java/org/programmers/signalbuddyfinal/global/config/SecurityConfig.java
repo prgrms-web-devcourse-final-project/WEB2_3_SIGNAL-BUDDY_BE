@@ -8,6 +8,7 @@ import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetailsS
 import org.programmers.signalbuddyfinal.global.security.exception.CustomAuthenticationEntryPoint;
 import org.programmers.signalbuddyfinal.global.security.filter.JwtAuthorizationFilter;
 import org.programmers.signalbuddyfinal.global.security.jwt.JwtUtil;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -28,6 +29,11 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    @Value("${url.front-url}")
+    private String frontendUrl;
+    @Value("${url.back-url}")
+    private String backendUrl;
 
     private final JwtUtil jwtUtil;
     private final CustomUserDetailsService customUserDetailsService;
@@ -50,6 +56,7 @@ public class SecurityConfig {
     public CustomAuthenticationProvider customAuthenticationProvider() {
         return new CustomAuthenticationProvider(customUserDetailsService, bCryptPasswordEncoder());
     }
+
     @Bean
     AuthenticationManager authenticationManager() {
         return new ProviderManager(List.of(customAuthenticationProvider()));
@@ -68,44 +75,48 @@ public class SecurityConfig {
                     "/ws/**",
                     "/actuator/health",
                     "/webjars/**").permitAll()
-                    // 로그인, 회원가입
+                // 로그인, 회원가입
                 .requestMatchers("/api/auth/login", "/api/auth/reissue", "/api/members/join",
                     "/api/admins/join", "/members/signup", "/api/members/files/**").permitAll()
-                    .requestMatchers("/api/bookmarks/**", "/bookmarks/**").hasRole("USER")
-                    // 댓글
-                    .requestMatchers(HttpMethod.GET, "/api/feedbacks/{feedbackId}/comments").permitAll()
-                    // 교차로
-                    .requestMatchers("/api/crossroads/save").hasRole(ADMIN)
-                    .requestMatchers(HttpMethod.GET,"/api/crossroads/**").permitAll()
-                    // 피드백
-                    .requestMatchers(HttpMethod.GET, "/api/feedbacks/**").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/admin/feedbacks").hasRole(ADMIN)
-                    // 피드백 신고
-                    .requestMatchers(HttpMethod.GET, "/api/feedbacks/reports").hasRole(ADMIN)
-                    .requestMatchers(HttpMethod.PATCH, "/api/feedbacks/{feedbackId}/reports/{reportId}").hasRole(ADMIN)
-                    .requestMatchers(HttpMethod.DELETE, "/api/feedbacks/{feedbackId}/reports/{reportId}").hasRole(ADMIN)
-                    // 회원
-                    .requestMatchers("/api/admins/**", "/admins/members/**").hasRole(ADMIN)
-                    .requestMatchers("/api/members/**", "/members/**").hasRole(USER)
-                     // Prometheus 엔드포인트 허용
-                    .requestMatchers("/actuator/prometheus").permitAll()
-                    .anyRequest().authenticated()
+                .requestMatchers("/api/bookmarks/**", "/bookmarks/**").hasRole("USER")
+                // 댓글
+                .requestMatchers(HttpMethod.GET, "/api/feedbacks/{feedbackId}/comments").permitAll()
+                // 교차로
+                .requestMatchers("/api/crossroads/save").hasRole(ADMIN)
+                .requestMatchers(HttpMethod.GET, "/api/crossroads/**").permitAll()
+                // 피드백
+                .requestMatchers(HttpMethod.GET, "/api/feedbacks/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/admin/feedbacks").hasRole(ADMIN)
+                // 피드백 신고
+                .requestMatchers(HttpMethod.GET, "/api/feedbacks/reports").hasRole(ADMIN)
+                .requestMatchers(HttpMethod.PATCH, "/api/feedbacks/{feedbackId}/reports/{reportId}")
+                .hasRole(ADMIN)
+                .requestMatchers(HttpMethod.DELETE,
+                    "/api/feedbacks/{feedbackId}/reports/{reportId}").hasRole(ADMIN)
+                // 회원
+                .requestMatchers("/api/admins/**", "/admins/members/**").hasRole(ADMIN)
+                .requestMatchers("/api/members/**", "/members/**").hasRole(USER)
+                // Prometheus 엔드포인트 허용
+                .requestMatchers("/actuator/prometheus").permitAll()
+                .anyRequest().authenticated()
             );
 
         // 기본 로그인 관련 설정
         http
             .formLogin(auth -> auth.disable())
             .httpBasic(auth -> auth.disable())
-            .sessionManagement(session-> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-
+            .sessionManagement(
+                session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         // csrf 비활성화
         http.csrf(AbstractHttpConfigurer::disable);
 
         http
-            .addFilterAfter(jwtAuthorizationFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
+            .addFilterAfter(jwtAuthorizationFilter(jwtUtil),
+                UsernamePasswordAuthenticationFilter.class);
 
-        http.exceptionHandling(exception -> exception.authenticationEntryPoint(customAuthenticationEntryPoint));
+        http.exceptionHandling(
+            exception -> exception.authenticationEntryPoint(customAuthenticationEntryPoint));
 
         return http.build();
     }
@@ -114,7 +125,8 @@ public class SecurityConfig {
     public CorsConfigurationSource configurationSource() {
 
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(Arrays.asList("https://signal-buddy.vercel.app", "http://localhost:3000"));
+        configuration.setAllowedOriginPatterns(
+            Arrays.asList(frontendUrl, backendUrl, backendUrl + ".nip.io", "http://localhost:3000", "http://localhost:8080"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
         configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type"));
