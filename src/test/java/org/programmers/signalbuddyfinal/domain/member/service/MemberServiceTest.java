@@ -25,9 +25,6 @@ import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
 import org.programmers.signalbuddyfinal.global.service.AwsFileService;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.mock.web.MockMultipartFile;
@@ -81,23 +78,14 @@ class MemberServiceTest {
             .email("test2@example.com").nickname("TestUser2").memberStatus(MemberStatus.ACTIVITY)
             .role(MemberRole.USER).build();
 
-        // MockHttpServletRequest와 MockHttpSession 생성
-        MockHttpServletRequest mockRequest = new MockHttpServletRequest();
-        MockHttpSession mockSession = new MockHttpSession();
-
-        mockRequest.setSession(mockSession); // MockHttpSession 설정
         when(memberRepository.findById(id)).thenReturn(Optional.of(member));
 
-        final MemberResponse actualResponse = memberService.updateMember(id, updateRequest,
-            mockRequest);
+        final MemberResponse actualResponse = memberService.updateMember(id, updateRequest
+        );
 
         assertThat(actualResponse.getEmail()).isEqualTo(expectedResponse.getEmail());
         assertThat(actualResponse.getNickname()).isEqualTo(expectedResponse.getNickname());
         verify(memberRepository, times(1)).findById(id);
-
-        // 세션에 값이 저장되었는지 확인
-//        Object sessionAttribute = mockSession.getAttribute("SPRING_SECURITY_CONTEXT");
-//        assertNotNull(sessionAttribute); // SecurityContext가 저장되었는지 확인
     }
 
     @Test
