@@ -6,7 +6,6 @@ import org.programmers.signalbuddyfinal.domain.feedback_summary.dto.FeedbackSumm
 import org.programmers.signalbuddyfinal.domain.feedback_summary.entity.FeedbackSummary;
 import org.programmers.signalbuddyfinal.domain.feedback_summary.mapper.FeedbackSummaryMapper;
 import org.programmers.signalbuddyfinal.domain.feedback_summary.repository.FeedbackSummaryRepository;
-import org.programmers.signalbuddyfinal.global.exception.advice.GlobalExceptionHandler;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class FeedbackSummaryService {
 
     private final FeedbackSummaryRepository feedbackSummaryRepository;
-    private final GlobalExceptionHandler globalExceptionHandler;
 
     public FeedbackSummaryResponse getFeedbackSummary(LocalDate date) {
         FeedbackSummary feedbackSummary = feedbackSummaryRepository.findByIdOrThrow(date);
