@@ -7,9 +7,9 @@ public enum Danger {
 
     DANGER("위험"), WARNING("경고"), NOTICE("일반");
 
-    private final String danger;
+    private final String label;
 
-    Danger(String danger) {
-        this.danger = danger;
+    Danger(String label) {
+        this.label = label;
     }
 }

@@ -27,7 +27,7 @@ public class PostitSolve extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long PostitSolvesId;
+    private Long postItSolvesId;
 
     @Column(nullable = false)
     private String imageUrl;

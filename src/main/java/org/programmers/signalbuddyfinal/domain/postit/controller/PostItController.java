@@ -50,7 +50,7 @@ public class PostItController {
     }
 
     @DeleteMapping("/{postitId}")
-    public ResponseEntity<ApiResponse> deletePostIt(
+    public ResponseEntity deletePostIt(
         @PathVariable(value = "postitId") final Long postitId,
         @CurrentUser CustomUser2Member user
     ) {
