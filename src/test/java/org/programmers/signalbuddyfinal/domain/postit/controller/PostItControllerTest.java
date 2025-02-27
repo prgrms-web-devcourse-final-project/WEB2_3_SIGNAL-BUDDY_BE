@@ -339,6 +339,7 @@ public class PostItControllerTest extends ControllerTest {
 
         CustomUserDetails customUserDetails = new CustomUserDetails(1L, "user1@gmamil.com", "1234",
             "url2.jpg", "user1", MemberRole.USER, MemberStatus.ACTIVITY);
+        CustomUser2Member user = new CustomUser2Member(customUserDetails);
 
         doNothing().when(postItService).deletePostIt(anyLong(), any(CustomUser2Member.class));
 

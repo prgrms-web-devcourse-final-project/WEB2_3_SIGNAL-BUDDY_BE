@@ -62,7 +62,7 @@ public class AdminMemberControllerTest extends ControllerTest {
 
         given(adminService.getAllMembers(any(Pageable.class))).willReturn(response);
 
-        mockMvc.perform(
+        final ResultActions result = mockMvc.perform(
                 get("/api/admin/members", content).param("page", "0")
                     .param("size", "10"))
             .andExpect(status().isOk())
@@ -124,7 +124,7 @@ public class AdminMemberControllerTest extends ControllerTest {
             any(MemberFilterRequest.class)))
             .willReturn(page);
 
-        mockMvc.perform(
+        final ResultActions result = mockMvc.perform(
                 get("/api/admin/members/filter")
                     .param("page", "0")
                     .param("size", "10")
