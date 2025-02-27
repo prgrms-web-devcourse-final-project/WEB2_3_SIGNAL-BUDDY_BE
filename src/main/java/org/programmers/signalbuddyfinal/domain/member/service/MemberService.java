@@ -68,8 +68,9 @@ public class MemberService {
     public String saveProfileImage(Long id, MultipartFile file) {
         final Member member = findMemberById(id);
         final String profileImage = saveProfileImageIfPresent(file);
-        member.saveProfileImage(profileImage);
-        return profileImage;
+        final String imageUrl = awsFileService.getFileFromS3(profileImage, memberDir).toString();
+        member.saveProfileImage(imageUrl);
+        return imageUrl;
     }
 
     @Transactional
