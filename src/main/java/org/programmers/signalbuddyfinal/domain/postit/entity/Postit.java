@@ -9,7 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.locationtech.jts.geom.Point;
 import org.programmers.signalbuddyfinal.domain.basetime.BaseTimeEntity;
-import org.programmers.signalbuddyfinal.domain.crossroad.service.PointUtil;
+import org.programmers.signalbuddyfinal.global.util.PointUtil;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 
 import java.time.LocalDateTime;
