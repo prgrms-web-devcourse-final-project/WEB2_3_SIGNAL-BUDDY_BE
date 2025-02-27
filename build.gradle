@@ -236,12 +236,12 @@ swaggerSources {
 openapi3 {
     servers = [
             {
-                url = "http://localhost:8080"
-                description = "Local Server"
+                url = "https://52.79.71.9.nip.io"
+                description = "Develop Server"
             },
             {
-                url = "http://52.79.71.9"
-                description = "Develop Server"
+                url = "http://localhost:8080"
+                description = "Local Server"
             }
     ]
     title = "API 문서"
