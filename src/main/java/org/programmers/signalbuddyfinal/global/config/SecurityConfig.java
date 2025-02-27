@@ -8,6 +8,7 @@ import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetailsS
 import org.programmers.signalbuddyfinal.global.security.exception.CustomAuthenticationEntryPoint;
 import org.programmers.signalbuddyfinal.global.security.filter.JwtAuthorizationFilter;
 import org.programmers.signalbuddyfinal.global.security.jwt.JwtUtil;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -28,6 +29,11 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    @Value("${api.front-url}")
+    private String frontendUrl;
+    @Value("${api.back-url}")
+    private String backendUrl;
 
     private final JwtUtil jwtUtil;
     private final CustomUserDetailsService customUserDetailsService;
@@ -120,8 +126,7 @@ public class SecurityConfig {
 
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOriginPatterns(
-            Arrays.asList("https://signal-buddy.vercel.app", "https://52.79.71.9",
-                "http://localhost:3000", "http://localhost:8080"));
+            Arrays.asList(frontendUrl, backendUrl, backendUrl + ".nip.io", "http://localhost:3000", "http://localhost:8080"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
         configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type"));
