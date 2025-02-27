@@ -19,6 +19,7 @@ import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.programmers.signalbuddyfinal.domain.member.exception.MemberErrorCode;
 import org.programmers.signalbuddyfinal.domain.member.mapper.MemberMapper;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
+import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,64 +30,10 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class AdminService {
 
     private final MemberRepository memberRepository;
-    private final BookmarkRepository bookmarkRepository;
     private BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
-
-    public Page<AdminMemberDetailResponse> getAllMembers(Pageable pageable) {
-        Page<Member> membersPage = memberRepository.findAllMembers(pageable);
-
-        Page<AdminMemberDetailResponse> adminMemberResponses = membersPage.map(member -> {
-
-            List<AdminBookmarkResponse> adminBookmarkResponses = bookmarkRepository.findBookmarkByMember(
-                member.getMemberId());
-            AdminMemberDetailResponse response = AdminMapper.INSTANCE.toAdminMemberResponse(member,
-                adminBookmarkResponses);
-
-            return response;
-        });
-
-        return adminMemberResponses;
-    }
-
-    public AdminMemberDetailResponse getMember(Long id) {
-        Member member = memberRepository.findById(id).orElseThrow(() -> new BusinessException(
-            MemberErrorCode.NOT_FOUND_MEMBER));
-
-        List<AdminBookmarkResponse> adminBookmarkResponses = bookmarkRepository.findBookmarkByMember(
-            member.getMemberId());
-
-        AdminMemberDetailResponse response = AdminMapper.INSTANCE.toAdminMemberResponse(member,
-            adminBookmarkResponses);
-
-        return response;
-    }
-
-    public Page<WithdrawalMemberResponse> getAllWithdrawalMembers(Pageable pageable) {
-        Page<WithdrawalMemberResponse> membersPage = memberRepository.findAllWithdrawMembers(pageable);
-
-       return membersPage;
-    }
-
-    // 회원 필터링
-    public Page<AdminMemberResponse> getAllMemberWithFilter(Pageable pageable, MemberFilterRequest memberFilterRequest) {
-
-        if((memberFilterRequest.getStartDate() != null && memberFilterRequest.getEndDate() != null)&& memberFilterRequest.getAgo() !=null){
-            throw new BusinessException(AdminErrorCode.DUPLICATED_DATE);
-        }
-        Page<AdminMemberResponse> members = memberRepository.findAllMemberWithFilter(pageable,
-            memberFilterRequest);
-
-        return members;
-    }
-
-    // 회원 검색
-    public Page<AdminMemberResponse> searchMember (Pageable pageable,String content){
-        return memberRepository.findMemberByEmailOrNickname(pageable,content);
-    }
 
     @Transactional
     public MemberResponse joinAdminMember(AdminJoinRequest adminJoinRequest) {

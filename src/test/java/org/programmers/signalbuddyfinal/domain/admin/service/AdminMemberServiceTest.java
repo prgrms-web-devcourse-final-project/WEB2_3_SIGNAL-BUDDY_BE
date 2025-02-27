@@ -1,7 +1,6 @@
-package org.programmers.signalbuddyfinal.domain.admin.repository;
+package org.programmers.signalbuddyfinal.domain.admin.service;
 
-
-import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,14 +14,18 @@ import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
 import org.programmers.signalbuddyfinal.domain.social.entity.SocialProvider;
 import org.programmers.signalbuddyfinal.domain.social.repository.SocialProviderRepository;
-import org.programmers.signalbuddyfinal.global.support.RepositoryTest;
+import org.programmers.signalbuddyfinal.global.exception.BusinessException;
+import org.programmers.signalbuddyfinal.global.support.ServiceTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
-class AdminMemberRepositoryTest extends RepositoryTest {
+public class AdminMemberServiceTest extends ServiceTest {
 
     private Pageable pageable;
+    @Autowired
+    AdminMemberService adminService;
+
     @Autowired
     MemberRepository memberRepository;
 
@@ -43,74 +46,42 @@ class AdminMemberRepositoryTest extends RepositoryTest {
         pageable = PageRequest.of(0, 10);
     }
 
-    @DisplayName("회원 전체 조회 테스트")
+    @DisplayName("기간별 조회 중복 사용 예외 테스트")
     @Test
-    public void getAllMEmberTest() {
+    public void 기간별_조회_중복_사용_테스트() {
 
-        assertThat(memberRepository.findAllMembers(pageable).getTotalElements()).isEqualTo(9);
+        MemberFilterRequest duplicatedFilter = createFilter(null, null, null,
+            LocalDateTime.of(2024, 1, 25, 0, 0, 0),
+            LocalDateTime.of(2025, 1, 25, 0, 0, 0), Periods.TODAY, null);
+
+        assertThrows(
+            BusinessException.class,
+            () -> adminService.getAllMemberWithFilter(pageable, duplicatedFilter));
     }
 
-
-    @DisplayName("한개의 조건이 설정된 사용자 필더링 조회")
+    @DisplayName("기간별 조회 시작일 미지정 예외 테스트")
     @Test
-    public void 한개의_조건이_설정된_사용자_필터링_조회() {
-        MemberFilterRequest roleFilter = createFilter(null, MemberRole.USER, null, null, null,
-            null, null);
-        MemberFilterRequest statusFilter = createFilter(MemberStatus.ACTIVITY, null, null, null,
-            null, null, null);
-        MemberFilterRequest oAuthFilter = createFilter(null, null, "naver", null, null, null, null);
+    public void 기간별_조회_시작일_미지정_테스트() {
 
-        assertThat(memberRepository.findAllMemberWithFilter(pageable, roleFilter)
-            .getTotalElements()).isEqualTo(8);
-        assertThat(memberRepository.findAllMemberWithFilter(pageable, statusFilter)
-            .getTotalElements()).isEqualTo(5);
-        assertThat(memberRepository.findAllMemberWithFilter(pageable, oAuthFilter)
-            .getTotalElements()).isEqualTo(3);
+        MemberFilterRequest noStartDateFilter = createFilter(null, null, null, null,
+            LocalDateTime.of(2025, 1, 25, 0, 0, 0), null, null);
+
+        assertThrows(
+            BusinessException.class,
+            () -> adminService.getAllMemberWithFilter(pageable, noStartDateFilter));
     }
 
-    @DisplayName("사용자 + 활성 + null 필터링 조회")
+    @DisplayName("기간별 조회 시작일 > 종료일 예외 테스트")
     @Test
-    public void 사용자_활성_null_조회() {
-        MemberFilterRequest roleAndActivityFilter = createFilter(MemberStatus.ACTIVITY,
-            MemberRole.USER, null, null, null, null, null);
+    public void 기간별_조회_시작일_종료일_비교_테스트() {
 
-        assertThat(memberRepository.findAllMemberWithFilter(pageable, roleAndActivityFilter)
-            .getTotalElements()).isEqualTo(4);
-    }
+        MemberFilterRequest afterStartDateFilter = createFilter(null, null, null,
+            LocalDateTime.of(2025, 1, 25, 0, 0, 0),
+            LocalDateTime.of(2024, 1, 25, 0, 0, 0), null, null);
 
-    @DisplayName("사용자 + 비활성 + null 필터링 조회")
-    @Test
-    public void 사용자_비활성_null_조회() {
-
-        MemberFilterRequest roleAndWithdrawalFilter = createFilter(MemberStatus.WITHDRAWAL,
-            MemberRole.USER, null, null, null, null, null);
-
-        assertThat(memberRepository.findAllMemberWithFilter(pageable, roleAndWithdrawalFilter)
-            .getTotalElements()).isEqualTo(4);
-    }
-
-    @DisplayName("사용자 + 활성 + oAuth 필터링 조회")
-    @Test
-    public void 사용자_활성_oAuth_조회() {
-
-        MemberFilterRequest roleAndActivityWithOAuthAFilter = createFilter(MemberStatus.ACTIVITY,
-            MemberRole.USER, "naver", null, null, null, null);
-
-        assertThat(
-            memberRepository.findAllMemberWithFilter(pageable, roleAndActivityWithOAuthAFilter)
-                .getTotalElements()).isEqualTo(1);
-    }
-
-    @DisplayName("필터가 전부 null 인 경우")
-    @Test
-    public void 전체_null_조회() {
-
-        MemberFilterRequest roleAndActivityWithOAuthAFilter = createFilter(null, null, null, null,
-            null, null, null);
-
-        assertThat(
-            memberRepository.findAllMemberWithFilter(pageable, roleAndActivityWithOAuthAFilter)
-                .getTotalElements()).isEqualTo(9);
+        assertThrows(
+            BusinessException.class,
+            () -> adminService.getAllMemberWithFilter(pageable, afterStartDateFilter));
     }
 
     private void createMember(String email, String nickname, MemberRole role, MemberStatus status,
