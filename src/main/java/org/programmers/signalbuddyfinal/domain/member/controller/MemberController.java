@@ -1,6 +1,5 @@
 package org.programmers.signalbuddyfinal.domain.member.controller;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +19,6 @@ import org.programmers.signalbuddyfinal.domain.recentpath.dto.RecentPathResponse
 import org.programmers.signalbuddyfinal.domain.recentpath.service.RecentPathService;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
-import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -56,9 +54,9 @@ public class MemberController {
 
     @PatchMapping("{id}")
     public ResponseEntity<ApiResponse<MemberResponse>> updateMember(@PathVariable Long id,
-        @RequestBody MemberUpdateRequest memberUpdateRequest, HttpServletRequest request) {
+        @RequestBody MemberUpdateRequest memberUpdateRequest) {
         log.info("id : {}, UpdateRequest: {}", id, memberUpdateRequest);
-        final MemberResponse updated = memberService.updateMember(id, memberUpdateRequest, request);
+        final MemberResponse updated = memberService.updateMember(id, memberUpdateRequest);
         return ResponseEntity.ok(ApiResponse.createSuccess(updated));
     }
 
