@@ -107,7 +107,6 @@ public class AdminMemberControllerTest extends ControllerTest {
             .startDate(LocalDateTime.of(2025, 1, 1, 0, 0, 0))
             .endDate(LocalDateTime.of(2025, 2, 20, 0, 0, 0))
             .search("user1@test.com")
-            .periods(null)
             .build();
 
         final List<AdminMemberResponse> members = List.of(
@@ -133,7 +132,6 @@ public class AdminMemberControllerTest extends ControllerTest {
                     .param("oAuthProvider", filter.getOAuthProvider())
                     .param("startDate", filter.getStartDate().toString())
                     .param("endDate", filter.getEndDate().toString())
-                    .param("period",  filter.getPeriods() != null ? filter.getPeriods().toString() : null)
                     .param("search", filter.getSearch())
                     .header("Accept", "application/json"))
             .andExpect(status().isOk())
@@ -170,7 +168,7 @@ public class AdminMemberControllerTest extends ControllerTest {
                                     - google)
                                     """).optional(),
                             parameterWithName("startDate").description("""
-                                    (선택) 가입 기간별 조회 1
+                                    (선택) 가입 기간별 조회
                                           * 조회 기간 : startDate ~ endDate
                                           * 사용시 startDate endDate 둘 다 입력 필수
                                     - 검색 시작일
@@ -180,20 +178,6 @@ public class AdminMemberControllerTest extends ControllerTest {
                                     - 검색 종료일
                                     - 형식 : YYYY-MM-dd
                                     """)
-                                .optional(),
-                            parameterWithName("period").description(
-                                    """
-                                (선택) 가입 기간별 조회 2
-                                      * 조회 기간 : 현재일 기준
-                                - 형식 : YYYY-MM-dd
-                                -- TODAY : 오늘
-                                -- THREE_DAYS : 3일 전
-                                -- WEEK : 일주일 전
-                                -- MONTH : 한달 전
-                                -- THREE_MONTH : 세달 전
-                                
-                                가입 기간별 조회1, 2 중복 사용 불가
-                                """)
                                 .optional(),
                             parameterWithName("search").description(
                                     """

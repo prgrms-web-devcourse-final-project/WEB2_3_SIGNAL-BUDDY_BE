@@ -7,7 +7,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.programmers.signalbuddyfinal.domain.admin.dto.MemberFilterRequest;
-import org.programmers.signalbuddyfinal.domain.admin.dto.enums.Periods;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
@@ -46,25 +45,12 @@ public class AdminMemberServiceTest extends ServiceTest {
         pageable = PageRequest.of(0, 10);
     }
 
-    @DisplayName("기간별 조회 중복 사용 예외 테스트")
-    @Test
-    public void 기간별_조회_중복_사용_테스트() {
-
-        MemberFilterRequest duplicatedFilter = createFilter(null, null, null,
-            LocalDateTime.of(2024, 1, 25, 0, 0, 0),
-            LocalDateTime.of(2025, 1, 25, 0, 0, 0), Periods.TODAY, null);
-
-        assertThrows(
-            BusinessException.class,
-            () -> adminService.getAllMemberWithFilter(pageable, duplicatedFilter));
-    }
-
     @DisplayName("기간별 조회 시작일 미지정 예외 테스트")
     @Test
     public void 기간별_조회_시작일_미지정_테스트() {
 
         MemberFilterRequest noStartDateFilter = createFilter(null, null, null, null,
-            LocalDateTime.of(2025, 1, 25, 0, 0, 0), null, null);
+            LocalDateTime.of(2025, 1, 25, 0, 0, 0), null);
 
         assertThrows(
             BusinessException.class,
@@ -77,7 +63,7 @@ public class AdminMemberServiceTest extends ServiceTest {
 
         MemberFilterRequest afterStartDateFilter = createFilter(null, null, null,
             LocalDateTime.of(2025, 1, 25, 0, 0, 0),
-            LocalDateTime.of(2024, 1, 25, 0, 0, 0), null, null);
+            LocalDateTime.of(2024, 1, 25, 0, 0, 0),  null);
 
         assertThrows(
             BusinessException.class,
@@ -108,15 +94,13 @@ public class AdminMemberServiceTest extends ServiceTest {
     }
 
     private MemberFilterRequest createFilter(MemberStatus status, MemberRole role,
-        String oAuthProvider, LocalDateTime startDate, LocalDateTime endDate, Periods period,
-        String search) {
+        String oAuthProvider, LocalDateTime startDate, LocalDateTime endDate, String search) {
         return MemberFilterRequest.builder()
             .role(role)
             .status(status)
             .oAuthProvider(oAuthProvider)
             .startDate(startDate)
             .endDate(endDate)
-            .periods(period)
             .search(search)
             .build();
     }
