@@ -25,10 +25,7 @@ public class TrafficController {
     private TrafficCsvService trafficCsvService;
 
     @PostMapping("/save")
-    public ResponseEntity<ApiResponse<Object>> saveTrafficData(
-            @RequestBody Map<String,String> request,
-            @CurrentUser CustomUser2Member user
-    ) throws IOException {
+    public ResponseEntity<ApiResponse<Object>> saveTrafficData(@RequestBody Map<String,String> request) throws IOException {
         String filePath = request.get("filePath");
         File file = new File(filePath);
 
@@ -36,7 +33,7 @@ public class TrafficController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.createError("파일을 찾을 수 없습니다."));
         }
 
-        trafficCsvService.saveCsvData(file, user);
+        trafficCsvService.saveCsvData(file);
 
         return ResponseEntity.ok(ApiResponse.createSuccess("파일이 성공적으로 저장되었습니다."));
     }

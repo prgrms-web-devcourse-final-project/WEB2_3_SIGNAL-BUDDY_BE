@@ -56,7 +56,7 @@ public class TrafficControllerTest extends ControllerTest {
         Map<String, String> requestBody = Map.of("filePath", filePath);
 
         // when
-        doNothing().when(trafficCsvService).saveCsvData(any(File.class),any(CustomUser2Member.class) );
+        doNothing().when(trafficCsvService).saveCsvData(any(File.class) );
 
         ResultActions result = mockMvc.perform(
                 multipart("/api/traffic/save")

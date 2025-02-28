@@ -30,12 +30,9 @@ public class TrafficCsvService {
     private final TrafficRepository trafficRepository;
 
     @Transactional
-    public void saveCsvData(File file, CustomUser2Member user) throws IOException {
+    public void saveCsvData(File file) throws IOException {
 
-        // 관리자만 수정 가능
-        verifyAdmin(user);
-
-        try (Reader reader = new BufferedReader( new InputStreamReader(new FileInputStream(file), Charset.forName("EUC-KR") ) ) ){
+        try (Reader reader = new BufferedReader( new InputStreamReader(new FileInputStream(file)) ) ){
 
             List<TrafficSignal> entityList = new ArrayList<>();
 
@@ -63,15 +60,6 @@ public class TrafficCsvService {
             throw new BusinessException(TrafficErrorCode.ALREADY_EXIST_TRAFFIC_SIGNAL);
         }
 
-    }
-
-    // 관리자만 접근 가능
-    private void verifyAdmin(CustomUser2Member user) {
-        if (!MemberRole.ADMIN.equals(user.getRole())) {
-            throw new BusinessException(
-                    FeedbackReportErrorCode.REQUEST_NOT_AUTHORIZED
-            );
-        }
     }
 
 }

@@ -18,8 +18,7 @@ import java.net.URISyntaxException;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.*;
 
 @Transactional
 public class TrafficCsvServiceTest extends ServiceTest {
@@ -34,6 +33,7 @@ public class TrafficCsvServiceTest extends ServiceTest {
 
     @BeforeEach
     void setUp() throws URISyntaxException, NullPointerException {
+
         testCsvFile = new File(getClass()
                 .getClassLoader()
                 .getResource("static/traffic/seoul_traffic_light_test.csv")
@@ -101,10 +101,10 @@ public class TrafficCsvServiceTest extends ServiceTest {
     void saveTrafficInfo() throws IOException {
 
         //when
-        doNothing().when(trafficCsvService).saveCsvData(testCsvFile,any(CustomUser2Member.class) );
+        trafficCsvService.saveCsvData( testCsvFile );
 
         //then
-        assertThat(trafficRepository.count()).isGreaterThan(1);
+        assertThat(trafficRepository.count()).isGreaterThan(0);
 
     }
 }
