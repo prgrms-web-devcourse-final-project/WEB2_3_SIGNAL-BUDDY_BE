@@ -6,6 +6,7 @@ import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackResponse;
 import org.programmers.signalbuddyfinal.domain.feedback.entity.Feedback;
 import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.AnswerStatus;
 import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.FeedbackCategory;
+import org.programmers.signalbuddyfinal.global.constant.SearchTarget;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -13,6 +14,7 @@ public interface CustomFeedbackRepository {
 
     Page<FeedbackResponse> findAllByActiveMembers(
         Pageable pageable,
+        SearchTarget target,
         AnswerStatus answerStatus, Set<FeedbackCategory> categories,
         Long crossroadId, String keyword
     );

@@ -27,6 +27,7 @@ import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.FeedbackCat
 import org.programmers.signalbuddyfinal.domain.feedback.exception.FeedbackErrorCode;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
+import org.programmers.signalbuddyfinal.global.constant.SearchTarget;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -59,6 +60,7 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
     @Override
     public Page<FeedbackResponse> findAllByActiveMembers(
         Pageable pageable,
+        SearchTarget target,
         AnswerStatus answerStatus, Set<FeedbackCategory> categories,
         Long crossroadId, String keyword
     ) {
@@ -66,7 +68,13 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
         BooleanExpression answerStatusCondition = answerStatusCondition(answerStatus);
         BooleanExpression categoriesCondition = categoriesCondition(categories);
         BooleanExpression crossroadIdCondition = crossroadIdCondition(crossroadId);
-        BooleanExpression fulltextSearch = fulltextSearch(keyword, feedback.subject, feedback.content);
+
+        BooleanExpression fulltextSearch = Expressions.TRUE;
+        if (SearchTarget.WRITER.equals(target)) {
+            fulltextSearch = fulltextSearch(keyword, member.nickname);
+        } else if (SearchTarget.SUBJECT_OR_CONTENT.equals(target)) {
+            fulltextSearch = fulltextSearch(keyword, feedback.subject, feedback.content);
+        }
 
         List<FeedbackResponse> results = jpaQueryFactory
             .select(feedbackResponseDto)
@@ -213,6 +221,18 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
         return numberTemplate(
             Double.class, "function('match2_against', {0}, {1}, {2})",
             target1, target2, formattedSearchWord
+        ).gt(0);
+    }
+
+    private BooleanExpression fulltextSearch(String keyword, StringPath target) {
+        if (keyword == null || keyword.isBlank()) {
+            return Expressions.TRUE;
+        }
+
+        String formattedSearchWord = "\"" + keyword + "\"";
+        return numberTemplate(
+            Double.class, "function('match_against', {0}, {1})",
+            target, formattedSearchWord
         ).gt(0);
     }
 

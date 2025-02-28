@@ -16,6 +16,7 @@ import org.programmers.signalbuddyfinal.domain.like.repository.LikeRepository;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
+import org.programmers.signalbuddyfinal.global.constant.SearchTarget;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
@@ -44,12 +45,13 @@ public class FeedbackService {
 
     public PageResponse<FeedbackResponse> searchFeedbackList(
         Pageable pageable,
+        SearchTarget target,
         FeedbackSearchRequest request,
         Long crossroadId
     ) {
         return new PageResponse<>(
             feedbackRepository.findAllByActiveMembers(
-                pageable, request.getStatus(), request.getCategory(),
+                pageable, target, request.getStatus(), request.getCategory(),
                 crossroadId, request.getKeyword()
             )
         );

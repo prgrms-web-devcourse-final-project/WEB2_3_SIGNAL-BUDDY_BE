@@ -7,6 +7,7 @@ import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackResponse;
 import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackSearchRequest;
 import org.programmers.signalbuddyfinal.domain.feedback.service.FeedbackService;
 import org.programmers.signalbuddyfinal.global.annotation.CurrentUser;
+import org.programmers.signalbuddyfinal.global.constant.SearchTarget;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
@@ -50,13 +51,14 @@ public class FeedbackController {
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<FeedbackResponse>>> searchFeedbackList(
         @PageableDefault Pageable pageable,
+        @RequestParam(value = "target", defaultValue = "content") SearchTarget target,
         @ModelAttribute FeedbackSearchRequest request,
         @RequestParam(value = "crossroadId", required = false) Long crossroadId
     ) {
         return ResponseEntity.ok(
             ApiResponse.createSuccess(
                 feedbackService.searchFeedbackList(
-                    pageable, request, crossroadId
+                    pageable, target, request, crossroadId
                 )
             )
         );
