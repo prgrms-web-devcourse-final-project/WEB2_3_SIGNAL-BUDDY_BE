@@ -22,8 +22,8 @@ public interface CustomFeedbackRepository {
     Page<FeedbackResponse> findPagedExcludingMember(Long memberId, Pageable pageable);
 
     Page<FeedbackResponse> findAllByFilter(
-        Pageable pageable, String keyword,
-        AnswerStatus answerStatus,
+        Pageable pageable, SearchTarget target,
+        String keyword, AnswerStatus answerStatus,
         Set<FeedbackCategory> categories,
         LocalDate startDate, LocalDate endDate,
         Boolean deleted

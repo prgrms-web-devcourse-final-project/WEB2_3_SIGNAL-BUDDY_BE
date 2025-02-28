@@ -64,17 +64,11 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
         AnswerStatus answerStatus, Set<FeedbackCategory> categories,
         Long crossroadId, String keyword
     ) {
+        BooleanExpression searchCondition = searchCondition(target, keyword);
         BooleanExpression activityMember = member.memberStatus.eq(MemberStatus.ACTIVITY);
         BooleanExpression answerStatusCondition = answerStatusCondition(answerStatus);
         BooleanExpression categoriesCondition = categoriesCondition(categories);
         BooleanExpression crossroadIdCondition = crossroadIdCondition(crossroadId);
-
-        BooleanExpression fulltextSearch = Expressions.TRUE;
-        if (SearchTarget.WRITER.equals(target)) {
-            fulltextSearch = fulltextSearch(keyword, member.nickname);
-        } else if (SearchTarget.SUBJECT_OR_CONTENT.equals(target)) {
-            fulltextSearch = fulltextSearch(keyword, feedback.subject, feedback.content);
-        }
 
         List<FeedbackResponse> results = jpaQueryFactory
             .select(feedbackResponseDto)
@@ -85,7 +79,7 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
                     .and(answerStatusCondition)
                     .and(categoriesCondition)
                     .and(crossroadIdCondition)
-                    .and(fulltextSearch)
+                    .and(searchCondition)
                     .and(isNotDeletedFeedback)
             )
             .offset(pageable.getOffset()).limit(pageable.getPageSize())
@@ -102,7 +96,7 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
                         .and(answerStatusCondition)
                         .and(categoriesCondition)
                         .and(crossroadIdCondition)
-                        .and(fulltextSearch)
+                        .and(searchCondition)
                         .and(isNotDeletedFeedback)
                 ).fetchOne()
         ).orElse(0L);
@@ -127,13 +121,13 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
 
     @Override
     public Page<FeedbackResponse> findAllByFilter(
-        Pageable pageable, String keyword,
-        AnswerStatus answerStatus,
+        Pageable pageable, SearchTarget target,
+        String keyword, AnswerStatus answerStatus,
         Set<FeedbackCategory> categories,
         LocalDate startDate, LocalDate endDate,
         Boolean deleted
     ) {
-        BooleanExpression fulltextSearch = fulltextSearch(keyword, feedback.subject, feedback.content);
+        BooleanExpression searchCondition = searchCondition(target, keyword);
         BooleanExpression answerStatusCondition = answerStatusCondition(answerStatus);
         BooleanExpression categoriesCondition = categoriesCondition(categories);
         BooleanExpression betweenDates = betweenDates(feedback.createdAt, startDate, endDate);
@@ -146,7 +140,7 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
             .where(
                 deletedCondition
                     .and(answerStatusCondition)
-                    .and(fulltextSearch)
+                    .and(searchCondition)
                     .and(categoriesCondition)
                     .and(betweenDates)
             )
@@ -161,7 +155,7 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
                 .where(
                     deletedCondition
                         .and(answerStatusCondition)
-                        .and(fulltextSearch)
+                        .and(searchCondition)
                         .and(categoriesCondition)
                         .and(betweenDates)
                 ).fetchOne()
@@ -210,6 +204,16 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
             }
         }
         return expression;
+    }
+
+    private BooleanExpression searchCondition(SearchTarget target, String keyword) {
+        BooleanExpression fulltextSearch = Expressions.TRUE;
+        if (SearchTarget.WRITER.equals(target)) {
+            fulltextSearch = fulltextSearch(keyword, member.nickname);
+        } else if (SearchTarget.SUBJECT_OR_CONTENT.equals(target)) {
+            fulltextSearch = fulltextSearch(keyword, feedback.subject, feedback.content);
+        }
+        return fulltextSearch;
     }
 
     private BooleanExpression fulltextSearch(String keyword, StringPath target1, StringPath target2) {

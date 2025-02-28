@@ -230,7 +230,7 @@ class FeedbackRepositoryImplTest extends RepositoryTest {
 
         // When
         feedbackRepository.findAllByFilter(
-            pageable, keyword,
+            pageable, SearchTarget.SUBJECT_OR_CONTENT, keyword,
             AnswerStatus.BEFORE, categories,
             startDate, endDate,
             Boolean.FALSE
@@ -239,7 +239,7 @@ class FeedbackRepositoryImplTest extends RepositoryTest {
         // Then
         verify(feedbackRepository, times(1))
             .findAllByFilter(
-                pageable, keyword,
+                pageable, SearchTarget.SUBJECT_OR_CONTENT, keyword,
                 AnswerStatus.BEFORE, categories,
                 startDate, endDate,
                 Boolean.FALSE
@@ -257,7 +257,7 @@ class FeedbackRepositoryImplTest extends RepositoryTest {
 
         // When
         Page<FeedbackResponse> actual = feedbackRepository.findAllByFilter(
-            pageable, null,
+            pageable, SearchTarget.SUBJECT_OR_CONTENT, null,
             null, null,
             null, null,
             Boolean.TRUE
