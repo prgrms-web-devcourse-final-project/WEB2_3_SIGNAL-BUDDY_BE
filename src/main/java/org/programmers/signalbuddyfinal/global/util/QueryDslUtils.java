@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public final class QueryDSLUtil {
+public final class QueryDslUtils {
 
     /**
      * createAt이 startDate ~ endDate 범위로 설정

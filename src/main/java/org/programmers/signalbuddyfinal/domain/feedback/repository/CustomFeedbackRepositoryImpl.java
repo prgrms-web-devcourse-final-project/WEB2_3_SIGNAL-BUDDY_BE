@@ -3,9 +3,9 @@ package org.programmers.signalbuddyfinal.domain.feedback.repository;
 import static org.programmers.signalbuddyfinal.domain.crossroad.entity.QCrossroad.crossroad;
 import static org.programmers.signalbuddyfinal.domain.feedback.entity.QFeedback.feedback;
 import static org.programmers.signalbuddyfinal.domain.member.entity.QMember.member;
-import static org.programmers.signalbuddyfinal.global.util.QueryDSLUtil.betweenDates;
-import static org.programmers.signalbuddyfinal.global.util.QueryDSLUtil.fulltextSearch;
-import static org.programmers.signalbuddyfinal.global.util.QueryDSLUtil.getOrderSpecifiers;
+import static org.programmers.signalbuddyfinal.global.util.QueryDslUtils.betweenDates;
+import static org.programmers.signalbuddyfinal.global.util.QueryDslUtils.fulltextSearch;
+import static org.programmers.signalbuddyfinal.global.util.QueryDslUtils.getOrderSpecifiers;
 
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;

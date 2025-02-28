@@ -2,9 +2,9 @@ package org.programmers.signalbuddyfinal.domain.feedback_report.repository;
 
 import static org.programmers.signalbuddyfinal.domain.feedback_report.entity.QFeedbackReport.feedbackReport;
 import static org.programmers.signalbuddyfinal.domain.member.entity.QMember.member;
-import static org.programmers.signalbuddyfinal.global.util.QueryDSLUtil.betweenDates;
-import static org.programmers.signalbuddyfinal.global.util.QueryDSLUtil.fulltextSearch;
-import static org.programmers.signalbuddyfinal.global.util.QueryDSLUtil.getOrderSpecifiers;
+import static org.programmers.signalbuddyfinal.global.util.QueryDslUtils.betweenDates;
+import static org.programmers.signalbuddyfinal.global.util.QueryDslUtils.fulltextSearch;
+import static org.programmers.signalbuddyfinal.global.util.QueryDslUtils.getOrderSpecifiers;
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.QBean;
