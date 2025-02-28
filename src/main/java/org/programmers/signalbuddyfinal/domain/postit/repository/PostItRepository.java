@@ -9,10 +9,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface PostItRepository extends JpaRepository<Postit, Long> {
+public interface PostItRepository extends JpaRepository<Postit, Long>, CustomPostItRepository {
 
-
-    default Postit findByIdOrThrow(Long id){
-        return findById(id).orElseThrow(() -> new BusinessException(PostItErrorCode.NOT_FOUND_POSTIT));
+    default Postit findByIdOrThrow(Long id) {
+        return findById(id).orElseThrow(
+            () -> new BusinessException(PostItErrorCode.NOT_FOUND_POSTIT));
     }
 }
