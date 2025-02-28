@@ -24,7 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class AdminPostItService {
-
+    // TODO : 만료일만 변경하는 기능 추가,,,
     private final PostItRepository postItRepository;
     private final MemberRepository memberRepository;
     private final PostitSolveRepository postitSolveRepository;
