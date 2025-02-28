@@ -1,16 +1,15 @@
 package org.programmers.signalbuddyfinal.domain.feedback_report.repository;
 
-import static com.querydsl.core.types.dsl.Expressions.numberTemplate;
 import static org.programmers.signalbuddyfinal.domain.feedback_report.entity.QFeedbackReport.feedbackReport;
 import static org.programmers.signalbuddyfinal.domain.member.entity.QMember.member;
 import static org.programmers.signalbuddyfinal.global.util.QueryDSLUtil.betweenDates;
+import static org.programmers.signalbuddyfinal.global.util.QueryDSLUtil.fulltextSearch;
 import static org.programmers.signalbuddyfinal.global.util.QueryDSLUtil.getOrderSpecifiers;
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.QBean;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
-import com.querydsl.core.types.dsl.StringPath;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDate;
 import java.util.List;
@@ -21,6 +20,7 @@ import org.programmers.signalbuddyfinal.domain.feedback_report.dto.FeedbackRepor
 import org.programmers.signalbuddyfinal.domain.feedback_report.entity.enums.FeedbackReportCategory;
 import org.programmers.signalbuddyfinal.domain.feedback_report.entity.enums.FeedbackReportStatus;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
+import org.programmers.signalbuddyfinal.global.constant.SearchTarget;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -46,12 +46,12 @@ public class CustomFeedbackReportRepositoryImpl implements CustomFeedbackReportR
 
     @Override
     public Page<FeedbackReportResponse> findAllByFilter(
-        Pageable pageable, String keyword,
+        Pageable pageable, SearchTarget target, String keyword,
         Set<FeedbackReportCategory> categories,
         Set<FeedbackReportStatus> statuses,
         LocalDate startDate, LocalDate endDate
     ) {
-        BooleanExpression fulltextSearch = fulltextSearch(keyword, feedbackReport.content);
+        BooleanExpression searchCondition = searchCondition(target, keyword);
         BooleanExpression betweenDates = betweenDates(feedbackReport.createdAt, startDate, endDate);
         BooleanExpression categoryCondition = categoryCondition(categories);
         BooleanExpression statusCondition = statusCondition(statuses);
@@ -61,8 +61,8 @@ public class CustomFeedbackReportRepositoryImpl implements CustomFeedbackReportR
             .from(feedbackReport)
             .join(member).on(feedbackReport.member.eq(member)).fetchJoin()
             .where(
-                betweenDates
-                    .and(fulltextSearch)
+                searchCondition
+                    .and(betweenDates)
                     .and(categoryCondition)
                     .and(statusCondition)
             )
@@ -76,8 +76,8 @@ public class CustomFeedbackReportRepositoryImpl implements CustomFeedbackReportR
                 .from(feedbackReport)
                 .join(member).on(feedbackReport.member.eq(member)).fetchJoin()
                 .where(
-                    betweenDates
-                        .and(fulltextSearch)
+                    searchCondition
+                        .and(betweenDates)
                         .and(categoryCondition)
                         .and(statusCondition)
                 ).fetchOne()
@@ -86,16 +86,14 @@ public class CustomFeedbackReportRepositoryImpl implements CustomFeedbackReportR
         return new PageImpl<>(results, pageable, count);
     }
 
-    private BooleanExpression fulltextSearch(String keyword, StringPath target) {
-        if (keyword == null || keyword.isBlank()) {
-            return Expressions.TRUE;
+    private BooleanExpression searchCondition(SearchTarget target, String keyword) {
+        BooleanExpression fulltextSearch = Expressions.TRUE;
+        if (SearchTarget.WRITER.equals(target)) {
+            fulltextSearch = fulltextSearch(keyword, member.nickname);
+        } else if (SearchTarget.SUBJECT_OR_CONTENT.equals(target)) {
+            fulltextSearch = fulltextSearch(keyword, feedbackReport.content);
         }
-
-        String formattedSearchWord = "\"" + keyword + "\"";
-        return numberTemplate(
-            Double.class, "function('match_against', {0}, {1})",
-            target, formattedSearchWord
-        ).gt(0);
+        return fulltextSearch;
     }
 
     private BooleanExpression categoryCondition(Set<FeedbackReportCategory> categories) {

@@ -1,22 +1,21 @@
 package org.programmers.signalbuddyfinal.domain.feedback_report.service;
 
 import java.time.LocalDate;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.feedback.entity.Feedback;
 import org.programmers.signalbuddyfinal.domain.feedback.repository.FeedbackRepository;
 import org.programmers.signalbuddyfinal.domain.feedback_report.dto.FeedbackReportRequest;
 import org.programmers.signalbuddyfinal.domain.feedback_report.dto.FeedbackReportResponse;
+import org.programmers.signalbuddyfinal.domain.feedback_report.dto.FeedbackReportSearchRequest;
 import org.programmers.signalbuddyfinal.domain.feedback_report.dto.FeedbackReportUpdateRequest;
 import org.programmers.signalbuddyfinal.domain.feedback_report.entity.FeedbackReport;
-import org.programmers.signalbuddyfinal.domain.feedback_report.entity.enums.FeedbackReportCategory;
-import org.programmers.signalbuddyfinal.domain.feedback_report.entity.enums.FeedbackReportStatus;
 import org.programmers.signalbuddyfinal.domain.feedback_report.exception.FeedbackReportErrorCode;
 import org.programmers.signalbuddyfinal.domain.feedback_report.mapper.FeedbackReportMapper;
 import org.programmers.signalbuddyfinal.domain.feedback_report.repository.FeedbackReportRepository;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
+import org.programmers.signalbuddyfinal.global.constant.SearchTarget;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
@@ -51,9 +50,8 @@ public class FeedbackReportService {
     }
 
     public PageResponse<FeedbackReportResponse> searchFeedbackReportList(
-        Pageable pageable, String keyword,
-        Set<FeedbackReportCategory> categories,
-        Set<FeedbackReportStatus> statuses,
+        Pageable pageable, SearchTarget target,
+        FeedbackReportSearchRequest request,
         LocalDate startDate, LocalDate endDate,
         CustomUser2Member user
     ) {
@@ -61,7 +59,9 @@ public class FeedbackReportService {
 
         return new PageResponse<>(
             reportRepository.findAllByFilter(
-                pageable, keyword, categories, statuses, startDate, endDate
+                pageable, target, request.getKeyword(),
+                request.getCategory(), request.getStatus(),
+                startDate, endDate
             )
         );
     }

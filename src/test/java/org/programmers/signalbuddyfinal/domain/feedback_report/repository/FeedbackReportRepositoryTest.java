@@ -1,5 +1,6 @@
 package org.programmers.signalbuddyfinal.domain.feedback_report.repository;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 
 import java.time.LocalDate;
@@ -23,6 +24,7 @@ import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
+import org.programmers.signalbuddyfinal.global.constant.SearchTarget;
 import org.programmers.signalbuddyfinal.global.support.RepositoryTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -62,12 +64,13 @@ class FeedbackReportRepositoryTest extends RepositoryTest {
             saveFeedbackReport("test " + i, member, feedback);
         }
 
-        createFulltextIndex();
+        createFulltextIndexOnMember();
+        createFulltextIndexOnFeedback();
     }
 
-    @DisplayName("검색어를 이용해 피드백 신고 데이터들을 가져온다.")
+    @DisplayName("신고 내용을 검색하여 피드백 신고 데이터들을 가져온다.")
     @Test
-    void findAllByFilterByKeyword() {
+    void findAllByFilterByKeywordFromContent() {
         // Given
         Pageable pageable = PageRequest.of(0, 7,
             Direction.DESC, "createdAt");
@@ -75,7 +78,8 @@ class FeedbackReportRepositoryTest extends RepositoryTest {
 
         // When
         Page<FeedbackReportResponse> actual = reportRepository.findAllByFilter(
-            pageable, keyword, null, Collections.emptySet(), null, null
+            pageable, SearchTarget.SUBJECT_OR_CONTENT, keyword,
+            null, Collections.emptySet(), null, null
         );
 
         // Then
@@ -88,6 +92,34 @@ class FeedbackReportRepositoryTest extends RepositoryTest {
                 .isEqualTo(feedback.getFeedbackId());
             softAssertions.assertThat(actual.getContent().get(4).getMember().getMemberId())
                 .isEqualTo(feedback.getMember().getMemberId());
+        });
+    }
+
+    @DisplayName("신고자를 검색하여 피드백 신고 데이터들을 가져온다.")
+    @Test
+    void findAllByFilterByKeywordFromMember() {
+        // Given
+        Pageable pageable = PageRequest.of(0, 7,
+            Direction.DESC, "createdAt");
+        String keyword = member.getNickname();
+
+        // When
+        Page<FeedbackReportResponse> actual = reportRepository.findAllByFilter(
+            pageable, SearchTarget.WRITER, keyword,
+            null, Collections.emptySet(), null, null
+        );
+
+        // Then
+        SoftAssertions.assertSoftly(softAssertions -> {
+            softAssertions.assertThat(actual.getTotalElements()).isEqualTo(12);
+            softAssertions.assertThat(actual.getNumber()).isEqualTo(pageable.getPageNumber());
+            softAssertions.assertThat(actual.getSize()).isEqualTo(pageable.getPageSize());
+            softAssertions.assertThat(actual.getContent().get(4).getFeedbackId())
+                .isEqualTo(feedback.getFeedbackId());
+            softAssertions.assertThat(actual.getContent()).isNotEmpty()
+                .allSatisfy(response -> assertThat(response.getMember().getNickname())
+                            .contains(keyword)
+                );
         });
     }
 
@@ -117,11 +149,12 @@ class FeedbackReportRepositoryTest extends RepositoryTest {
             FeedbackReportStatus.REJECTED, FeedbackReportStatus.PROCESSED
         );
 
-        createFulltextIndex();
+        createFulltextIndexOnFeedback();
 
         // When
         Page<FeedbackReportResponse> actual = reportRepository.findAllByFilter(
-            pageable, keyword, categories, statuses, null, null
+            pageable, SearchTarget.SUBJECT_OR_CONTENT, keyword,
+            categories, statuses, null, null
         );
 
         // Then
@@ -154,11 +187,14 @@ class FeedbackReportRepositoryTest extends RepositoryTest {
 
         // When & Then
         reportRepository.findAllByFilter(
-            pageable, keyword,
+            pageable, SearchTarget.SUBJECT_OR_CONTENT, keyword,
             Collections.emptySet(), null, startDate, endDate
         );
         verify(reportRepository)
-            .findAllByFilter(pageable, keyword, Collections.emptySet(), null, startDate, endDate);
+            .findAllByFilter(
+                pageable, SearchTarget.SUBJECT_OR_CONTENT, keyword,
+                Collections.emptySet(), null, startDate, endDate
+            );
     }
 
     private Member saveMember(String email, String nickname) {
@@ -194,10 +230,17 @@ class FeedbackReportRepositoryTest extends RepositoryTest {
                 .member(member).feedback(feedback).build());
     }
 
-    private void createFulltextIndex() {
+    private void createFulltextIndexOnFeedback() {
         jdbcTemplate.execute(
             "CREATE FULLTEXT INDEX IF NOT EXISTS idx_content " +
                 "ON feedback_reports (content)"
+        );
+    }
+
+    private void createFulltextIndexOnMember() {
+        jdbcTemplate.execute(
+            "CREATE FULLTEXT INDEX IF NOT EXISTS idx_nickname " +
+                "ON members (nickname)"
         );
     }
 }
