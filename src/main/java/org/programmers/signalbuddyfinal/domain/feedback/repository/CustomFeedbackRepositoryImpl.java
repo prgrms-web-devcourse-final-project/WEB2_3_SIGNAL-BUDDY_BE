@@ -1,11 +1,11 @@
 package org.programmers.signalbuddyfinal.domain.feedback.repository;
 
-import static com.querydsl.core.types.dsl.Expressions.numberTemplate;
 import static org.programmers.signalbuddyfinal.domain.crossroad.entity.QCrossroad.crossroad;
 import static org.programmers.signalbuddyfinal.domain.feedback.entity.QFeedback.feedback;
 import static org.programmers.signalbuddyfinal.domain.member.entity.QMember.member;
-import static org.programmers.signalbuddyfinal.global.util.QueryDSLUtil.betweenDates;
-import static org.programmers.signalbuddyfinal.global.util.QueryDSLUtil.getOrderSpecifiers;
+import static org.programmers.signalbuddyfinal.global.util.QueryDslUtils.betweenDates;
+import static org.programmers.signalbuddyfinal.global.util.QueryDslUtils.fulltextSearch;
+import static org.programmers.signalbuddyfinal.global.util.QueryDslUtils.getOrderSpecifiers;
 
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
@@ -13,7 +13,6 @@ import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.QBean;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
-import com.querydsl.core.types.dsl.StringPath;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDate;
 import java.util.List;
@@ -27,6 +26,7 @@ import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.FeedbackCat
 import org.programmers.signalbuddyfinal.domain.feedback.exception.FeedbackErrorCode;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
+import org.programmers.signalbuddyfinal.global.constant.SearchTarget;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -59,25 +59,26 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
     @Override
     public Page<FeedbackResponse> findAllByActiveMembers(
         Pageable pageable,
+        SearchTarget target,
         AnswerStatus answerStatus, Set<FeedbackCategory> categories,
         Long crossroadId, String keyword
     ) {
+        BooleanExpression searchCondition = searchCondition(target, keyword);
         BooleanExpression activityMember = member.memberStatus.eq(MemberStatus.ACTIVITY);
         BooleanExpression answerStatusCondition = answerStatusCondition(answerStatus);
         BooleanExpression categoriesCondition = categoriesCondition(categories);
         BooleanExpression crossroadIdCondition = crossroadIdCondition(crossroadId);
-        BooleanExpression fulltextSearch = fulltextSearch(keyword, feedback.subject, feedback.content);
 
         List<FeedbackResponse> results = jpaQueryFactory
             .select(feedbackResponseDto)
             .from(feedback)
             .join(member).on(feedback.member.eq(member)).fetchJoin()
             .where(
-                activityMember
+                searchCondition
                     .and(answerStatusCondition)
                     .and(categoriesCondition)
                     .and(crossroadIdCondition)
-                    .and(fulltextSearch)
+                    .and(activityMember)
                     .and(isNotDeletedFeedback)
             )
             .offset(pageable.getOffset()).limit(pageable.getPageSize())
@@ -90,11 +91,11 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
                 .from(feedback)
                 .join(member).on(feedback.member.eq(member)).fetchJoin()
                 .where(
-                    activityMember
+                    searchCondition
                         .and(answerStatusCondition)
                         .and(categoriesCondition)
                         .and(crossroadIdCondition)
-                        .and(fulltextSearch)
+                        .and(activityMember)
                         .and(isNotDeletedFeedback)
                 ).fetchOne()
         ).orElse(0L);
@@ -119,13 +120,13 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
 
     @Override
     public Page<FeedbackResponse> findAllByFilter(
-        Pageable pageable, String keyword,
-        AnswerStatus answerStatus,
+        Pageable pageable, SearchTarget target,
+        String keyword, AnswerStatus answerStatus,
         Set<FeedbackCategory> categories,
         LocalDate startDate, LocalDate endDate,
         Boolean deleted
     ) {
-        BooleanExpression fulltextSearch = fulltextSearch(keyword, feedback.subject, feedback.content);
+        BooleanExpression searchCondition = searchCondition(target, keyword);
         BooleanExpression answerStatusCondition = answerStatusCondition(answerStatus);
         BooleanExpression categoriesCondition = categoriesCondition(categories);
         BooleanExpression betweenDates = betweenDates(feedback.createdAt, startDate, endDate);
@@ -136,9 +137,9 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
             .from(feedback)
             .join(member).on(feedback.member.eq(member)).fetchJoin()
             .where(
-                deletedCondition
+                searchCondition
                     .and(answerStatusCondition)
-                    .and(fulltextSearch)
+                    .and(deletedCondition)
                     .and(categoriesCondition)
                     .and(betweenDates)
             )
@@ -151,9 +152,9 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
                 .from(feedback)
                 .join(member).on(feedback.member.eq(member)).fetchJoin()
                 .where(
-                    deletedCondition
+                    searchCondition
                         .and(answerStatusCondition)
-                        .and(fulltextSearch)
+                        .and(deletedCondition)
                         .and(categoriesCondition)
                         .and(betweenDates)
                 ).fetchOne()
@@ -204,16 +205,14 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
         return expression;
     }
 
-    private BooleanExpression fulltextSearch(String keyword, StringPath target1, StringPath target2) {
-        if (keyword == null || keyword.isBlank()) {
-            return Expressions.TRUE;
+    private BooleanExpression searchCondition(SearchTarget target, String keyword) {
+        BooleanExpression fulltextSearch = Expressions.TRUE;
+        if (SearchTarget.WRITER.equals(target)) {
+            fulltextSearch = fulltextSearch(keyword, member.nickname);
+        } else if (SearchTarget.SUBJECT_OR_CONTENT.equals(target)) {
+            fulltextSearch = fulltextSearch(keyword, feedback.subject, feedback.content);
         }
-
-        String formattedSearchWord = "\"" + keyword + "\"";
-        return numberTemplate(
-            Double.class, "function('match2_against', {0}, {1}, {2})",
-            target1, target2, formattedSearchWord
-        ).gt(0);
+        return fulltextSearch;
     }
 
     private BooleanExpression deletedCondition(Boolean deleted) {

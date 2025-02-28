@@ -2,15 +2,14 @@ package org.programmers.signalbuddyfinal.domain.feedback_report.controller;
 
 import jakarta.validation.Valid;
 import java.time.LocalDate;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.feedback_report.dto.FeedbackReportRequest;
 import org.programmers.signalbuddyfinal.domain.feedback_report.dto.FeedbackReportResponse;
+import org.programmers.signalbuddyfinal.domain.feedback_report.dto.FeedbackReportSearchRequest;
 import org.programmers.signalbuddyfinal.domain.feedback_report.dto.FeedbackReportUpdateRequest;
-import org.programmers.signalbuddyfinal.domain.feedback_report.entity.enums.FeedbackReportCategory;
-import org.programmers.signalbuddyfinal.domain.feedback_report.entity.enums.FeedbackReportStatus;
 import org.programmers.signalbuddyfinal.domain.feedback_report.service.FeedbackReportService;
 import org.programmers.signalbuddyfinal.global.annotation.CurrentUser;
+import org.programmers.signalbuddyfinal.global.constant.SearchTarget;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
@@ -22,6 +21,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -55,12 +55,9 @@ public class FeedbackReportController {
     public ResponseEntity<ApiResponse<PageResponse<FeedbackReportResponse>>> searchFeedbackReportList(
         @PageableDefault(sort = {"createdAt"}, direction = Direction.DESC)
         Pageable pageable,
-        @RequestParam(value = "keyword", required = false)
-        String keyword,
-        @RequestParam(value = "category", required = false)
-        Set<FeedbackReportCategory> categories,
-        @RequestParam(value = "status", required = false)
-        Set<FeedbackReportStatus> statuses,
+        @RequestParam(value = "target", defaultValue = "content")
+        SearchTarget target,
+        @ModelAttribute FeedbackReportSearchRequest request,
         @RequestParam(name = "start-date", required = false)
         @DateTimeFormat(pattern = "yyyy-MM-dd")
         LocalDate startDate,
@@ -72,8 +69,7 @@ public class FeedbackReportController {
         return ResponseEntity.ok(
             ApiResponse.createSuccess(
                 reportService.searchFeedbackReportList(
-                    pageable, keyword,
-                    categories, statuses,
+                    pageable, target, request,
                     startDate, endDate,
                     user
                 )

@@ -69,6 +69,11 @@ class CustomFeedbackSummaryRepositoryImplTest extends ServiceTest {
                 );
             }
         }
+
+        saveDeletedFeedback(
+            "deleted subject ", "deleted content ",
+            FeedbackCategory.DELAY, member, crossroad1
+        );
     }
 
     @DisplayName("특정 날짜의 교차로 별 피드백 개수 순위를 집계한다.")
@@ -136,5 +141,15 @@ class CustomFeedbackSummaryRepositoryImplTest extends ServiceTest {
         return feedbackRepository.saveAndFlush(
             Feedback.create().subject(subject).content(content).secret(Boolean.FALSE)
                 .category(category).member(member).crossroad(crossroad).build());
+    }
+
+    private Feedback saveDeletedFeedback(
+        String subject, String content, FeedbackCategory category,
+        Member member, Crossroad crossroad
+    ) {
+        Feedback feedback = Feedback.create().subject(subject).content(content).secret(Boolean.FALSE)
+            .category(category).member(member).crossroad(crossroad).build();
+        feedback.delete();
+        return feedbackRepository.saveAndFlush(feedback);
     }
 }

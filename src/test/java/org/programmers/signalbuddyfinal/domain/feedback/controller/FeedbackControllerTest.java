@@ -46,6 +46,7 @@ import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.programmers.signalbuddyfinal.global.anotation.WithMockCustomUser;
+import org.programmers.signalbuddyfinal.global.constant.SearchTarget;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.programmers.signalbuddyfinal.global.support.ControllerTest;
@@ -178,7 +179,8 @@ class FeedbackControllerTest extends ControllerTest {
 
         given(
             feedbackService.searchFeedbackList(
-                any(Pageable.class), any(FeedbackSearchRequest.class),  anyLong()
+                any(Pageable.class), any(SearchTarget.class),
+                any(FeedbackSearchRequest.class),  anyLong()
             )
         ).willReturn(response);
 
@@ -187,6 +189,7 @@ class FeedbackControllerTest extends ControllerTest {
             get("/api/feedbacks")
                 .queryParam("page", String.valueOf(pageable.getPageNumber()))
                 .queryParam("size", String.valueOf(pageable.getPageSize()))
+                .queryParam("target", "content")
                 .queryParam("status", AnswerStatus.BEFORE.getValue())
                 .queryParam("category",
                     FeedbackCategory.ETC.getValue(), FeedbackCategory.DELAY.getValue())
@@ -215,6 +218,12 @@ class FeedbackControllerTest extends ControllerTest {
                                     .description("페이지 번호 (기본값 : 0, 0부터 시작)").optional(),
                                 parameterWithName("size").type(SimpleType.NUMBER)
                                     .description("페이지 크기 (기본값 : 10)").optional(),
+                                parameterWithName("target").type(SimpleType.STRING)
+                                    .description("""
+                                        피드백 검색 범위 (기본값 : `content`, 택 1)
+                                        - `content` : 제목 + 내용
+                                        - `writer` : 작성자
+                                        """).optional(),
                                 parameterWithName("status").type(SimpleType.STRING)
                                     .description("""
                                         피드백 답변 상태 (택 1)

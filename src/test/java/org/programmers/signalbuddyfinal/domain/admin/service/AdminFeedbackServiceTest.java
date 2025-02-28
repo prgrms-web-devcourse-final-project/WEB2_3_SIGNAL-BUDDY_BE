@@ -6,6 +6,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
+import org.programmers.signalbuddyfinal.global.constant.SearchTarget;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.exception.GlobalErrorCode;
@@ -27,7 +28,7 @@ class AdminFeedbackServiceTest extends ServiceTest {
         // When & Then
         try {
             adminFeedbackService.searchFeedbackList(
-                null, null, null, null, null, user
+                null, SearchTarget.SUBJECT_OR_CONTENT, null, null, null, null, user
             );
         } catch (BusinessException e) {
             assertThat(e.getErrorCode()).isEqualTo(GlobalErrorCode.ADMIN_ONLY);

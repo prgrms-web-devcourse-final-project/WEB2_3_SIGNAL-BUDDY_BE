@@ -6,6 +6,7 @@ import org.programmers.signalbuddyfinal.domain.admin.service.AdminFeedbackServic
 import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackResponse;
 import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackSearchRequest;
 import org.programmers.signalbuddyfinal.global.annotation.CurrentUser;
+import org.programmers.signalbuddyfinal.global.constant.SearchTarget;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
@@ -31,6 +32,8 @@ public class AdminFeedbackController {
     public ResponseEntity<ApiResponse<PageResponse<FeedbackResponse>>> searchFeedbackList(
         @PageableDefault(sort = {"createdAt"}, direction = Direction.DESC)
         Pageable pageable,
+        @RequestParam(value = "target", defaultValue = "content")
+        SearchTarget target,
         @ModelAttribute FeedbackSearchRequest request,
         @RequestParam(value = "deleted", required = false)
         Boolean deleted,
@@ -45,7 +48,7 @@ public class AdminFeedbackController {
         return ResponseEntity.ok(
             ApiResponse.createSuccess(
                 adminFeedbackService.searchFeedbackList(
-                    pageable, request, deleted, startDate, endDate, user
+                    pageable, target, request, deleted, startDate, endDate, user
                 )
             )
         );

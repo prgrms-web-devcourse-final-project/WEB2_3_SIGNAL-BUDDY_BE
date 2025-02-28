@@ -5,8 +5,6 @@ import static com.epages.restdocs.apispec.ResourceDocumentation.parameterWithNam
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anySet;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
@@ -35,6 +33,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.programmers.signalbuddyfinal.domain.feedback_report.dto.FeedbackReportRequest;
 import org.programmers.signalbuddyfinal.domain.feedback_report.dto.FeedbackReportResponse;
+import org.programmers.signalbuddyfinal.domain.feedback_report.dto.FeedbackReportSearchRequest;
 import org.programmers.signalbuddyfinal.domain.feedback_report.dto.FeedbackReportUpdateRequest;
 import org.programmers.signalbuddyfinal.domain.feedback_report.entity.enums.FeedbackReportCategory;
 import org.programmers.signalbuddyfinal.domain.feedback_report.entity.enums.FeedbackReportStatus;
@@ -43,6 +42,7 @@ import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.programmers.signalbuddyfinal.global.anotation.WithMockCustomUser;
+import org.programmers.signalbuddyfinal.global.constant.SearchTarget;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.programmers.signalbuddyfinal.global.support.ControllerTest;
@@ -198,8 +198,8 @@ class FeedbackReportControllerTest extends ControllerTest {
 
         given(
             reportService.searchFeedbackReportList(
-                any(Pageable.class), anyString(),
-                anySet(), anySet(),
+                any(Pageable.class), any(SearchTarget.class),
+                any(FeedbackReportSearchRequest.class),
                 any(LocalDate.class), any(LocalDate.class),
                 any(CustomUser2Member.class)
             )
@@ -211,6 +211,7 @@ class FeedbackReportControllerTest extends ControllerTest {
                 .header(HttpHeaders.AUTHORIZATION, getTokenExample())
                 .queryParam("page", String.valueOf(pageable.getPageNumber()))
                 .queryParam("size", String.valueOf(pageable.getPageSize()))
+                .queryParam("target", "content")
                 .queryParam("keyword", "test")
                 .queryParam(
                     "category",
@@ -267,6 +268,12 @@ class FeedbackReportControllerTest extends ControllerTest {
                                         정렬 순서 (기본값 : `desc`)
                                         - `asc` : 오름차순
                                         - `desc` : 내림차순
+                                        """).optional(),
+                                parameterWithName("target").type(SimpleType.STRING)
+                                    .description("""
+                                        피드백 검색 범위 (기본값 : `content`, 택 1)
+                                        - `content` : 신고 내용
+                                        - `writer` : 작성자
                                         """).optional(),
                                 parameterWithName("keyword").type(SimpleType.STRING)
                                     .description("검색어").optional(),
