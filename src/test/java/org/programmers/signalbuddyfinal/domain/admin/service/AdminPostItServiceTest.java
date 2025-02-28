@@ -11,6 +11,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Point;
+import org.programmers.signalbuddyfinal.domain.admin.dto.PostItFilterRequest;
+import org.programmers.signalbuddyfinal.domain.admin.dto.enums.Deleted;
+import org.programmers.signalbuddyfinal.domain.admin.dto.enums.Periods;
 import org.programmers.signalbuddyfinal.domain.crossroad.service.PointUtil;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
@@ -19,7 +22,6 @@ import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepositor
 import org.programmers.signalbuddyfinal.domain.postit.entity.Danger;
 import org.programmers.signalbuddyfinal.domain.postit.entity.Postit;
 import org.programmers.signalbuddyfinal.domain.postit.repository.PostItRepository;
-import org.programmers.signalbuddyfinal.domain.postitsolve.repository.PostitSolveRepository;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.support.ServiceTest;
 import org.slf4j.Logger;
@@ -27,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 public class AdminPostItServiceTest extends ServiceTest {
@@ -42,8 +45,6 @@ public class AdminPostItServiceTest extends ServiceTest {
     MemberRepository memberRepository;
     @Autowired
     AdminPostItService adminPostItService;
-    @Autowired
-    PostitSolveRepository postitSolveRepository;
 
     @BeforeEach
     public void setUp() {
@@ -75,11 +76,9 @@ public class AdminPostItServiceTest extends ServiceTest {
 
     @Test
     @DisplayName("관리자 포스트잇 해결 상태 변경 성공 테스트")
+    @Transactional
     public void adminCompletePostItSuccessTest() {
-        Long postitId = unsolvedPostit.getPostitId();
-        adminPostItService.completePostIt(postitId);
-
-        log.info("결과..." + unsolvedPostit.getDeletedAt().toString());
+        adminPostItService.completePostIt(unsolvedPostit.getPostitId());
         assertThat(unsolvedPostit.getDeletedAt()).isNotNull();
     }
 
@@ -88,6 +87,44 @@ public class AdminPostItServiceTest extends ServiceTest {
     public void adminAlreadyCompletePostItExceptionTest() {
 
         assertThrows(BusinessException.class, () -> adminPostItService.completePostIt(1L));
+    }
+
+    @DisplayName("포스트잇 기간별 조회 중복 사용 예외 테스트")
+    @Test
+    public void 기간별_조회_중복_사용_테스트() {
+
+        PostItFilterRequest duplicatedFilter = createFilter(
+            LocalDateTime.of(2024, 1, 25, 0, 0, 0),
+            LocalDateTime.of(2025, 1, 25, 0, 0, 0), Periods.MONTH, null, null, null);
+
+        assertThrows(
+            BusinessException.class,
+            () -> adminPostItService.getAllPostItWithFilter(pageable, duplicatedFilter));
+    }
+
+    @DisplayName("포스트잇 기간별 조회 시작일 미지정 예외 테스트")
+    @Test
+    public void 기간별_조회_시작일_미지정_테스트() {
+
+        PostItFilterRequest noStartDateFilter = createFilter(null,
+            LocalDateTime.of(2025, 1, 25, 0, 0, 0), null, null, null, null);
+
+        assertThrows(
+            BusinessException.class,
+            () -> adminPostItService.getAllPostItWithFilter(pageable, noStartDateFilter));
+    }
+
+    @DisplayName("포스트잇 기간별 조회 시작일 > 종료일 예외 테스트")
+    @Test
+    public void 기간별_조회_시작일_종료일_비교_테스트() {
+
+        PostItFilterRequest afterStartDateFilter = createFilter(
+            LocalDateTime.of(2025, 1, 25, 0, 0, 0),
+            LocalDateTime.of(2024, 1, 25, 0, 0, 0), null, null, null, null);
+
+        assertThrows(
+            BusinessException.class,
+            () -> adminPostItService.getAllPostItWithFilter(pageable, afterStartDateFilter));
     }
 
     private Postit createPostIt(Danger danger, Point coordinate, String subject,
@@ -116,6 +153,19 @@ public class AdminPostItServiceTest extends ServiceTest {
             .role(MemberRole.USER)
             .memberStatus(MemberStatus.ACTIVITY)
             .build());
+    }
+
+    private PostItFilterRequest createFilter(LocalDateTime startDate, LocalDateTime endDate,
+        Periods period, Danger danger, Deleted deleted,
+        String search) {
+        return PostItFilterRequest.builder()
+            .startDate(startDate)
+            .endDate(endDate)
+            .periods(period)
+            .search(search)
+            .danger(danger)
+            .deleted(deleted)
+            .build();
     }
 
 }
