@@ -1,7 +1,6 @@
 package org.programmers.signalbuddyfinal.domain.comment.controller;
 
 import static com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper.document;
-import static com.epages.restdocs.apispec.ResourceDocumentation.headerWithName;
 import static com.epages.restdocs.apispec.ResourceDocumentation.parameterWithName;
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
 import static org.mockito.ArgumentMatchers.any;
@@ -270,8 +269,7 @@ class CommentControllerTest extends ControllerTest {
                             .tag(tag)
                             .summary("댓글 삭제")
                             .requestHeaders(
-                                headerWithName(HttpHeaders.AUTHORIZATION).type(SimpleType.STRING)
-                                    .description("JWT")
+                                jwtFormat()
                             )
                             .pathParameters(
                                 parameterWithName("feedbackId").type(SimpleType.NUMBER)
