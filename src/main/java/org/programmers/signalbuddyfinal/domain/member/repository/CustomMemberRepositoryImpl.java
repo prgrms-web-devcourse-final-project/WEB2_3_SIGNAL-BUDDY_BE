@@ -56,9 +56,9 @@ public class CustomMemberRepositoryImpl implements CustomMemberRepository {
             .fetch();
 
         long total = jpaQueryFactory
-            .select(adminMemberResponseDto)
+            .select(member.count())
             .from(member)
-            .fetchCount();
+            .fetchOne();
 
         return new PageResponse<>(new PageImpl<>(members, pageable, total));
     }
@@ -74,10 +74,10 @@ public class CustomMemberRepositoryImpl implements CustomMemberRepository {
             .fetch();
 
         long total = jpaQueryFactory
-            .select(withdrawalMemberResponseDto)
+            .select(member.count())
             .from(member)
             .where(member.memberStatus.eq(MemberStatus.WITHDRAWAL))
-            .fetchCount();
+            .fetchOne();
 
         return new PageImpl<>(members, pageable, total);
     }
@@ -103,7 +103,7 @@ public class CustomMemberRepositoryImpl implements CustomMemberRepository {
             .fetch();
 
         long total = jpaQueryFactory
-            .select(adminMemberResponseDto)
+            .select(member.count())
             .from(member)
             .leftJoin(socialProvider).on(socialProvider.member.memberId.eq(member.memberId))
             .where(
@@ -113,7 +113,7 @@ public class CustomMemberRepositoryImpl implements CustomMemberRepository {
                 eqOAuthProvider(filter.getOAuthProvider()),
                 betweenCreatedAt(filter.getStartDate(), filter.getEndDate())
             )
-            .fetchCount();
+            .fetchOne();
 
         return new PageResponse<>(new PageImpl<>(members, pageable, total));
     }

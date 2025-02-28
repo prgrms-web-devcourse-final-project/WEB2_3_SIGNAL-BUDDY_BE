@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class AdminMemberService {
+
     private final MemberRepository memberRepository;
     private final BookmarkRepository bookmarkRepository;
     private BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
@@ -39,8 +40,7 @@ public class AdminMemberService {
         List<AdminBookmarkResponse> adminBookmarkResponses = bookmarkRepository.findBookmarkByMember(
             member.getMemberId());
 
-        return AdminMapper.INSTANCE.toAdminMemberResponse(member,
-            adminBookmarkResponses);
+        return AdminMapper.INSTANCE.toAdminMemberResponse(member, adminBookmarkResponses);
     }
 
     public Page<WithdrawalMemberResponse> getAllWithdrawalMembers(Pageable pageable) {
@@ -53,11 +53,7 @@ public class AdminMemberService {
 
         checkFilterException(memberFilterRequest);
 
-        PageResponse<AdminMemberResponse> members = memberRepository.findAllMemberWithFilter(
-            pageable,
-            memberFilterRequest);
-
-        return members;
+        return memberRepository.findAllMemberWithFilter(pageable, memberFilterRequest);
     }
 
     private void checkFilterException(MemberFilterRequest memberFilterRequest) {

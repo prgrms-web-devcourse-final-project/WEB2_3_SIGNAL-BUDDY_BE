@@ -30,10 +30,8 @@ public class AdminPostItService {
     private final PostitSolveRepository postitSolveRepository;
 
     public PageResponse<AdminPostItResponse> getAllPostIt(Pageable pageable) {
-        PageResponse<AdminPostItResponse> postItResponses = postItRepository.findAllPostIt(
-            pageable);
 
-        return postItResponses;
+        return postItRepository.findAllPostIt(pageable);
     }
 
     @Transactional
@@ -52,11 +50,7 @@ public class AdminPostItService {
 
         checkFilterException(postItFilterRequest);
 
-        PageResponse<AdminPostItResponse> postIts = postItRepository.findAllPostItWithFilter(
-            pageable,
-            postItFilterRequest);
-
-        return postIts;
+        return postItRepository.findAllPostItWithFilter(pageable, postItFilterRequest);
     }
 
     private void checkFilterException(PostItFilterRequest postItFilterRequest) {

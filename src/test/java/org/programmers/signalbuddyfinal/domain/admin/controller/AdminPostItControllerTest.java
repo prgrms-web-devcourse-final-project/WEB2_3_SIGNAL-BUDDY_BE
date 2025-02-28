@@ -29,14 +29,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.programmers.signalbuddyfinal.domain.admin.dto.AdminMemberResponse;
 import org.programmers.signalbuddyfinal.domain.admin.dto.AdminPostItResponse;
-import org.programmers.signalbuddyfinal.domain.admin.dto.MemberFilterRequest;
 import org.programmers.signalbuddyfinal.domain.admin.dto.PostItFilterRequest;
 import org.programmers.signalbuddyfinal.domain.admin.dto.enums.Deleted;
 import org.programmers.signalbuddyfinal.domain.admin.service.AdminPostItService;
-import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
-import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.programmers.signalbuddyfinal.domain.postit.dto.PostItResponse;
 import org.programmers.signalbuddyfinal.domain.postit.entity.Danger;
 import org.programmers.signalbuddyfinal.global.anotation.WithMockCustomUser;
@@ -63,7 +59,7 @@ public class AdminPostItControllerTest extends ControllerTest {
 
     @DisplayName("전체 포스트잇 조회")
     @Test
-    public void getAllPostIt() throws Exception {
+    void getAllPostIt() throws Exception {
         final List<AdminPostItResponse> postIts = List.of(
             new AdminPostItResponse(Danger.NOTICE, "제목1", "내용1", "user1@test.com",
                 LocalDateTime.of(2025, 1, 20, 11, 35)),
@@ -117,7 +113,7 @@ public class AdminPostItControllerTest extends ControllerTest {
     @Test
     @DisplayName("관리자 포스트잇 해결")
     @WithMockCustomUser
-    public void completePostIt() throws Exception {
+    void completePostIt() throws Exception {
         PostItResponse postItResponse = createResponse(1L);
 
         given(adminPostItService.completePostIt(anyLong(), eq(null))).willReturn(postItResponse);
@@ -145,10 +141,10 @@ public class AdminPostItControllerTest extends ControllerTest {
                             )
                             .queryParameters(
                                 parameterWithName("만료일").description("""
-                                    **(선택)** 변경 만료일
-                                    - 미해결로 변경 & 만료일 수정시에 작성
-                                    - 형식 : YYYY-MM-dd HH-mm
-                                    """)
+                                        **(선택)** 변경 만료일
+                                        - 미해결로 변경 & 만료일 수정시에 작성
+                                        - 형식 : YYYY-MM-dd HH-mm
+                                        """)
                                     .optional()
                             )
                             .build()
@@ -205,7 +201,7 @@ public class AdminPostItControllerTest extends ControllerTest {
 
     @DisplayName("포스트잇 필터링 조회")
     @Test
-    public void FilteredPostIt() throws Exception {
+    void FilteredPostIt() throws Exception {
         final PostItFilterRequest filter = PostItFilterRequest.builder()
             .startDate(LocalDateTime.of(2025, 1, 1, 0, 0, 0))
             .endDate(LocalDateTime.of(2025, 2, 20, 0, 0, 0))
@@ -230,7 +226,7 @@ public class AdminPostItControllerTest extends ControllerTest {
             any(PostItFilterRequest.class)))
             .willReturn(response);
 
-        final ResultActions result = mockMvc.perform(
+        mockMvc.perform(
                 get("/api/admin/postits/filter")
                     .param("page", "0")
                     .param("size", "10")

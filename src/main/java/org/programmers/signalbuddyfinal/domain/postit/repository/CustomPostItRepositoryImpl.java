@@ -42,9 +42,9 @@ public class CustomPostItRepositoryImpl implements CustomPostItRepository {
             .fetch();
 
         long total = jpaQueryFactory
-            .select(adminPostItResponseDto)
+            .select(postit.count())
             .from(postit)
-            .fetchCount();
+            .fetchOne();
 
         return new PageResponse<>(new PageImpl<>(postIts, pageable, total));
     }
@@ -68,7 +68,7 @@ public class CustomPostItRepositoryImpl implements CustomPostItRepository {
             .fetch();
 
         long total = jpaQueryFactory
-            .select(adminPostItResponseDto)
+            .select(postit.count())
             .from(postit)
             .where(
                 eqSearch(filter.getSearch()),
@@ -76,7 +76,7 @@ public class CustomPostItRepositoryImpl implements CustomPostItRepository {
                 eqIsDeleted(filter.getDeleted()),
                 betweenCreatedAt(filter.getStartDate(), filter.getEndDate())
             )
-            .fetchCount();
+            .fetchOne();
 
         return new PageResponse<>(new PageImpl<>(postIts, pageable, total));
     }

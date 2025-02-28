@@ -11,7 +11,6 @@ import org.locationtech.jts.geom.Point;
 import org.programmers.signalbuddyfinal.domain.basetime.BaseTimeEntity;
 import org.programmers.signalbuddyfinal.domain.crossroad.service.PointUtil;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
-
 import java.time.LocalDateTime;
 import org.programmers.signalbuddyfinal.domain.postit.dto.PostItRequest;
 
@@ -74,13 +73,13 @@ public class Postit extends BaseTimeEntity {
     }
 
     public void updatePostIt(PostItRequest postItRequest, String imageUrl) {
-        Point coordinate = PointUtil.toPoint(postItRequest.getLat(), postItRequest.getLng());
+        Point newCoordinate = PointUtil.toPoint(postItRequest.getLat(), postItRequest.getLng());
 
         if (!this.danger.equals(postItRequest.getDanger())) {
             this.danger = postItRequest.getDanger();
         }
-        if (!this.coordinate.equals(coordinate)) {
-            this.coordinate = coordinate;
+        if (!this.coordinate.equals(newCoordinate)) {
+            this.coordinate = newCoordinate;
         }
         if (!this.subject.equals(postItRequest.getSubject())) {
             this.subject = postItRequest.getSubject();
