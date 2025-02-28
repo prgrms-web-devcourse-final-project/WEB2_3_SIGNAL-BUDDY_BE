@@ -271,7 +271,7 @@ class FeedbackReportControllerTest extends ControllerTest {
                                         """).optional(),
                                 parameterWithName("target").type(SimpleType.STRING)
                                     .description("""
-                                        피드백 검색 범위 (기본값 : `content`)
+                                        피드백 검색 범위 (기본값 : `content`, 택 1)
                                         - `content` : 신고 내용
                                         - `writer` : 작성자
                                         """).optional(),

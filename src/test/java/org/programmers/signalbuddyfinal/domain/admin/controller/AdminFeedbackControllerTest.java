@@ -141,7 +141,7 @@ class AdminFeedbackControllerTest extends ControllerTest {
                                         """).optional(),
                                 parameterWithName("target").type(SimpleType.STRING)
                                     .description("""
-                                        피드백 검색 범위 (기본값 : `content`)
+                                        피드백 검색 범위 (기본값 : `content`, 택 1)
                                         - `content` : 제목 + 내용
                                         - `writer` : 작성자
                                         """).optional(),
