@@ -32,13 +32,15 @@ public class CustomFeedbackSummaryRepositoryImpl implements CustomFeedbackSummar
 
     private final JPAQueryFactory jpaQueryFactory;
 
+    private final BooleanExpression isNotDeletedFeedback = feedback.deletedAt.isNull();
+
     @Override
     public List<CrossroadFeedbackCount> countFeedbackOnCrossroadByDate(LocalDate date) {
         return jpaQueryFactory
             .select(CROSSROAD_FEEDBACK_COUNT)
             .from(feedback)
             .join(crossroad).on(feedback.crossroad.eq(crossroad))
-            .where(dateCondition(date))
+            .where(dateCondition(date).and(isNotDeletedFeedback))
             .groupBy(crossroad.crossroadId)
             .having(feedback.count().goe(1))
             .orderBy(feedback.count().desc())
@@ -51,7 +53,7 @@ public class CustomFeedbackSummaryRepositoryImpl implements CustomFeedbackSummar
         return jpaQueryFactory
             .select(FEEDBACK_CATEGORY_COUNT)
             .from(feedback)
-            .where(dateCondition(date))
+            .where(dateCondition(date).and(isNotDeletedFeedback))
             .groupBy(feedback.category)
             .having(feedback.count().goe(1))
             .orderBy(feedback.count().desc())
@@ -64,7 +66,7 @@ public class CustomFeedbackSummaryRepositoryImpl implements CustomFeedbackSummar
         return Optional.ofNullable(jpaQueryFactory
             .select(feedback.count())
             .from(feedback)
-            .where(dateCondition(date))
+            .where(dateCondition(date).and(isNotDeletedFeedback))
             .fetchOne()
         ).orElse(0L);
     }
