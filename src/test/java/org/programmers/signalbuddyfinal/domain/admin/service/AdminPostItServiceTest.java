@@ -95,7 +95,7 @@ public class AdminPostItServiceTest extends ServiceTest {
     }
 
     @Test
-    @DisplayName("관리자 포스트잇 해결 -> 미해결 포스트잇 변경 성공 테스트")
+    @DisplayName("관리자 포스트잇 해결 - 미해결 포스트잇 변경 성공 테스트")
     public void adminAlreadyCompletePostItExceptionTest() {
         postitSolveRepository.save(PostitSolve.creator()
             .content("내용")
