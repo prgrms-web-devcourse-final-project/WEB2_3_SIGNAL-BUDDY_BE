@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -90,6 +91,19 @@ public class PostItServiceTest extends ServiceTest {
 
         assertThat(response.getContent()).isEqualTo(request.getContent());
         assertThat(response.getSubject()).isEqualTo(request.getSubject());
+
+    }
+
+    @Test
+    @DisplayName("포스트잇 등록시 deletedAt null 할당 테스트")
+    public void deletedAtEqualNullTest() {
+        PostItCreateRequest request = createPostItCreateRequest("제목", "내용",
+            LocalDateTime.of(25, 1, 1, 0, 0));
+
+        PostItResponse response = postItService.createPostIt(request, mockImage1, user1);
+        Optional<Postit> postit = postItRepository.findById(response.getPostitId());
+
+        assertThat(postit.get().getDeletedAt()).isNull();
 
     }
 

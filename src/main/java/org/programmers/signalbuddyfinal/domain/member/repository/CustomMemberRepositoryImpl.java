@@ -25,6 +25,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 import static org.programmers.signalbuddyfinal.domain.member.entity.QMember.member;
+import static org.programmers.signalbuddyfinal.domain.postit.entity.QPostit.postit;
 import static org.programmers.signalbuddyfinal.domain.social.entity.QSocialProvider.socialProvider;
 
 @Slf4j
@@ -178,6 +179,6 @@ public class CustomMemberRepositoryImpl implements CustomMemberRepository {
             default:
                 return Expressions.TRUE;
         }
-        return member.createdAt.goe(startDate);
+        return postit.expiryDate.between(startDate, now);
     }
 }
