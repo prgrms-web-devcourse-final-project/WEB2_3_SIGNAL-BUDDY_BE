@@ -21,6 +21,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Slf4j
 public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
+    private static final String EXCEPTION_ATTRIBUTE = "exception";
     private final AntPathMatcher antPathMatcher = new AntPathMatcher();
     private final JwtUtil jwtUtil;
     private final Set<String> excludeGetPaths = Set.of(
@@ -29,7 +30,8 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
     private final Set<String> excludeAllPaths = Set.of(
         "/", "/docs/**", "/ws/**", "/actuator/health", "/webjars/**", "/api/auth/login",
         "/docs/index.html", "/api/members/join",
-        "/api/admins/join", "/members/signup", "/api/members/files/**", "/actuator/prometheus"
+        "/api/admins/join", "/api/members/files/**", "/actuator/prometheus",
+        "/api/auth/auth-code", "/api/auth/verify-code"
     );
 
     public JwtAuthorizationFilter(JwtUtil jwtUtil) {
@@ -47,7 +49,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
         String accessToken = extractAccessToken(request);
         if (accessToken == null || accessToken.isEmpty()) {
-            request.setAttribute("exception", "EXPIRED_ACCESS_TOKEN");
+            request.setAttribute(EXCEPTION_ATTRIBUTE, "EXPIRED_ACCESS_TOKEN");
             throw new BusinessException(TokenErrorCode.ACCESS_TOKEN_NOT_EXIST);
         }
 
@@ -55,11 +57,11 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
             jwtUtil.validateToken(accessToken);
         } catch (MalformedJwtException | UnsupportedJwtException | IllegalArgumentException e) {
             log.info(e.getMessage());
-            request.setAttribute("exception", "INVALID_TOKEN");
+            request.setAttribute(EXCEPTION_ATTRIBUTE, "INVALID_TOKEN");
             throw new BusinessException(TokenErrorCode.INVALID_TOKEN);
         } catch (ExpiredJwtException e) {
             log.info(e.getMessage());
-            request.setAttribute("exception", "EXPIRED_ACCESS_TOKEN");
+            request.setAttribute(EXCEPTION_ATTRIBUTE, "EXPIRED_ACCESS_TOKEN");
             throw new BusinessException(TokenErrorCode.EXPIRED_ACCESS_TOKEN);
         }
 

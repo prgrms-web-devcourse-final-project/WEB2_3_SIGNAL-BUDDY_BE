@@ -633,8 +633,15 @@ class MemberControllerTest extends ControllerTest {
                 .file(requestPart)
                 .file(file))
             .andExpect(status().isOk())
-            .andDo(document("기본 계정 회원가입", preprocessRequest(prettyPrint()),
+            .andDo(document("기본 계정 회원가입",
+                preprocessRequest(prettyPrint()),
                 preprocessResponse(prettyPrint()),
+                resource(
+                    ResourceSnippetParameters.builder()
+                        .tag(tag)
+                        .summary("회원가입")
+                        .build()
+                ),
                 requestParts(
                     partWithName("profileImageUrl").description("프로필 이미지 파일"),
                     partWithName("memberJoinRequest").description("회원 가입 정보")

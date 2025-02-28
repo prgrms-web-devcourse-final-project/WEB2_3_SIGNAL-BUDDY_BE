@@ -8,8 +8,6 @@ import org.programmers.signalbuddyfinal.domain.auth.dto.NewTokenResponse;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.mapper.MemberMapper;
-import org.programmers.signalbuddyfinal.global.annotation.CurrentUser;
-import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
 import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
 import org.programmers.signalbuddyfinal.global.security.jwt.JwtService;
@@ -31,7 +29,7 @@ public class AuthService {
     private final JwtUtil jwtUtil;
     private final JwtService jwtService;
 
-    public ResponseEntity<ApiResponse> login(LoginRequest loginRequest) {
+    public ResponseEntity<ApiResponse<MemberResponse>> login(LoginRequest loginRequest) {
 
         Authentication authentication = authenticationManager.authenticate(
             new UsernamePasswordAuthenticationToken(loginRequest.getId(), loginRequest.getPassword()));
@@ -48,7 +46,7 @@ public class AuthService {
             .body(ApiResponse.createSuccess(createResponseBody(authentication)));
     }
 
-    public ResponseEntity<ApiResponse> reissue(String refreshToken) {
+    public ResponseEntity<ApiResponse<Object>> reissue(String refreshToken) {
         NewTokenResponse newTokenResponse = jwtService.reissue(refreshToken);
         HttpHeaders headers = new HttpHeaders();
         accessTokenSend2Client(headers, newTokenResponse.getAccessToken());
