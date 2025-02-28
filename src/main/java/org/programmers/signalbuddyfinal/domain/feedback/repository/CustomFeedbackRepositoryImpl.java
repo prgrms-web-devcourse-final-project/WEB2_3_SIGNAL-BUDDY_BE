@@ -1,10 +1,10 @@
 package org.programmers.signalbuddyfinal.domain.feedback.repository;
 
-import static com.querydsl.core.types.dsl.Expressions.numberTemplate;
 import static org.programmers.signalbuddyfinal.domain.crossroad.entity.QCrossroad.crossroad;
 import static org.programmers.signalbuddyfinal.domain.feedback.entity.QFeedback.feedback;
 import static org.programmers.signalbuddyfinal.domain.member.entity.QMember.member;
 import static org.programmers.signalbuddyfinal.global.util.QueryDSLUtil.betweenDates;
+import static org.programmers.signalbuddyfinal.global.util.QueryDSLUtil.fulltextSearch;
 import static org.programmers.signalbuddyfinal.global.util.QueryDSLUtil.getOrderSpecifiers;
 
 import com.querydsl.core.types.Order;
@@ -13,7 +13,6 @@ import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.QBean;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
-import com.querydsl.core.types.dsl.StringPath;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDate;
 import java.util.List;
@@ -75,11 +74,11 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
             .from(feedback)
             .join(member).on(feedback.member.eq(member)).fetchJoin()
             .where(
-                activityMember
+                searchCondition
                     .and(answerStatusCondition)
                     .and(categoriesCondition)
                     .and(crossroadIdCondition)
-                    .and(searchCondition)
+                    .and(activityMember)
                     .and(isNotDeletedFeedback)
             )
             .offset(pageable.getOffset()).limit(pageable.getPageSize())
@@ -92,11 +91,11 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
                 .from(feedback)
                 .join(member).on(feedback.member.eq(member)).fetchJoin()
                 .where(
-                    activityMember
+                    searchCondition
                         .and(answerStatusCondition)
                         .and(categoriesCondition)
                         .and(crossroadIdCondition)
-                        .and(searchCondition)
+                        .and(activityMember)
                         .and(isNotDeletedFeedback)
                 ).fetchOne()
         ).orElse(0L);
@@ -138,9 +137,9 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
             .from(feedback)
             .join(member).on(feedback.member.eq(member)).fetchJoin()
             .where(
-                deletedCondition
+                searchCondition
                     .and(answerStatusCondition)
-                    .and(searchCondition)
+                    .and(deletedCondition)
                     .and(categoriesCondition)
                     .and(betweenDates)
             )
@@ -153,9 +152,9 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
                 .from(feedback)
                 .join(member).on(feedback.member.eq(member)).fetchJoin()
                 .where(
-                    deletedCondition
+                    searchCondition
                         .and(answerStatusCondition)
-                        .and(searchCondition)
+                        .and(deletedCondition)
                         .and(categoriesCondition)
                         .and(betweenDates)
                 ).fetchOne()
@@ -214,30 +213,6 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
             fulltextSearch = fulltextSearch(keyword, feedback.subject, feedback.content);
         }
         return fulltextSearch;
-    }
-
-    private BooleanExpression fulltextSearch(String keyword, StringPath target1, StringPath target2) {
-        if (keyword == null || keyword.isBlank()) {
-            return Expressions.TRUE;
-        }
-
-        String formattedSearchWord = "\"" + keyword + "\"";
-        return numberTemplate(
-            Double.class, "function('match2_against', {0}, {1}, {2})",
-            target1, target2, formattedSearchWord
-        ).gt(0);
-    }
-
-    private BooleanExpression fulltextSearch(String keyword, StringPath target) {
-        if (keyword == null || keyword.isBlank()) {
-            return Expressions.TRUE;
-        }
-
-        String formattedSearchWord = "\"" + keyword + "\"";
-        return numberTemplate(
-            Double.class, "function('match_against', {0}, {1})",
-            target, formattedSearchWord
-        ).gt(0);
     }
 
     private BooleanExpression deletedCondition(Boolean deleted) {
