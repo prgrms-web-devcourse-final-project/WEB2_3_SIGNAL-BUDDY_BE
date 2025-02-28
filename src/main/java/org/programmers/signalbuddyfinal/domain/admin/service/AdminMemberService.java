@@ -28,9 +28,8 @@ public class AdminMemberService {
     private BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
 
     public PageResponse<AdminMemberResponse> getAllMembers(Pageable pageable) {
-        PageResponse<AdminMemberResponse> membersPage = memberRepository.findAllMembers(pageable);
 
-        return membersPage;
+        return memberRepository.findAllMembers(pageable);
     }
 
     public AdminMemberDetailResponse getMember(Long id) {
@@ -40,16 +39,13 @@ public class AdminMemberService {
         List<AdminBookmarkResponse> adminBookmarkResponses = bookmarkRepository.findBookmarkByMember(
             member.getMemberId());
 
-        AdminMemberDetailResponse response = AdminMapper.INSTANCE.toAdminMemberResponse(member,
+        return AdminMapper.INSTANCE.toAdminMemberResponse(member,
             adminBookmarkResponses);
-
-        return response;
     }
 
     public Page<WithdrawalMemberResponse> getAllWithdrawalMembers(Pageable pageable) {
-        Page<WithdrawalMemberResponse> membersPage = memberRepository.findAllWithdrawMembers(pageable);
 
-        return membersPage;
+        return memberRepository.findAllWithdrawMembers(pageable);
     }
 
     public PageResponse<AdminMemberResponse> getAllMemberWithFilter(Pageable pageable,
