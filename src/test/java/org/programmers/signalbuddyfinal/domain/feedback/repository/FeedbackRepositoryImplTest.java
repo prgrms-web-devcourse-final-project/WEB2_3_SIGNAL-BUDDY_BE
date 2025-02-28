@@ -22,6 +22,7 @@ import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
+import org.programmers.signalbuddyfinal.global.constant.SearchTarget;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.support.RepositoryTest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,14 +61,16 @@ class FeedbackRepositoryImplTest extends RepositoryTest {
         saveFeedback("test subject3", "test content3", member, crossroad);
         saveFeedback("test subject4", "test content4", member, crossroad);
 
-        createFulltextIndex();
+        createFulltextIndexOnMember();
+        createFulltextIndexOnFeedback();
     }
 
     @DisplayName("활동 중인 회원들의 피드백 목록을 조회한다.")
     @Test
     void getFeedbacks() {
-        final Page<FeedbackResponse> allByActiveMembers = feedbackRepository.findAllByActiveMembers(
-            Pageable.ofSize(10), AnswerStatus.BEFORE, null, null , null);
+        Page<FeedbackResponse> allByActiveMembers = feedbackRepository.findAllByActiveMembers(
+            Pageable.ofSize(10), SearchTarget.SUBJECT_OR_CONTENT, AnswerStatus.BEFORE,
+            null, null , null);
 
         assertThat(allByActiveMembers).isNotNull();
         assertThat(allByActiveMembers.getTotalElements()).isEqualTo(3);
@@ -90,11 +93,11 @@ class FeedbackRepositoryImplTest extends RepositoryTest {
         }
         saveFeedback(subject + 13, content + 13, withDrawalMember, crossroad);
 
-        createFulltextIndex();
+        createFulltextIndexOnFeedback();
 
         // When
         Page<FeedbackResponse> actual = feedbackRepository.findAllByActiveMembers(
-            Pageable.ofSize(10), AnswerStatus.BEFORE,
+            Pageable.ofSize(10), SearchTarget.SUBJECT_OR_CONTENT, AnswerStatus.BEFORE,
             null, crossroad.getCrossroadId(), null
         );
 
@@ -123,11 +126,11 @@ class FeedbackRepositoryImplTest extends RepositoryTest {
         saveFeedback("test subject13", "test content13", FeedbackCategory.ADD_SIGNAL, member, crossroad);
         saveFeedback("test subject14", "test content14", member, crossroad);
 
-        createFulltextIndex();
+        createFulltextIndexOnFeedback();
 
         // When
         Page<FeedbackResponse> actual = feedbackRepository.findAllByActiveMembers(
-            Pageable.ofSize(10), null,
+            Pageable.ofSize(10), SearchTarget.SUBJECT_OR_CONTENT, null,
             categories, null, null
         );
 
@@ -148,9 +151,9 @@ class FeedbackRepositoryImplTest extends RepositoryTest {
         });
     }
 
-    @DisplayName("피드백의 제목과 내용을 대상으로 검색어로 조회한다.")
+    @DisplayName("피드백의 제목과 내용을 대상으로 검색어를 조회한다.")
     @Test
-    void findAllByActiveMembersByKeyword() {
+    void findAllByActiveMembersByKeywordFromContent() {
         // Given
         String keyword = "홍길동";
         Set<FeedbackCategory> categories = Set.of(FeedbackCategory.DELAY, FeedbackCategory.ADD_SIGNAL);
@@ -160,11 +163,11 @@ class FeedbackRepositoryImplTest extends RepositoryTest {
         saveFeedback("test subject13", keyword + " ㅁㅁㅁ", FeedbackCategory.ADD_SIGNAL, member, crossroad);
         saveFeedback("test subject14", "test content14", member, crossroad);
 
-        createFulltextIndex();
+        createFulltextIndexOnFeedback();
 
         // When
         Page<FeedbackResponse> actual = feedbackRepository.findAllByActiveMembers(
-            Pageable.ofSize(10), null,
+            Pageable.ofSize(10), SearchTarget.SUBJECT_OR_CONTENT, null,
             categories, null, keyword
         );
 
@@ -182,6 +185,35 @@ class FeedbackRepositoryImplTest extends RepositoryTest {
                 softAssertions.assertThat(feedback.getSubject() + feedback.getContent())
                     .contains(keyword);
             }
+        });
+    }
+
+    @DisplayName("피드백의 작성자를 대상으로 검색어를 조회한다.")
+    @Test
+    void findAllByActiveMembersByKeywordFromWriter() {
+        // Given
+        String keyword = member.getNickname();
+
+        // When
+        Page<FeedbackResponse> actual = feedbackRepository.findAllByActiveMembers(
+            Pageable.ofSize(10), SearchTarget.WRITER, null,
+            null, null, keyword
+        );
+
+        // Then
+        SoftAssertions.assertSoftly(softAssertions -> {
+            softAssertions.assertThat(actual).isNotNull();
+            softAssertions.assertThat(actual.getTotalElements()).isEqualTo(3);
+            softAssertions.assertThat(actual.getTotalPages()).isEqualTo(1);
+
+            softAssertions.assertThat(actual.getContent()).isNotEmpty()
+                .allSatisfy(feedback -> {
+                    assertThat(feedback.getMember().getMemberStatus())
+                        .isEqualTo(MemberStatus.ACTIVITY);
+                    assertThat(feedback.getMember().getNickname())
+                        .contains(keyword);
+                }
+            );
         });
     }
 
@@ -289,10 +321,17 @@ class FeedbackRepositoryImplTest extends RepositoryTest {
                 .category(category).member(member).crossroad(crossroad).build());
     }
 
-    private void createFulltextIndex() {
+    private void createFulltextIndexOnFeedback() {
         jdbcTemplate.execute(
             "CREATE FULLTEXT INDEX IF NOT EXISTS idx_subject_content " +
                 "ON feedbacks (subject, content)"
+        );
+    }
+
+    private void createFulltextIndexOnMember() {
+        jdbcTemplate.execute(
+            "CREATE FULLTEXT INDEX IF NOT EXISTS idx_nickname " +
+                "ON members (nickname)"
         );
     }
 }
