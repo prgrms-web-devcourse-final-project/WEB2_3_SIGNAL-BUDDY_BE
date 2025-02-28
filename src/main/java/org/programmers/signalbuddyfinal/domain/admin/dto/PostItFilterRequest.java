@@ -6,7 +6,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.admin.dto.enums.Deleted;
-import org.programmers.signalbuddyfinal.domain.admin.dto.enums.Periods;
 import org.programmers.signalbuddyfinal.domain.postit.entity.Danger;
 
 @AllArgsConstructor
@@ -24,6 +23,4 @@ public class PostItFilterRequest {
     private String search;
 
     private Deleted deleted;
-
-    private Periods periods;
 }

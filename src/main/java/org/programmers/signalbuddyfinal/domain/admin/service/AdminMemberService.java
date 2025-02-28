@@ -65,11 +65,6 @@ public class AdminMemberService {
     }
 
     private void checkFilterException(MemberFilterRequest memberFilterRequest) {
-        if ((memberFilterRequest.getStartDate() != null && memberFilterRequest.getEndDate() != null)
-            && memberFilterRequest.getPeriods() != null) {
-            throw new BusinessException(AdminErrorCode.DUPLICATED_PERIOD);
-        }
-
         if (memberFilterRequest.getStartDate() != null
             && memberFilterRequest.getEndDate() == null) {
             throw new BusinessException(AdminErrorCode.END_DATE_NOT_SELECTED);

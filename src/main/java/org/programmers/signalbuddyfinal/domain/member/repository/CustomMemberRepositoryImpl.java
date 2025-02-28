@@ -6,13 +6,11 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.programmers.signalbuddyfinal.domain.admin.dto.AdminMemberResponse;
 import org.programmers.signalbuddyfinal.domain.admin.dto.MemberFilterRequest;
 import org.programmers.signalbuddyfinal.domain.admin.dto.WithdrawalMemberResponse;
-import org.programmers.signalbuddyfinal.domain.admin.dto.enums.Periods;
 import org.programmers.signalbuddyfinal.domain.member.entity.QMember;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
@@ -21,11 +19,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
-
 import java.util.List;
-
 import static org.programmers.signalbuddyfinal.domain.member.entity.QMember.member;
-import static org.programmers.signalbuddyfinal.domain.postit.entity.QPostit.postit;
 import static org.programmers.signalbuddyfinal.domain.social.entity.QSocialProvider.socialProvider;
 
 @Slf4j
@@ -100,8 +95,7 @@ public class CustomMemberRepositoryImpl implements CustomMemberRepository {
                 eqStatus(filter.getStatus()),
                 eqRole(filter.getRole()),
                 eqOAuthProvider(filter.getOAuthProvider()),
-                betweenCreatedAt(filter.getStartDate(), filter.getEndDate()),
-                withinSignupPeriod(filter.getPeriods())
+                betweenCreatedAt(filter.getStartDate(), filter.getEndDate())
             )
             .offset(pageable.getOffset())
             .limit(pageable.getPageSize())
@@ -117,8 +111,7 @@ public class CustomMemberRepositoryImpl implements CustomMemberRepository {
                 eqStatus(filter.getStatus()),
                 eqRole(filter.getRole()),
                 eqOAuthProvider(filter.getOAuthProvider()),
-                betweenCreatedAt(filter.getStartDate(), filter.getEndDate()),
-                withinSignupPeriod(filter.getPeriods())
+                betweenCreatedAt(filter.getStartDate(), filter.getEndDate())
             )
             .fetchCount();
 
@@ -149,36 +142,5 @@ public class CustomMemberRepositoryImpl implements CustomMemberRepository {
         if (startDate != null && endDate != null)
             return member.createdAt.between(startDate, endDate);
         return Expressions.TRUE;
-    }
-
-    // 이전 날짜 조회
-    private BooleanExpression withinSignupPeriod(Periods period) {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime startDate;
-
-        if (period == null) {
-            return Expressions.TRUE;
-        }
-
-        switch (period) {
-            case TODAY:
-                startDate = now.truncatedTo(ChronoUnit.DAYS);
-                break;
-            case THREE_DAYS:
-                startDate = now.minusDays(3);
-                break;
-            case WEEK:
-                startDate = now.minusWeeks(1);
-                break;
-            case MONTH:
-                startDate = now.minusMonths(1);
-                break;
-            case THREE_MONTH:
-                startDate = now.minusMonths(3);
-                break;
-            default:
-                return Expressions.TRUE;
-        }
-        return postit.expiryDate.between(startDate, now);
     }
 }

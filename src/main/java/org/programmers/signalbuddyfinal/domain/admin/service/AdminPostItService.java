@@ -54,10 +54,6 @@ public class AdminPostItService {
     }
 
     private void checkFilterException(PostItFilterRequest postItFilterRequest) {
-        if ((postItFilterRequest.getStartDate() != null && postItFilterRequest.getEndDate() != null)
-            && postItFilterRequest.getPeriods() != null) {
-            throw new BusinessException(AdminErrorCode.DUPLICATED_PERIOD);
-        }
 
         if (postItFilterRequest.getStartDate() != null
             && postItFilterRequest.getEndDate() == null) {

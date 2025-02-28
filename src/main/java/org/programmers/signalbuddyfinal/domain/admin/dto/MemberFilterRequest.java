@@ -7,7 +7,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.programmers.signalbuddyfinal.domain.admin.dto.enums.Periods;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 
@@ -28,8 +27,6 @@ public class MemberFilterRequest {
 
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDateTime endDate;
-
-    private Periods periods;
 
     private String search;
 }
