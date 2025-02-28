@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.dto.TrafficFileResponse;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.repository.TrafficRepository;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.service.TrafficCsvService;
+import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.support.ServiceTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +18,8 @@ import java.net.URISyntaxException;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 
 @Transactional
 public class TrafficCsvServiceTest extends ServiceTest {
@@ -98,7 +101,7 @@ public class TrafficCsvServiceTest extends ServiceTest {
     void saveTrafficInfo() throws IOException {
 
         //when
-        trafficCsvService.saveCsvData(testCsvFile);
+        doNothing().when(trafficCsvService).saveCsvData(testCsvFile,any(CustomUser2Member.class) );
 
         //then
         assertThat(trafficRepository.count()).isGreaterThan(1);

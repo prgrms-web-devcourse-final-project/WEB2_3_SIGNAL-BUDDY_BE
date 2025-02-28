@@ -4,16 +4,20 @@ import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.programmers.signalbuddyfinal.domain.feedback_report.exception.FeedbackReportErrorCode;
+import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.dto.TrafficFileResponse;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.entity.TrafficSignal;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.exception.TrafficErrorCode;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.repository.TrafficRepository;
+import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,9 +30,12 @@ public class TrafficCsvService {
     private final TrafficRepository trafficRepository;
 
     @Transactional
-    public void saveCsvData(File file) throws IOException {
+    public void saveCsvData(File file, CustomUser2Member user) throws IOException {
 
-        try (Reader reader = new BufferedReader( new InputStreamReader(new FileInputStream(file)) ) ){
+        // 관리자만 수정 가능
+        verifyAdmin(user);
+
+        try (Reader reader = new BufferedReader( new InputStreamReader(new FileInputStream(file), Charset.forName("EUC-KR") ) ) ){
 
             List<TrafficSignal> entityList = new ArrayList<>();
 
@@ -41,14 +48,9 @@ public class TrafficCsvService {
 
             List<TrafficFileResponse> traffics = csvBean.parse();
 
-            traffics.forEach(traffic -> {
-                System.out.println("serialNumber: " + traffic.getSerial());
-                System.out.println("district: " + traffic.getDistrict());
-                System.out.println("signalType: " + traffic.getSignalType());
-                System.out.println("lat: " + traffic.getLat());
-                System.out.println("lng: " + traffic.getLng());
-                System.out.println("address: " + traffic.getAddress());
-            });
+            for (TrafficFileResponse trafficFileResponse : traffics) {
+                System.out.println(trafficFileResponse.getLng());
+            }
 
             for(TrafficFileResponse trafficRes : traffics) {
                 entityList.add(new TrafficSignal(trafficRes));
@@ -61,6 +63,15 @@ public class TrafficCsvService {
             throw new BusinessException(TrafficErrorCode.ALREADY_EXIST_TRAFFIC_SIGNAL);
         }
 
+    }
+
+    // 관리자만 접근 가능
+    private void verifyAdmin(CustomUser2Member user) {
+        if (!MemberRole.ADMIN.equals(user.getRole())) {
+            throw new BusinessException(
+                    FeedbackReportErrorCode.REQUEST_NOT_AUTHORIZED
+            );
+        }
     }
 
 }

@@ -7,9 +7,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import org.programmers.signalbuddyfinal.domain.trafficSignal.controller.TrafficController;
-import org.programmers.signalbuddyfinal.domain.trafficSignal.repository.TrafficRepository;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.service.TrafficCsvService;
 import org.programmers.signalbuddyfinal.global.config.WebConfig;
+import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.support.ControllerTest;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -22,6 +22,7 @@ import java.io.File;
 import java.util.Map;
 
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
@@ -55,7 +56,7 @@ public class TrafficControllerTest extends ControllerTest {
         Map<String, String> requestBody = Map.of("filePath", filePath);
 
         // when
-        doNothing().when(trafficCsvService).saveCsvData(testCsvFile);
+        doNothing().when(trafficCsvService).saveCsvData(any(File.class),any(CustomUser2Member.class) );
 
         ResultActions result = mockMvc.perform(
                 multipart("/api/traffic/save")
