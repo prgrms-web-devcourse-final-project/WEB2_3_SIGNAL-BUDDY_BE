@@ -1,11 +1,16 @@
 package org.programmers.signalbuddyfinal.global.util;
 
+import static com.querydsl.core.types.dsl.Expressions.numberTemplate;
+
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.DateTimePath;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.PathBuilder;
+import com.querydsl.core.types.dsl.StringPath;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
@@ -14,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class QueryDSLUtil {
 
     /**
@@ -73,5 +79,44 @@ public final class QueryDSLUtil {
         OrderSpecifier<?>[] results = orderSpecifiers.toArray(
             new OrderSpecifier<?>[0]);
         return results;
+    }
+
+    /**
+     * 타켓 컬럼으로부터 Full Text Search를 한다.
+     *
+     * @param keyword 검색어
+     * @param target1 타켓 컬럼 1
+     * @param target2 타켓 컬럼 2
+     * @return QueryDSL에서 Where의 조건으로 사용
+     */
+    public static BooleanExpression fulltextSearch(String keyword, StringPath target1, StringPath target2) {
+        if (keyword == null || keyword.isBlank()) {
+            return Expressions.TRUE;
+        }
+
+        String formattedSearchWord = "\"" + keyword + "\"";
+        return numberTemplate(
+            Double.class, "function('match2_against', {0}, {1}, {2})",
+            target1, target2, formattedSearchWord
+        ).gt(0);
+    }
+
+    /**
+     * 타켓 컬럼으로부터 Full Text Search 한다.
+     *
+     * @param keyword 검색어
+     * @param target 타켓 컬럼 1
+     * @return QueryDSL에서 Where의 조건으로 사용
+     */
+    public static BooleanExpression fulltextSearch(String keyword, StringPath target) {
+        if (keyword == null || keyword.isBlank()) {
+            return Expressions.TRUE;
+        }
+
+        String formattedSearchWord = "\"" + keyword + "\"";
+        return numberTemplate(
+            Double.class, "function('match_against', {0}, {1})",
+            target, formattedSearchWord
+        ).gt(0);
     }
 }
