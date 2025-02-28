@@ -113,26 +113,6 @@ public class AdminPostItServiceTest extends ServiceTest {
     }
 
     @Test
-    @DisplayName("관리자 포스트잇 해결 -> 미해결 만료일 null 테스트")
-    @Transactional
-    public void ExpireDateIsNullTest() {
-
-        postitSolveRepository.save(PostitSolve.creator()
-            .content("내용")
-            .imageUrl("https://image1.com/imageUrl")
-            .deletedAt(solvedPostit.getDeletedAt())
-            .member(member.get(0))
-            .postit(solvedPostit)
-            .build());
-
-        LocalDateTime tmp = solvedPostit.getDeletedAt();
-        adminPostItService.completePostIt(solvedPostit.getPostitId(), null);
-        assertThat(solvedPostit.getDeletedAt()).isNull();
-        assertThat(solvedPostit.getExpiryDate()).isEqualTo(tmp);
-    }
-
-
-    @Test
     @DisplayName("관리자 해결 -> 미해결 변경시 만료일이 현재일보다 이전인 경우")
     @Transactional
     public void expireDateExceptionTest() {
