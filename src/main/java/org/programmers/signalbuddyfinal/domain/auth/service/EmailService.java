@@ -2,9 +2,11 @@ package org.programmers.signalbuddyfinal.domain.auth.service;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import java.security.SecureRandom;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.programmers.signalbuddyfinal.domain.auth.dto.EmailRequest;
 import org.programmers.signalbuddyfinal.domain.auth.dto.VerifyCodeRequest;
 import org.programmers.signalbuddyfinal.domain.auth.entity.Purpose;
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EmailService {
@@ -82,10 +85,10 @@ public class EmailService {
     // 인증 코드 생성
     private String createCode() {
 
-        Random random = new Random();
-        StringBuffer sb = new StringBuffer();
-
-        return String.valueOf(random.nextInt(888888) + 111111);
+        SecureRandom secureRandom = new SecureRandom();
+        int authenticationCode = secureRandom.nextInt((int) Math.pow(10, 6));
+        log.info("authentication code: {}", authenticationCode);
+        return String.format("%06d", authenticationCode);
     }
 
     // 이메일 내용 작성
