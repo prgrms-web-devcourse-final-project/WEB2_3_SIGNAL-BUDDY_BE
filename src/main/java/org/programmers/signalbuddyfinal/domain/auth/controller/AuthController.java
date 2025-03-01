@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.auth.dto.EmailRequest;
 import org.programmers.signalbuddyfinal.domain.auth.dto.LoginRequest;
+import org.programmers.signalbuddyfinal.domain.auth.dto.SocialLoginRequest;
 import org.programmers.signalbuddyfinal.domain.auth.dto.VerifyCodeRequest;
 import org.programmers.signalbuddyfinal.domain.auth.service.AuthService;
 import org.programmers.signalbuddyfinal.domain.auth.service.EmailService;
@@ -42,5 +43,10 @@ public class AuthController {
     @PostMapping("/verify-code")
     public ResponseEntity<ApiResponse<Object>> verifyCode(@Valid @RequestBody VerifyCodeRequest verifyCodeRequest) {
         return emailService.verifyCode(verifyCodeRequest);
+    }
+
+    @PostMapping("/social-login")
+    public ResponseEntity<ApiResponse<MemberResponse>> socialLogin(@RequestBody SocialLoginRequest socialLoginRequest){
+        return authService.socialLogin(socialLoginRequest);
     }
 }
