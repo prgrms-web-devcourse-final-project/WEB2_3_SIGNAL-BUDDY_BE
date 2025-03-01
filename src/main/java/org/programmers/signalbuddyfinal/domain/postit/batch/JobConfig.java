@@ -4,7 +4,6 @@ import jakarta.persistence.EntityManagerFactory;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
 import org.programmers.signalbuddyfinal.domain.postit.entity.Postit;
 import org.programmers.signalbuddyfinal.domain.postit.service.PostItComplete;
 import org.springframework.batch.core.Job;
@@ -25,8 +24,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 @Slf4j
 public class JobConfig {
 
-    private static final int chunkSize = 10;
-    private final MemberRepository memberRepository;
+    private static final int CHUNK_SIZE = 10;
     private final EntityManagerFactory entityManagerFactory;
     private final PostItComplete postItCompleteService;
 
@@ -43,7 +41,7 @@ public class JobConfig {
     @JobScope
     public Step completePostItStep(JobRepository jobRepository,
         PlatformTransactionManager transactionManager) {
-        return new StepBuilder("completePostItStep", jobRepository).<Postit, Postit>chunk(chunkSize,
+        return new StepBuilder("completePostItStep", jobRepository).<Postit, Postit>chunk(CHUNK_SIZE,
                 transactionManager)
             .allowStartIfComplete(true)
             .reader(postItCustomReader()).writer(deletedAtWriter()).build();
@@ -52,7 +50,7 @@ public class JobConfig {
     @Bean
     @StepScope
     public PostItCustomReader postItCustomReader() {
-        return new PostItCustomReader(entityManagerFactory, chunkSize);
+        return new PostItCustomReader(entityManagerFactory, CHUNK_SIZE);
     }
 
     @Bean

@@ -7,7 +7,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.postit.entity.Danger;
-import org.springframework.format.annotation.DateTimeFormat;
 
 @Builder
 @NoArgsConstructor

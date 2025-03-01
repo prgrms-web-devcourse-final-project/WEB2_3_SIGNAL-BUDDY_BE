@@ -11,7 +11,6 @@ import org.locationtech.jts.geom.Point;
 import org.programmers.signalbuddyfinal.domain.basetime.BaseTimeEntity;
 import org.programmers.signalbuddyfinal.domain.crossroad.service.PointUtil;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
-
 import java.time.LocalDateTime;
 import org.programmers.signalbuddyfinal.domain.postit.dto.PostItRequest;
 
@@ -61,7 +60,8 @@ public class Postit extends BaseTimeEntity {
 
 
     @Builder(builderMethodName = "creator")
-    private Postit(Danger danger, Point coordinate, String subject, String content, String imageUrl, LocalDateTime expiryDate, Member member) {
+    private Postit(Danger danger, Point coordinate, String subject, String content, String imageUrl,
+        LocalDateTime expiryDate, Member member) {
         this.danger = Objects.requireNonNull(danger);
         this.coordinate = Objects.requireNonNull(coordinate);
         this.subject = Objects.requireNonNull(subject);
@@ -73,29 +73,34 @@ public class Postit extends BaseTimeEntity {
     }
 
     public void updatePostIt(PostItRequest postItRequest, String imageUrl) {
-        Point coordinate= PointUtil.toPoint(postItRequest.getLat(), postItRequest.getLng());
+        Point newCoordinate = PointUtil.toPoint(postItRequest.getLat(), postItRequest.getLng());
 
-        if(!this.danger.equals(postItRequest.getDanger())) {
+        if (!this.danger.equals(postItRequest.getDanger())) {
             this.danger = postItRequest.getDanger();
         }
-        if(!this.coordinate.equals(coordinate)) {
-            this.coordinate = coordinate;
+        if (!this.coordinate.equals(newCoordinate)) {
+            this.coordinate = newCoordinate;
         }
-        if(!this.subject.equals(postItRequest.getSubject())) {
+        if (!this.subject.equals(postItRequest.getSubject())) {
             this.subject = postItRequest.getSubject();
         }
-        if(!this.content.equals(postItRequest.getContent())) {
+        if (!this.content.equals(postItRequest.getContent())) {
             this.content = postItRequest.getContent();
         }
-        if(!this.imageUrl.equals(imageUrl)) {
+        if (!this.imageUrl.equals(imageUrl)) {
             this.imageUrl = imageUrl;
         }
     }
 
-    public void completePostIt(LocalDateTime deletedAt){
+    public void completePostIt(LocalDateTime deletedAt) {
         this.deletedAt = deletedAt;
     }
-    public void returnPostIt(){
+
+    public void returnCompletePostIt(LocalDateTime expiryDate) {
         this.deletedAt = null;
+        if (expiryDate != null) {
+            this.expiryDate = expiryDate;
+        }
+
     }
 }

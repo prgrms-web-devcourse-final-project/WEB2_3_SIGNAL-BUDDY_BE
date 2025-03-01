@@ -12,6 +12,7 @@ import org.programmers.signalbuddyfinal.domain.postit.entity.Postit;
 import org.programmers.signalbuddyfinal.domain.postit.exception.PostItErrorCode;
 import org.programmers.signalbuddyfinal.domain.postit.mapper.PostItMapper;
 import org.programmers.signalbuddyfinal.domain.postit.repository.PostItRepository;
+import org.programmers.signalbuddyfinal.domain.postitsolve.entity.PostitSolve;
 import org.programmers.signalbuddyfinal.domain.postitsolve.repository.PostitSolveRepository;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
@@ -31,7 +32,6 @@ public class PostItService {
     private final MemberRepository memberRepository;
     private final AwsFileService awsFileService;
     private final PostitSolveRepository postitSolveRepository;
-    private final PostItComplete postItComplete;
 
     @Value("${cloud.aws.s3.folder.post-it}")
     private String postItDir;
@@ -85,12 +85,7 @@ public class PostItService {
     @Transactional
     public PostItResponse completePostIt(Long postitId) {
 
-        Postit postit = postItRepository.findByIdOrThrow(postitId);
-        LocalDateTime deletedAt = LocalDateTime.now();
-
-        postItComplete.completePostIt(postit,deletedAt);
-
-        return PostItMapper.INSTANCE.toResponse(postit);
+        return PostItMapper.INSTANCE.toResponse(completePostIt(postItRepository.findByIdOrThrow(postitId)));
     }
 
     private String convertImageFile(MultipartFile image) {
@@ -100,5 +95,25 @@ public class PostItService {
             imageUrl = awsFileService.getFileFromS3(fileName, postItDir).toString();
         }
         return imageUrl;
+    }
+
+    private Postit completePostIt(Postit postit) {
+        LocalDateTime deletedAt = LocalDateTime.now();
+
+        if(postit.getDeletedAt()!=null){
+            throw new BusinessException(PostItErrorCode.AREADY_COMPLETED_POSTIT);
+        }
+
+        postit.completePostIt(deletedAt);
+
+        postitSolveRepository.save(PostitSolve.creator()
+            .content(postit.getContent())
+            .deletedAt(deletedAt)
+            .imageUrl(postit.getImageUrl())
+            .member(postit.getMember())
+            .postit(postit)
+            .build());
+
+        return postit;
     }
 }

@@ -14,10 +14,8 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.locationtech.jts.geom.Point;
 import org.programmers.signalbuddyfinal.domain.basetime.BaseTimeEntity;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
-import org.programmers.signalbuddyfinal.domain.postit.entity.Danger;
 import org.programmers.signalbuddyfinal.domain.postit.entity.Postit;
 
 @Entity(name = "postits_solves")
@@ -27,7 +25,7 @@ public class PostitSolve extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long PostitSolvesId;
+    private Long posttSolvesId;
 
     @Column(nullable = false)
     private String imageUrl;

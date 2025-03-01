@@ -37,7 +37,7 @@ import static org.mockito.BDDMockito.*;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessRequest;
 
 @WebMvcTest(AdminMemberController.class)
-public class AdminMemberControllerTest extends ControllerTest {
+class AdminMemberControllerTest extends ControllerTest {
 
     private final String tag = "Admin API";
 
@@ -46,7 +46,7 @@ public class AdminMemberControllerTest extends ControllerTest {
 
     @DisplayName("전체 회원 조회")
     @Test
-    public void getAllMember() throws Exception {
+    void getAllMember() throws Exception {
         final List<AdminMemberResponse> members = List.of(
             new AdminMemberResponse(1L, "user1@test.com", "User1", "kakao", MemberRole.USER,
                 MemberStatus.ACTIVITY, LocalDateTime.of(2025, 1, 22, 0, 0, 0)),
@@ -62,7 +62,7 @@ public class AdminMemberControllerTest extends ControllerTest {
 
         given(adminService.getAllMembers(any(Pageable.class))).willReturn(response);
 
-        final ResultActions result = mockMvc.perform(
+        mockMvc.perform(
                 get("/api/admin/members", content).param("page", "0")
                     .param("size", "10"))
             .andExpect(status().isOk())
@@ -107,7 +107,6 @@ public class AdminMemberControllerTest extends ControllerTest {
             .startDate(LocalDateTime.of(2025, 1, 1, 0, 0, 0))
             .endDate(LocalDateTime.of(2025, 2, 20, 0, 0, 0))
             .search("user1@test.com")
-            .periods(null)
             .build();
 
         final List<AdminMemberResponse> members = List.of(
@@ -124,7 +123,7 @@ public class AdminMemberControllerTest extends ControllerTest {
             any(MemberFilterRequest.class)))
             .willReturn(page);
 
-        final ResultActions result = mockMvc.perform(
+        mockMvc.perform(
                 get("/api/admin/members/filter")
                     .param("page", "0")
                     .param("size", "10")
@@ -133,7 +132,6 @@ public class AdminMemberControllerTest extends ControllerTest {
                     .param("oAuthProvider", filter.getOAuthProvider())
                     .param("startDate", filter.getStartDate().toString())
                     .param("endDate", filter.getEndDate().toString())
-                    .param("period",  filter.getPeriods() != null ? filter.getPeriods().toString() : null)
                     .param("search", filter.getSearch())
                     .header("Accept", "application/json"))
             .andExpect(status().isOk())
@@ -150,56 +148,42 @@ public class AdminMemberControllerTest extends ControllerTest {
                             parameterWithName("page").description("페이지 번호"),
                             parameterWithName("size").description("페이지 크기"),
                             parameterWithName("role").description("""
-                            (선택) 회원 역할
-                            형식
-                            - USER
-                            - ADMIN
-                            """).optional(),
-                            parameterWithName("status").description("""
-                                (선택) 회원 상태
+                                (선택) 회원 역할
                                 형식
-                                - ACTIVITY
-                                - WITHDRAWAL
-                                """)
+                                - USER
+                                - ADMIN
+                                """).optional(),
+                            parameterWithName("status").description("""
+                                    (선택) 회원 상태
+                                    형식
+                                    - ACTIVITY
+                                    - WITHDRAWAL
+                                    """)
                                 .optional(),
                             parameterWithName("oAuthProvider").description("""
-                                    (선택) oAuth 제공자
-                                    형식
-                                    - kakao
-                                    - naver
-                                    - google)
-                                    """).optional(),
+                                (선택) oAuth 제공자
+                                형식
+                                - kakao
+                                - naver
+                                - google)
+                                """).optional(),
                             parameterWithName("startDate").description("""
-                                    (선택) 가입 기간별 조회 1
-                                          * 조회 기간 : startDate ~ endDate
-                                          * 사용시 startDate endDate 둘 다 입력 필수
-                                    - 검색 시작일
-                                    - 형식 : YYYY-MM-dd
-                                    """).optional(),
+                                (선택) 가입 기간별 조회
+                                      * 조회 기간 : startDate ~ endDate
+                                      * 사용시 startDate endDate 둘 다 입력 필수
+                                - 검색 시작일
+                                - 형식 : YYYY-MM-dd
+                                """).optional(),
                             parameterWithName("endDate").description("""
                                     - 검색 종료일
                                     - 형식 : YYYY-MM-dd
                                     """)
                                 .optional(),
-                            parameterWithName("period").description(
-                                    """
-                                (선택) 가입 기간별 조회 2
-                                      * 조회 기간 : 현재일 기준
-                                - 형식 : YYYY-MM-dd
-                                -- TODAY : 오늘
-                                -- THREE_DAYS : 3일 전
-                                -- WEEK : 일주일 전
-                                -- MONTH : 한달 전
-                                -- THREE_MONTH : 세달 전
-                                
-                                가입 기간별 조회1, 2 중복 사용 불가
-                                """)
-                                .optional(),
                             parameterWithName("search").description(
                                     """
-                                검색
-                                - 이메일, 닉네임
-                                """)
+                                        검색
+                                        - 이메일, 닉네임
+                                        """)
                                 .optional()
                         )
                         .responseFields(

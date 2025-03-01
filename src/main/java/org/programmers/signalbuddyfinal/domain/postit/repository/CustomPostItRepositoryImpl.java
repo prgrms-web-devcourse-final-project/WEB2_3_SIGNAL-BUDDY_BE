@@ -8,13 +8,11 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.admin.dto.AdminPostItResponse;
 import org.programmers.signalbuddyfinal.domain.admin.dto.PostItFilterRequest;
 import org.programmers.signalbuddyfinal.domain.admin.dto.enums.Deleted;
-import org.programmers.signalbuddyfinal.domain.admin.dto.enums.Periods;
 import org.programmers.signalbuddyfinal.domain.postit.entity.Danger;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.springframework.data.domain.PageImpl;
@@ -44,9 +42,9 @@ public class CustomPostItRepositoryImpl implements CustomPostItRepository {
             .fetch();
 
         long total = jpaQueryFactory
-            .select(adminPostItResponseDto)
+            .select(postit.count())
             .from(postit)
-            .fetchCount();
+            .fetchOne();
 
         return new PageResponse<>(new PageImpl<>(postIts, pageable, total));
     }
@@ -63,7 +61,6 @@ public class CustomPostItRepositoryImpl implements CustomPostItRepository {
                     .and(eqDanger(filter.getDanger()))
                     .and(eqIsDeleted(filter.getDeleted()))
                     .and(betweenCreatedAt(filter.getStartDate(), filter.getEndDate()))
-                    .and(withinSignupPeriod(filter.getPeriods()))
             )
             .offset(pageable.getOffset())
             .limit(pageable.getPageSize())
@@ -71,16 +68,15 @@ public class CustomPostItRepositoryImpl implements CustomPostItRepository {
             .fetch();
 
         long total = jpaQueryFactory
-            .select(adminPostItResponseDto)
+            .select(postit.count())
             .from(postit)
             .where(
                 eqSearch(filter.getSearch()),
                 eqDanger(filter.getDanger()),
                 eqIsDeleted(filter.getDeleted()),
-                betweenCreatedAt(filter.getStartDate(), filter.getEndDate()),
-                withinSignupPeriod(filter.getPeriods())
+                betweenCreatedAt(filter.getStartDate(), filter.getEndDate())
             )
-            .fetchCount();
+            .fetchOne();
 
         return new PageResponse<>(new PageImpl<>(postIts, pageable, total));
     }
@@ -109,36 +105,5 @@ public class CustomPostItRepositoryImpl implements CustomPostItRepository {
             return postit.expiryDate.between(startDate, endDate);
         }
         return Expressions.TRUE;
-    }
-
-    // 이전 날짜 조회
-    private BooleanExpression withinSignupPeriod(Periods period) {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime startDate;
-
-        if (period == null) {
-            return Expressions.TRUE;
-        }
-
-        switch (period) {
-            case TODAY:
-                startDate = now.truncatedTo(ChronoUnit.DAYS);
-                break;
-            case THREE_DAYS:
-                startDate = now.minusDays(3);
-                break;
-            case WEEK:
-                startDate = now.minusWeeks(1);
-                break;
-            case MONTH:
-                startDate = now.minusMonths(1);
-                break;
-            case THREE_MONTH:
-                startDate = now.minusMonths(3);
-                break;
-            default:
-                return Expressions.TRUE;
-        }
-        return postit.expiryDate.between(startDate, now);
     }
 }

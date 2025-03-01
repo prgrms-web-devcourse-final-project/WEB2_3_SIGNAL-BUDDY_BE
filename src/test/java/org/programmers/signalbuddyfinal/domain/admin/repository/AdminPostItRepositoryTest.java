@@ -7,10 +7,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Point;
-import org.programmers.signalbuddyfinal.domain.admin.dto.MemberFilterRequest;
 import org.programmers.signalbuddyfinal.domain.admin.dto.PostItFilterRequest;
 import org.programmers.signalbuddyfinal.domain.admin.dto.enums.Deleted;
-import org.programmers.signalbuddyfinal.domain.admin.dto.enums.Periods;
 import org.programmers.signalbuddyfinal.domain.crossroad.service.PointUtil;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
@@ -71,22 +69,18 @@ public class AdminPostItRepositoryTest extends RepositoryTest {
     public void 한개의_조건이_설정된_포스트잇_필터링_조회() {
 
         PostItFilterRequest dateFilter = createFilter(LocalDateTime.of(2025, 1, 1, 0, 0),
-            LocalDateTime.of(2025, 4, 1, 0, 0), null, null, null, null);
-        PostItFilterRequest dangerFilter = createFilter(null, null, null, Danger.NOTICE, null,
+            LocalDateTime.of(2025, 4, 1, 0, 0), null, null, null);
+        PostItFilterRequest dangerFilter = createFilter(null, null, Danger.NOTICE, null,
             null);
-        PostItFilterRequest periodsFilter = createFilter(null, null, Periods.THREE_DAYS, null, null,
+        PostItFilterRequest searchFilter = createFilter(null, null, null, "검색",
             null);
-        PostItFilterRequest searchFilter = createFilter(null, null, null, null, "검색",
-            null);
-        PostItFilterRequest deletedFilter = createFilter(null, null, null, null, null,
+        PostItFilterRequest deletedFilter = createFilter(null, null,null, null,
             Deleted.DELETED);
 
         assertThat(postItRepository.findAllPostItWithFilter(pageable, dateFilter)
             .getTotalElements()).isEqualTo(3);
         assertThat(postItRepository.findAllPostItWithFilter(pageable, dangerFilter)
             .getTotalElements()).isEqualTo(2);
-        assertThat(postItRepository.findAllPostItWithFilter(pageable, periodsFilter)
-            .getTotalElements()).isEqualTo(1);
         assertThat(postItRepository.findAllPostItWithFilter(pageable, searchFilter)
             .getTotalElements()).isEqualTo(2);
         assertThat(postItRepository.findAllPostItWithFilter(pageable, deletedFilter)
@@ -99,8 +93,8 @@ public class AdminPostItRepositoryTest extends RepositoryTest {
     public void 중복_조건_포스트잇_필터링_조회() {
 
         PostItFilterRequest dateAndDangerFilter = createFilter(LocalDateTime.of(2025, 1, 1, 0, 0),
-            LocalDateTime.of(2025, 4, 1, 0, 0), null, Danger.WARNING, null, null);
-        PostItFilterRequest dangerAndSearchFilter = createFilter(null, null, null, Danger.NOTICE, "검색",
+            LocalDateTime.of(2025, 4, 1, 0, 0), Danger.WARNING, null, null);
+        PostItFilterRequest dangerAndSearchFilter = createFilter(null, null,  Danger.NOTICE, "검색",
             null);
 
         assertThat(postItRepository.findAllPostItWithFilter(pageable, dateAndDangerFilter)
@@ -115,7 +109,7 @@ public class AdminPostItRepositoryTest extends RepositoryTest {
     public void 전체_null_조회() {
 
         PostItFilterRequest nullFilter = createFilter(null, null, null, null,
-            null, null);
+            null);
 
         assertThat(postItRepository.findAllPostItWithFilter(pageable, nullFilter)
             .getTotalElements()).isEqualTo(3);
@@ -138,13 +132,10 @@ public class AdminPostItRepositoryTest extends RepositoryTest {
         return postItRepository.save(postit);
     }
 
-    private PostItFilterRequest createFilter(LocalDateTime startDate, LocalDateTime endDate,
-        Periods period,
-        Danger danger, String search, Deleted deleted) {
+    private PostItFilterRequest createFilter(LocalDateTime startDate, LocalDateTime endDate, Danger danger, String search, Deleted deleted) {
         return PostItFilterRequest.builder()
             .startDate(startDate)
             .endDate(endDate)
-            .periods(period)
             .danger(danger)
             .search(search)
             .deleted(deleted)

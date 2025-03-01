@@ -1,5 +1,7 @@
 package org.programmers.signalbuddyfinal.domain.admin.controller;
 
+import java.time.LocalDateTime;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.admin.dto.AdminPostItResponse;
 import org.programmers.signalbuddyfinal.domain.admin.dto.PostItFilterRequest;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -34,11 +37,12 @@ public class AdminPostItController {
 
     @PatchMapping("/{postitId}")
     public ResponseEntity<ApiResponse<PostItResponse>> completePostIt(
-        @PathVariable(value = "postitId") Long postitId
+        @PathVariable(value = "postitId") Long postitId,
+        @RequestParam(value = "newExpireDay", required = false) LocalDateTime newExpireDate
     ) {
         return ResponseEntity.ok(
             ApiResponse.createSuccess(
-               adminPostItService.completePostIt(postitId)));
+               adminPostItService.completePostIt(postitId, newExpireDate)));
     }
 
     @GetMapping("/filter")
