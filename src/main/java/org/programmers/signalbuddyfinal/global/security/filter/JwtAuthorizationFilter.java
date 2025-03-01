@@ -31,7 +31,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         "/", "/docs/**", "/ws/**", "/actuator/health", "/webjars/**", "/api/auth/login",
         "/docs/index.html", "/api/members/join",
         "/api/admins/join", "/api/members/files/**", "/actuator/prometheus",
-        "/api/auth/auth-code", "/api/auth/verify-code"
+        "/api/auth/auth-code", "/api/auth/verify-code", "/api/auth/social-login"
     );
 
     public JwtAuthorizationFilter(JwtUtil jwtUtil) {
