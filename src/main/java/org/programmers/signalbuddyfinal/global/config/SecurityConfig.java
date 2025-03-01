@@ -77,7 +77,8 @@ public class SecurityConfig {
                     "/webjars/**").permitAll()
                 // 로그인, 회원가입
                 .requestMatchers("/api/auth/login", "/api/auth/reissue", "/api/members/join",
-                    "/api/admins/join", "/members/signup", "/api/members/files/**").permitAll()
+                    "/api/admins/join", "/api/members/files/**", "/api/auth/auth-code",
+                    "api/auth/verify-code").permitAll()
                 .requestMatchers("/api/bookmarks/**", "/bookmarks/**").hasRole("USER")
                 // 댓글
                 .requestMatchers(HttpMethod.GET, "/api/feedbacks/{feedbackId}/comments").permitAll()
@@ -132,7 +133,8 @@ public class SecurityConfig {
 
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOriginPatterns(
-            Arrays.asList(frontendUrl, backendUrl, backendUrl + ".nip.io", "http://localhost:3000", "http://localhost:8080"));
+            Arrays.asList(frontendUrl, backendUrl, backendUrl + ".nip.io", "http://localhost:3000",
+                "http://localhost:8080"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
         configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type"));

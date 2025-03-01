@@ -8,6 +8,7 @@ import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.docu
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessRequest;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessResponse;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.prettyPrint;
+import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -17,13 +18,19 @@ import com.epages.restdocs.apispec.ResourceSnippetParameters;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.programmers.signalbuddyfinal.domain.auth.dto.EmailRequest;
 import org.programmers.signalbuddyfinal.domain.auth.dto.LoginRequest;
+import org.programmers.signalbuddyfinal.domain.auth.dto.VerifyCodeRequest;
+import org.programmers.signalbuddyfinal.domain.auth.entity.Purpose;
 import org.programmers.signalbuddyfinal.domain.auth.service.AuthService;
+import org.programmers.signalbuddyfinal.domain.auth.service.EmailService;
+import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
 import org.programmers.signalbuddyfinal.global.support.ControllerTest;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @WebMvcTest(AuthController.class)
@@ -31,6 +38,9 @@ class AuthControllerTest extends ControllerTest {
 
     @MockitoBean
     private AuthService authService;
+
+    @MockitoBean
+    private EmailService emailService;
 
     @DisplayName("로그인 성공")
     @Test
@@ -41,7 +51,7 @@ class AuthControllerTest extends ControllerTest {
         String testRefreshToken = "testRefreshToken";
 
         ApiResponse apiResponse = ApiResponse.createSuccessWithNoData();
-        ResponseEntity<ApiResponse> response = ResponseEntity.ok()
+        ResponseEntity<ApiResponse<MemberResponse>> response = ResponseEntity.ok()
             .header("Set-Cookie","refresh-token=" + testRefreshToken)
             .header("Authorization", "Bearer " + testAccessToken)
             .body(apiResponse);
@@ -78,7 +88,7 @@ class AuthControllerTest extends ControllerTest {
         String newAccessToken = "newAccessToken";
 
         ApiResponse apiResponse = ApiResponse.createSuccessWithNoData();
-        ResponseEntity<ApiResponse> response = ResponseEntity.ok()
+        ResponseEntity<ApiResponse<Object>> response = ResponseEntity.ok()
                 .header("Set-Cookie","refresh-token=" + newRefreshToken)
                 .header("Authorization", "Bearer " + newAccessToken)
                 .body(apiResponse);
@@ -104,4 +114,70 @@ class AuthControllerTest extends ControllerTest {
                 )
             );
     }
+
+    @DisplayName("인증 코드 이메일 전송")
+    @Test
+    void sendAuthenticationCode() throws Exception {
+        // given
+        String email = "test@test.com";
+        EmailRequest emailRequest = new EmailRequest(email);
+
+        ApiResponse<Object> apiResponse = ApiResponse.createSuccessWithNoData();
+        ResponseEntity<ApiResponse<Object>> responseEntity = ResponseEntity.ok().body(apiResponse);
+        when(emailService.sendEmail(any(EmailRequest.class))).thenReturn(responseEntity);
+
+        //when, then
+        mockMvc.perform(post("/api/auth/auth-code")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(emailRequest)))
+            .andExpect(status().isOk())
+            .andDo(document("인증 코드 이메일 전송",
+                preprocessRequest(prettyPrint()),
+                preprocessResponse(prettyPrint()),
+                resource(
+                    ResourceSnippetParameters.builder()
+                        .tag("Auth API")
+                        .summary("인증 코드 이메일 전송")
+                        .requestFields(
+                            fieldWithPath("email")
+                                .type(JsonFieldType.STRING)
+                                .description("인증 코드를 받고자 하는 이메일")
+                        ).build())));
+    }
+
+    @DisplayName("인증 코드 검증")
+    @Test
+    void verifyAuthenticationCode() throws Exception {
+        // given
+        VerifyCodeRequest verifyCodeRequest = new VerifyCodeRequest(Purpose.NEW_PASSWORD, "test@test.com", "123456");
+
+        ApiResponse<Object> apiResponse = ApiResponse.createSuccessWithNoData();
+        ResponseEntity<ApiResponse<Object>> responseEntity = ResponseEntity.ok().body(apiResponse);
+        when(emailService.verifyCode(any(VerifyCodeRequest.class))).thenReturn(responseEntity);
+
+        //when, then
+        mockMvc.perform(post("/api/auth/verify-code")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(verifyCodeRequest)))
+            .andExpect(status().isOk())
+            .andDo(document("인증 코드 검증",
+                preprocessRequest(prettyPrint()),
+                preprocessResponse(prettyPrint()),
+                resource(
+                    ResourceSnippetParameters.builder()
+                        .tag("Auth API")
+                        .summary("인증 코드 검증")
+                        .requestFields(
+                            fieldWithPath("purpose")
+                                .type(JsonFieldType.STRING)
+                                .description("인증하는 목적(비밀번호 재설정, 계정 복귀)"),
+                            fieldWithPath("email")
+                                .type(JsonFieldType.STRING)
+                                .description("인증 코드를 받고자 하는 이메일"),
+                            fieldWithPath("code")
+                                .type(JsonFieldType.STRING)
+                                .description("인증 코드")
+                        ).build())));
+    }
+
 }

@@ -10,7 +10,9 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public enum AuthErrorCode implements ErrorCode {
 
-    UNAUTHORIZED(HttpStatus.UNAUTHORIZED,"14000", "다시 로그인 해주세요.");
+    UNAUTHORIZED(HttpStatus.UNAUTHORIZED,"14000", "다시 로그인 해주세요."),
+    NOT_MATCH_AUTH_CODE(HttpStatus.BAD_REQUEST, "14001","인증 코드가 일치하지 않습니다."),
+    INVALID_AUTH_CODE(HttpStatus.UNAUTHORIZED,"14002", "인증 코드가 유효하지 않습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

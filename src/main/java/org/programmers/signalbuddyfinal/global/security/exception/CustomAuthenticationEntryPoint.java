@@ -1,14 +1,10 @@
 package org.programmers.signalbuddyfinal.global.security.exception;
 
-import com.nimbusds.jwt.JWT;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
-import org.programmers.signalbuddyfinal.domain.auth.exception.AuthErrorCode;
-import org.programmers.signalbuddyfinal.domain.member.exception.MemberErrorCode;
-import org.programmers.signalbuddyfinal.global.exception.ErrorCode;
 import org.programmers.signalbuddyfinal.global.security.jwt.TokenErrorCode;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;

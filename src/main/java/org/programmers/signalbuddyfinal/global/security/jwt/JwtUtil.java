@@ -45,8 +45,8 @@ public class JwtUtil {
             .subject(String.valueOf(nowMember.getMemberId()))
             .claim("status", nowMember.getStatus().name())
             .claim("auth", nowMember.getRole().name())
-            .setIssuedAt(new Date())
-            .setExpiration(new Date(new Date().getTime() + accessTokenExpiration))
+            .issuedAt(new Date())
+            .expiration(new Date(new Date().getTime() + accessTokenExpiration))
             .signWith(key)
             .compact();
     }
@@ -58,8 +58,8 @@ public class JwtUtil {
 
         String refreshToken = Jwts.builder()
             .subject(String.valueOf(nowMember.getMemberId()))
-            .setIssuedAt(new Date())
-            .setExpiration(new Date(new Date().getTime() + refreshTokenExpiration))
+            .issuedAt(new Date())
+            .expiration(new Date(new Date().getTime() + refreshTokenExpiration))
             .signWith(key)
             .compact();
 
