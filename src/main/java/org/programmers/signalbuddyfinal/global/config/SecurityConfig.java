@@ -76,7 +76,7 @@ public class SecurityConfig {
                     "/actuator/health",
                     "/webjars/**").permitAll()
                 // 로그인, 회원가입
-                .requestMatchers("/api/auth/login", "/api/auth/reissue", "/api/members/join",
+                .requestMatchers("/api/auth/login","/api/auth/social-login", "/api/auth/reissue", "/api/members/join",
                     "/api/admins/join", "/api/members/files/**", "/api/auth/auth-code",
                     "api/auth/verify-code","/api/members/password-reset").permitAll()
                 .requestMatchers("/api/bookmarks/**", "/bookmarks/**").hasRole("USER")

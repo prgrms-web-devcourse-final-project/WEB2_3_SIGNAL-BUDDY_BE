@@ -20,6 +20,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.programmers.signalbuddyfinal.domain.auth.dto.EmailRequest;
 import org.programmers.signalbuddyfinal.domain.auth.dto.LoginRequest;
+import org.programmers.signalbuddyfinal.domain.auth.dto.SocialLoginRequest;
 import org.programmers.signalbuddyfinal.domain.auth.dto.VerifyCodeRequest;
 import org.programmers.signalbuddyfinal.domain.auth.entity.Purpose;
 import org.programmers.signalbuddyfinal.domain.auth.service.AuthService;
@@ -42,7 +43,7 @@ class AuthControllerTest extends ControllerTest {
     @MockitoBean
     private EmailService emailService;
 
-    @DisplayName("로그인 성공")
+    @DisplayName("기본 로그인 성공")
     @Test
     void successLogin() throws Exception {
 
@@ -72,7 +73,45 @@ class AuthControllerTest extends ControllerTest {
                     resource(
                         ResourceSnippetParameters.builder()
                             .tag("Auth API")
-                            .summary("로그인")
+                            .summary("기본 로그인")
+                            .build()
+                    )
+                )
+            );
+    }
+
+    @DisplayName("소셜 로그인 성공")
+    @Test
+    void successSocialLogin() throws Exception {
+
+        //given
+        String testAccessToken = "testAccessToken";
+        String testRefreshToken = "testRefreshToken";
+        SocialLoginRequest socialLoginRequest = new SocialLoginRequest("google", "1234");
+
+        ApiResponse apiResponse = ApiResponse.createSuccessWithNoData();
+        ResponseEntity<ApiResponse<MemberResponse>> response = ResponseEntity.ok()
+            .header("Set-Cookie","refresh-token=" + testRefreshToken)
+            .header("Authorization", "Bearer " + testAccessToken)
+            .body(apiResponse);
+
+        when(authService.socialLogin(any(SocialLoginRequest.class))).thenReturn(response);
+
+        //when, then
+        mockMvc.perform(post("/api/auth/social-login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(socialLoginRequest)))
+            .andExpect(status().isOk())
+            .andExpect(header().string("Authorization", "Bearer " + testAccessToken))
+            .andExpect(header().string("Set-Cookie", "refresh-token="+testRefreshToken))
+            .andExpect(cookie().value("refresh-token", testRefreshToken))
+            .andDo(document("소셜 로그인",
+                    preprocessRequest(prettyPrint()),
+                    preprocessResponse(prettyPrint()),
+                    resource(
+                        ResourceSnippetParameters.builder()
+                            .tag("Auth API")
+                            .summary("소셜 로그인")
                             .build()
                     )
                 )
