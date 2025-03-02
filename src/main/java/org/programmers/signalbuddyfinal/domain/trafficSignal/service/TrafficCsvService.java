@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.io.*;
 import java.nio.charset.Charset;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -34,31 +33,32 @@ public class TrafficCsvService {
     @Transactional
     public void saveCsvData(File file) throws IOException {
 
-        try (Reader reader = new BufferedReader( new InputStreamReader(new FileInputStream(file), Charset.forName("EUC-KR") ) ) ) {
+        try (Reader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), Charset.forName("EUC-KR")))) {
 
-        List<TrafficSignal> entityList = new ArrayList<>();
+            List<TrafficSignal> entityList = new ArrayList<>();
 
-        try {
-            CsvToBean<TrafficFileResponse> csvToBean = new CsvToBeanBuilder<TrafficFileResponse>(reader)
-                    .withType(TrafficFileResponse.class)
-                    .withIgnoreLeadingWhiteSpace(true)
-                    .build();
+            try {
+                CsvToBean<TrafficFileResponse> csvToBean = new CsvToBeanBuilder<TrafficFileResponse>(reader)
+                        .withType(TrafficFileResponse.class)
+                        .withIgnoreLeadingWhiteSpace(true)
+                        .build();
 
-            List<TrafficFileResponse> traffics = csvToBean.parse();
+                List<TrafficFileResponse> traffics = csvToBean.parse();
 
-            for(TrafficFileResponse trafficRes : traffics) {
-                entityList.add(new TrafficSignal(trafficRes));
+                for (TrafficFileResponse trafficRes : traffics) {
+                    entityList.add(new TrafficSignal(trafficRes));
+                }
+
+                trafficRepository.saveAll(entityList);
+
+            } catch (DataIntegrityViolationException e) {
+                log.error("❌ Data Integrity Violation: {}", e.getMessage(), e);
+                throw new BusinessException(TrafficErrorCode.ALREADY_EXIST_TRAFFIC_SIGNAL);
+            } catch (Exception e) {
+                log.error(e.getMessage());
             }
 
-            trafficRepository.saveAll(entityList);
-
-        } catch (DataIntegrityViolationException e) {
-            log.error("❌ Data Integrity Violation: {}", e.getMessage(), e);
-            throw new BusinessException(TrafficErrorCode.ALREADY_EXIST_TRAFFIC_SIGNAL);
-        } catch (Exception e){
-            log.error(e.getMessage());
         }
 
     }
-
 }
