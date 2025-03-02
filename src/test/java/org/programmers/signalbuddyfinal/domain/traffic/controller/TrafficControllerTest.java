@@ -24,6 +24,7 @@ import java.util.Map;
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
+import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.jwtFormat;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
@@ -76,8 +77,7 @@ public class TrafficControllerTest extends ControllerTest {
                             )
                             .responseFields(
                                     fieldWithPath("status").description("성공 여부"),
-                                    fieldWithPath("data").description("응답 데이터"),
-                                    fieldWithPath("message").description("응답 메시지 내용")
+                                    fieldWithPath("data").description("응답 데이터")
                             )
                             .build()
                     )
