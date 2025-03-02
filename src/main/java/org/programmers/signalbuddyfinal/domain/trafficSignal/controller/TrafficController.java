@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
 import java.util.regex.Pattern;
 
 @Validated
@@ -34,7 +33,7 @@ public class TrafficController {
             throw new SecurityException("경로 탐색 시도 감지됨");
         }
 
-        File file = new File("static/traffic/"+fileName);
+        File file = new File("src/main/resources/static/file/"+fileName);
 
         if(!file.exists()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.createError("파일을 찾을 수 없습니다."));
@@ -47,8 +46,7 @@ public class TrafficController {
 
     // 파일 이름 검증 (특수 문자 및 경로 탐색 방지)
     private boolean isValidFileName(String fileName) {
-        // 안전한 문자만 포함하는 정규식 (영문, 숫자, 언더스코어, 하이픈)
-        String regex = "^[a-zA-Z0-9_-]+\\\\.[a-zA-Z0-9]+$";
+        String regex = "^[a-zA-Z0-9._-]+$";
         Pattern pattern = Pattern.compile(regex);
         return pattern.matcher(fileName).matches();
     }

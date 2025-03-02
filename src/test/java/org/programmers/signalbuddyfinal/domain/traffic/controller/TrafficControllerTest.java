@@ -12,13 +12,18 @@ import org.programmers.signalbuddyfinal.global.config.WebConfig;
 import org.programmers.signalbuddyfinal.global.support.ControllerTest;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 
+import static com.epages.restdocs.apispec.ResourceDocumentation.parameterWithName;
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doNothing;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
@@ -43,24 +48,24 @@ public class TrafficControllerTest extends ControllerTest {
     void saveTrafficData() throws Exception {
 
         // given
-        testCsvFile = new File(getClass()
-                .getClassLoader()
-                .getResource("static/file/seoul_traffic_light_test.csv")
-                .toURI());
+        String fileName = "seoul_traffic_light_test.csv";
 
-        String filePath = testCsvFile.getAbsolutePath();
+        String filePath = "src/main/resources/static/file/" + fileName;
 
-        Map<String, String> requestBody = Map.of("filePath", filePath);
+        testCsvFile = new File(filePath);
+
+        assertTrue(testCsvFile.exists(), "테스트 파일이 존재해야 합니다.");
 
         // when
         doNothing().when(trafficCsvService).saveCsvData(testCsvFile);
 
         ResultActions result = mockMvc.perform(
                 post("/api/traffic/save")
-                        .param("fileName", "test.csv"))  // 쿼리 파라미터로 파일명 전달
-                        .andExpect(status().isOk())  // 성공적인 요청 확인
-                        .andExpect(jsonPath("$.message").value("파일이 성공적으로 저장되었습니다.")
-        );
+                        .param("fileName", fileName)
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                ).andExpect(status().isOk())
+                 .andExpect(jsonPath("$.data").value("파일이 성공적으로 저장되었습니다."));
+
 
         // then
         result.andExpect(status().isOk()).andDo(
@@ -69,13 +74,13 @@ public class TrafficControllerTest extends ControllerTest {
                     preprocessResponse(prettyPrint()),
                     resource(ResourceSnippetParameters.builder()
                             .tag(tag)
-                            .requestFields(
-                                    fieldWithPath("fileName").description("CSV 파일 이름")
+                            .formParameters(
+                                    parameterWithName("fileName").description("CSV 파일 이름")
                             )
                             .responseFields(
                                     fieldWithPath("status").description("성공 여부"),
                                     fieldWithPath("data").description("응답 데이터"),
-                                    fieldWithPath("message").description("응답 메시지 내용")
+                                    fieldWithPath("message").description("음답 메세지")
                             )
                             .build()
                     )
