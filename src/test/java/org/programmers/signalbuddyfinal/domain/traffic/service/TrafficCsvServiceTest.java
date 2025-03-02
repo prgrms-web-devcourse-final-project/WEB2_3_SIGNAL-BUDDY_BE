@@ -33,7 +33,7 @@ public class TrafficCsvServiceTest extends ServiceTest {
     void setUp() throws URISyntaxException, NullPointerException {
         testCsvFile = new File(getClass()
                 .getClassLoader()
-                .getResource("static/traffic/seoul_traffic_light_test.csv")
+                .getResource("static/file/seoul_traffic_light_test.csv")
                 .toURI());
     }
 

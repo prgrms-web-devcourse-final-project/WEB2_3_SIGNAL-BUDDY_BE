@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.*;
 import java.nio.charset.Charset;
 
+import java.util.regex.Pattern;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -36,13 +37,6 @@ public class TrafficCsvService {
     public void saveCsvData(File file) throws IOException {
 
         try (Reader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), Charset.forName("EUC-KR")))) {
-
-            // 사용자 입력 파일 경로 검증
-            Path path = Paths.get(file.getPath()).toAbsolutePath().normalize();
-
-            if (!path.startsWith("src/main/resources/static/file") && !path.startsWith("src/test/resources/static/traffic")) {
-                throw new SecurityException("경로 탐색 시도 감지됨");
-            }
 
             try {
 
@@ -69,6 +63,6 @@ public class TrafficCsvService {
             }
 
         }
-
     }
+
 }

@@ -7,16 +7,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import org.programmers.signalbuddyfinal.domain.trafficSignal.controller.TrafficController;
-import org.programmers.signalbuddyfinal.domain.trafficSignal.repository.TrafficRepository;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.service.TrafficCsvService;
 import org.programmers.signalbuddyfinal.global.config.WebConfig;
 import org.programmers.signalbuddyfinal.global.support.ControllerTest;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.ResultActions;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.File;
 import java.util.Map;
@@ -25,7 +22,8 @@ import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
 import static org.mockito.Mockito.doNothing;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(TrafficController.class)
@@ -47,7 +45,7 @@ public class TrafficControllerTest extends ControllerTest {
         // given
         testCsvFile = new File(getClass()
                 .getClassLoader()
-                .getResource("static/traffic/seoul_traffic_light_test.csv")
+                .getResource("static/file/seoul_traffic_light_test.csv")
                 .toURI());
 
         String filePath = testCsvFile.getAbsolutePath();
@@ -58,9 +56,10 @@ public class TrafficControllerTest extends ControllerTest {
         doNothing().when(trafficCsvService).saveCsvData(testCsvFile);
 
         ResultActions result = mockMvc.perform(
-                multipart("/api/traffic/save")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(new ObjectMapper().writeValueAsString(requestBody))
+                post("/api/traffic/save")
+                        .param("fileName", "test.csv"))  // 쿼리 파라미터로 파일명 전달
+                        .andExpect(status().isOk())  // 성공적인 요청 확인
+                        .andExpect(jsonPath("$.message").value("파일이 성공적으로 저장되었습니다.")
         );
 
         // then
@@ -71,7 +70,7 @@ public class TrafficControllerTest extends ControllerTest {
                     resource(ResourceSnippetParameters.builder()
                             .tag(tag)
                             .requestFields(
-                                    fieldWithPath("filePath").description("CSV 파일의 절대 경로")
+                                    fieldWithPath("fileName").description("CSV 파일 이름")
                             )
                             .responseFields(
                                     fieldWithPath("status").description("성공 여부"),
