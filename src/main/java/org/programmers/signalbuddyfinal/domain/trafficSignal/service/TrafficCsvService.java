@@ -34,10 +34,9 @@ public class TrafficCsvService {
     @Transactional
     public void saveCsvData(File file) throws IOException {
 
-        try (Reader reader = new BufferedReader( new InputStreamReader(new FileInputStream(file)) ) ){
+        try (Reader reader = new BufferedReader( new InputStreamReader(new FileInputStream(file), Charset.forName("EUC-KR") ) ) ) {
 
         List<TrafficSignal> entityList = new ArrayList<>();
-        Reader reader = new BufferedReader( new InputStreamReader(file.getInputStream() ) );
 
         try {
             CsvToBean<TrafficFileResponse> csvToBean = new CsvToBeanBuilder<TrafficFileResponse>(reader)
