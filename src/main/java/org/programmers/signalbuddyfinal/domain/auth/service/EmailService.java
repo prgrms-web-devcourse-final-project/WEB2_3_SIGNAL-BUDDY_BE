@@ -18,6 +18,7 @@ import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
@@ -34,7 +35,8 @@ public class EmailService {
     final String PREFIX = "auth:email:";
 
     // 이메일 발송
-    public ResponseEntity<ApiResponse<Object>> sendEmail(EmailRequest emailRequest) {
+    @Async
+    public void sendEmail(EmailRequest emailRequest) {
 
         MimeMessage message = javaMailSender.createMimeMessage();
         String code = createCode();
@@ -46,7 +48,7 @@ public class EmailService {
             helper.setSubject("[signalBuddy] 인증코드가 발송되었습니다.");
             helper.setText(setContent(code), true);
         } catch (MessagingException e) {
-            throw new RuntimeException(e);
+            throw new BusinessException(AuthErrorCode.SEND_EMAIL_FAILED);
         }
 
         // 인증 코드 저장
@@ -54,7 +56,6 @@ public class EmailService {
 
         // 이메일 발송
         javaMailSender.send(message);
-        return ResponseEntity.ok().body(ApiResponse.createSuccessWithNoData());
     }
 
     // 인증 코드 검증
