@@ -19,6 +19,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,9 +37,17 @@ public class TrafficCsvService {
 
         try (Reader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), Charset.forName("EUC-KR")))) {
 
-            List<TrafficSignal> entityList = new ArrayList<>();
+            // 사용자 입력 파일 경로 검증
+            Path path = Paths.get(file.getPath()).toAbsolutePath().normalize();
+
+            if (!path.startsWith("src/main/resources/static/file") && !path.startsWith("src/test/resources/static/traffic")) {
+                throw new SecurityException("경로 탐색 시도 감지됨");
+            }
 
             try {
+
+                List<TrafficSignal> entityList = new ArrayList<>();
+
                 CsvToBean<TrafficFileResponse> csvToBean = new CsvToBeanBuilder<TrafficFileResponse>(reader)
                         .withType(TrafficFileResponse.class)
                         .withIgnoreLeadingWhiteSpace(true)
