@@ -5,9 +5,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.programmers.signalbuddyfinal.domain.auth.dto.LoginRequest;
 import org.programmers.signalbuddyfinal.domain.auth.dto.NewTokenResponse;
+import org.programmers.signalbuddyfinal.domain.auth.dto.SocialLoginRequest;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
+import org.programmers.signalbuddyfinal.domain.member.exception.MemberErrorCode;
 import org.programmers.signalbuddyfinal.domain.member.mapper.MemberMapper;
+import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
+import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
 import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
 import org.programmers.signalbuddyfinal.global.security.jwt.JwtService;
@@ -28,11 +32,41 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
     private final JwtService jwtService;
+    private final MemberRepository memberRepository;
 
+    // 토큰 재발행
+    public ResponseEntity<ApiResponse<Object>> reissue(String refreshToken) {
+        NewTokenResponse newTokenResponse = jwtService.reissue(refreshToken);
+        HttpHeaders headers = new HttpHeaders();
+        accessTokenSend2Client(headers, newTokenResponse.getAccessToken());
+        refreshTokenSend2Client(headers, newTokenResponse.getRefreshToken());
+
+        return ResponseEntity.ok()
+            .headers(headers)
+            .body(ApiResponse.createSuccessWithNoData());
+    }
+
+    // 기본 로그인
     public ResponseEntity<ApiResponse<MemberResponse>> login(LoginRequest loginRequest) {
 
-        Authentication authentication = authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(loginRequest.getId(), loginRequest.getPassword()));
+        return commonLogin(loginRequest.getId(), loginRequest.getPassword());
+    }
+
+    // 소셜 로그인
+    public ResponseEntity<ApiResponse<MemberResponse>> socialLogin(
+        SocialLoginRequest socialLoginRequest) {
+
+        Member existMember = memberRepository.findBySocialIdAndProviderId(
+                socialLoginRequest.getProvider(), socialLoginRequest.getSocialUserId())
+            .orElseThrow(() -> new BusinessException(MemberErrorCode.NOT_FOUND_MEMBER));
+
+        return commonLogin(existMember.getEmail(), null);
+    }
+
+    // 공통 로그인 로직
+    private ResponseEntity<ApiResponse<MemberResponse>> commonLogin(String email, String password) {
+
+        Authentication authentication = createAuthentication(email, password);
 
         String accessToken = jwtUtil.generateAccessToken(authentication);
         String refreshToken = jwtUtil.generateRefreshToken(authentication);
@@ -46,21 +80,18 @@ public class AuthService {
             .body(ApiResponse.createSuccess(createResponseBody(authentication)));
     }
 
-    public ResponseEntity<ApiResponse<Object>> reissue(String refreshToken) {
-        NewTokenResponse newTokenResponse = jwtService.reissue(refreshToken);
-        HttpHeaders headers = new HttpHeaders();
-        accessTokenSend2Client(headers, newTokenResponse.getAccessToken());
-        refreshTokenSend2Client(headers, newTokenResponse.getRefreshToken());
-
-        return ResponseEntity.ok()
-            .headers(headers)
-            .body(ApiResponse.createSuccessWithNoData());
+    // Authentication 객체 생성
+    private Authentication createAuthentication(String email, String password) {
+        return authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(email, password));
     }
 
+    // AccessToken을 Authorization 헤더에 설정
     private void accessTokenSend2Client(HttpHeaders headers, String accessToken) {
         headers.set("Authorization", "Bearer " + accessToken);
     }
 
+    // RefreshToken을 Set-Cookie 헤더에 설정
     private void refreshTokenSend2Client(HttpHeaders headers, String refreshToken) {
         ResponseCookie refreshTokenCookie = ResponseCookie.from("refresh-token", refreshToken)
             .httpOnly(true)
@@ -73,7 +104,8 @@ public class AuthService {
         headers.add(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
     }
 
-    private MemberResponse createResponseBody(Authentication authentication){
+    // Authentication 객체를 MemberResponse 객체로 변환
+    private MemberResponse createResponseBody(Authentication authentication) {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         Member loginMember = Member.builder()
             .memberId(userDetails.getMemberId())

@@ -29,7 +29,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
         throws AuthenticationException {
 
         String username = authentication.getName();
-        String password = authentication.getCredentials().toString();
+        String password = (String) authentication.getCredentials();
 
         CustomUserDetails customUserDetails = null;
 
@@ -41,7 +41,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
             throw new BusinessException(MemberErrorCode.WITHDRAWN_MEMBER);
         }
 
-        if(!bCryptPasswordEncoder.matches(password, customUserDetails.getPassword())) {
+        if(password != null && !bCryptPasswordEncoder.matches(password, customUserDetails.getPassword())) {
             throw new BusinessException(MemberErrorCode.NOT_FOUND_MEMBER);
         }
 
