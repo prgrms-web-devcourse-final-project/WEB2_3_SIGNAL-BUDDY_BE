@@ -131,17 +131,17 @@ public class MemberService {
             .orElseThrow(() -> new BusinessException(MemberErrorCode.NOT_FOUND_MEMBER));
 
         // 이메일 본인 인증을 완료한 사용자인지 확인
-        if (!redisTemplate.hasKey(
+        if (Boolean.FALSE.equals(redisTemplate.hasKey(
             "auth:email:" + Purpose.NEW_PASSWORD.toString().toLowerCase() + ":"
-                + member.getEmail())) {
+                + member.getEmail()))) {
             throw new BusinessException(AuthErrorCode.EMAIL_VERIFICATION_REQUIRED);
         }
 
-        MemberUpdateRequest OnlyUpdatePassword = MemberUpdateRequest.builder().
+        MemberUpdateRequest onlyUpdatePassword = MemberUpdateRequest.builder().
             password(resetPasswordRequest.getNewPassword()).
             build();
 
-        member.updateMember(OnlyUpdatePassword,
+        member.updateMember(onlyUpdatePassword,
             encodedPassword(resetPasswordRequest.getNewPassword()));
 
         // 이메일 본인 인증 데이터 삭제
