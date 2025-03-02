@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.commonResponse;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.commonResponseFormat;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.pageResponseFormat;
@@ -42,6 +43,7 @@ import org.programmers.signalbuddyfinal.domain.feedback.service.FeedbackService;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberJoinRequest;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberUpdateRequest;
+import org.programmers.signalbuddyfinal.domain.member.dto.ResetPasswordRequest;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.programmers.signalbuddyfinal.domain.member.service.MemberService;
@@ -51,6 +53,7 @@ import org.programmers.signalbuddyfinal.domain.recentpath.service.RecentPathServ
 import org.programmers.signalbuddyfinal.global.anotation.WithMockCustomUser;
 import org.programmers.signalbuddyfinal.global.config.WebConfig;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
+import org.programmers.signalbuddyfinal.global.response.ApiResponse;
 import org.programmers.signalbuddyfinal.global.support.ControllerTest;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -60,7 +63,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.restdocs.mockmvc.MockMvcRestDocumentation;
 import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.ResultActions;
@@ -652,6 +657,41 @@ class MemberControllerTest extends ControllerTest {
                     fieldWithPath("nickname").description("닉네임")
                     )
                 ));
+    }
+
+    @DisplayName("비밀번호 재설정")
+    @Test
+    void successResetPassword() throws Exception {
+        // given
+        ResetPasswordRequest resetPasswordRequest = new ResetPasswordRequest("test@test.com",
+            "new1234");
+        ApiResponse<Object> apiResponse = ApiResponse.createSuccessWithNoData();
+        ResponseEntity<ApiResponse<Object>> response = ResponseEntity.ok(apiResponse);
+        when(memberService.resetPassword(any(ResetPasswordRequest.class))).thenReturn(response);
+
+        // when, then
+        mockMvc.perform(post("/api/members/password-reset")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(resetPasswordRequest)))
+            .andExpect(status().isOk())
+            .andDo(MockMvcRestDocumentation.document("비밀번호 재설정",
+                    preprocessRequest(prettyPrint()),
+                    preprocessResponse(prettyPrint()),
+                    resource(
+                        ResourceSnippetParameters.builder()
+                            .tag("Auth API")
+                            .summary("비밀번호 재설정")
+                            .requestFields(
+                                fieldWithPath("email").type(JsonFieldType.STRING)
+                                    .description("비밀번호를 변경하고자 하는 이메일"),
+                                fieldWithPath("newPassword").type(JsonFieldType.STRING)
+                                    .description("새로운 비밀번호")
+                            )
+                            .build()
+                    )
+                )
+            );
+
     }
 
 }

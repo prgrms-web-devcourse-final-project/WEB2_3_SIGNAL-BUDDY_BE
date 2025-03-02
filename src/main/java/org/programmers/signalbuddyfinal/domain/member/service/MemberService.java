@@ -2,9 +2,12 @@ package org.programmers.signalbuddyfinal.domain.member.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.programmers.signalbuddyfinal.domain.auth.entity.Purpose;
+import org.programmers.signalbuddyfinal.domain.auth.exception.AuthErrorCode;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberJoinRequest;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberUpdateRequest;
+import org.programmers.signalbuddyfinal.domain.member.dto.ResetPasswordRequest;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
@@ -12,8 +15,11 @@ import org.programmers.signalbuddyfinal.domain.member.exception.MemberErrorCode;
 import org.programmers.signalbuddyfinal.domain.member.mapper.MemberMapper;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
+import org.programmers.signalbuddyfinal.global.response.ApiResponse;
 import org.programmers.signalbuddyfinal.global.service.AwsFileService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class MemberService {
 
+    private final RedisTemplate<String, String> redisTemplate;
     private final MemberRepository memberRepository;
     private final AwsFileService awsFileService;
     private BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
@@ -101,7 +108,7 @@ public class MemberService {
 
         Member joinMember = Member.builder().email(memberJoinRequest.getEmail())
             .nickname(memberJoinRequest.getNickname())
-            .password(bCryptPasswordEncoder.encode(memberJoinRequest.getPassword()))
+            .password(encodedPassword(memberJoinRequest.getPassword()))
             .profileImageUrl(profileImageUrl).memberStatus(MemberStatus.ACTIVITY)
             .role(MemberRole.USER).build();
 
@@ -113,6 +120,35 @@ public class MemberService {
         final Member member = findMemberById(id);
 
         return bCryptPasswordEncoder.matches(password, member.getPassword());
+    }
+
+    @Transactional
+    public ResponseEntity<ApiResponse<Object>> resetPassword(
+        ResetPasswordRequest resetPasswordRequest) {
+
+        // 서비스에 등록된 이메일인지 확인
+        Member member = memberRepository.findByEmail(resetPasswordRequest.getEmail())
+            .orElseThrow(() -> new BusinessException(MemberErrorCode.NOT_FOUND_MEMBER));
+
+        // 이메일 본인 인증을 완료한 사용자인지 확인
+        if (!redisTemplate.hasKey(
+            "auth:email:" + Purpose.NEW_PASSWORD.toString().toLowerCase() + ":"
+                + member.getEmail())) {
+            throw new BusinessException(AuthErrorCode.EMAIL_VERIFICATION_REQUIRED);
+        }
+
+        MemberUpdateRequest OnlyUpdatePassword = MemberUpdateRequest.builder().
+            password(resetPasswordRequest.getNewPassword()).
+            build();
+
+        member.updateMember(OnlyUpdatePassword,
+            encodedPassword(resetPasswordRequest.getNewPassword()));
+
+        // 이메일 본인 인증 데이터 삭제
+        redisTemplate.delete("auth:email:" + Purpose.NEW_PASSWORD.toString().toLowerCase() + ":"
+            + member.getEmail());
+
+        return ResponseEntity.ok(ApiResponse.createSuccessWithNoData());
     }
 
     private Member findMemberById(Long id) {

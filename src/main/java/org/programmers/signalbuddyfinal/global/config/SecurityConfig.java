@@ -78,7 +78,7 @@ public class SecurityConfig {
                 // 로그인, 회원가입
                 .requestMatchers("/api/auth/login", "/api/auth/reissue", "/api/members/join",
                     "/api/admins/join", "/api/members/files/**", "/api/auth/auth-code",
-                    "api/auth/verify-code").permitAll()
+                    "api/auth/verify-code","/api/members/password-reset").permitAll()
                 .requestMatchers("/api/bookmarks/**", "/bookmarks/**").hasRole("USER")
                 // 댓글
                 .requestMatchers(HttpMethod.GET, "/api/feedbacks/{feedbackId}/comments").permitAll()
