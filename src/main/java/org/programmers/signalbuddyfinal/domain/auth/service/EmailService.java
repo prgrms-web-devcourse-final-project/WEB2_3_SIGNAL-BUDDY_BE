@@ -32,7 +32,7 @@ public class EmailService {
     private final JavaMailSender javaMailSender;
     private final SpringTemplateEngine templateEngine;
 
-    final String PREFIX = "auth:email:";
+    static final String PREFIX = "auth:email:";
 
     // 이메일 발송
     @Async
@@ -111,7 +111,7 @@ public class EmailService {
     private void codeSave(String email, String code) {
 
         // 이미 요청한 메일에 대한 인증코드가 존재하는 경우, 삭제한다.
-        if (redisTemplate.hasKey(PREFIX + email)) {
+        if (Boolean.TRUE.equals(redisTemplate.hasKey(PREFIX + email))) {
             redisTemplate.delete(PREFIX + email);
         }
 
