@@ -40,9 +40,6 @@ public class TrafficControllerTest extends ControllerTest {
     @MockitoBean
     private TrafficCsvService trafficCsvService;
 
-    private File testCsvFile;
-
-
     @Test
     @DisplayName("데이터 저장")
     void saveTrafficData() throws Exception {
@@ -50,14 +47,8 @@ public class TrafficControllerTest extends ControllerTest {
         // given
         String fileName = "seoul_traffic_light_test.csv";
 
-        String filePath = "src/main/resources/static/file/" + fileName;
-
-        testCsvFile = new File(filePath);
-
-        assertTrue(testCsvFile.exists(), "테스트 파일이 존재해야 합니다.");
-
         // when
-        doNothing().when(trafficCsvService).saveCsvData(testCsvFile);
+        doNothing().when(trafficCsvService).saveCsvData(fileName);
 
         ResultActions result = mockMvc.perform(
                 post("/api/traffic/save")

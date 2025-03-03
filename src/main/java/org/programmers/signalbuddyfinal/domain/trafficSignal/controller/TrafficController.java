@@ -29,26 +29,10 @@ public class TrafficController {
             @RequestParam String fileName
     ) throws IOException {
 
-        if (!isValidFileName(fileName)) {
-            throw new SecurityException("경로 탐색 시도 감지됨");
-        }
-
-        File file = new File("src/main/resources/static/file/"+fileName);
-
-        if(!file.exists()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.createError("파일을 찾을 수 없습니다."));
-        }
-
-        trafficCsvService.saveCsvData(file);
+        trafficCsvService.saveCsvData(fileName);
 
         return ResponseEntity.ok(ApiResponse.createSuccess("파일이 성공적으로 저장되었습니다."));
     }
 
-    // 파일 이름 검증 (특수 문자 및 경로 탐색 방지)
-    private boolean isValidFileName(String fileName) {
-        String regex = "^[a-zA-Z0-9._-]+$";
-        Pattern pattern = Pattern.compile(regex);
-        return pattern.matcher(fileName).matches();
-    }
 
 }

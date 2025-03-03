@@ -14,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.*;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -97,8 +99,10 @@ public class TrafficCsvServiceTest extends ServiceTest {
     @DisplayName("보행등 정보 저장 검증")
     void saveTrafficInfo() throws IOException {
 
+        String fileName = testCsvFile.getName();
+
         //when
-        trafficCsvService.saveCsvData(testCsvFile);
+        trafficCsvService.saveCsvData(fileName);
 
         //then
         assertThat(trafficRepository.count()).isGreaterThan(1);
