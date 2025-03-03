@@ -3,6 +3,7 @@ package org.programmers.signalbuddyfinal.domain.auth.controller;
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessRequest;
@@ -163,7 +164,7 @@ class AuthControllerTest extends ControllerTest {
 
         ApiResponse<Object> apiResponse = ApiResponse.createSuccessWithNoData();
         ResponseEntity<ApiResponse<Object>> responseEntity = ResponseEntity.ok().body(apiResponse);
-        when(emailService.sendEmail(any(EmailRequest.class))).thenReturn(responseEntity);
+        doNothing().when(emailService).sendEmail(any(EmailRequest.class));
 
         //when, then
         mockMvc.perform(post("/api/auth/auth-code")
