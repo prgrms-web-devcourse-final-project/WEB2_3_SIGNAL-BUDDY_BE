@@ -36,16 +36,17 @@ public class TrafficCsvService {
     @Transactional
     public void saveCsvData(String fileName) throws IOException {
 
-        File file = new File("src/main/resources/static/file/"+fileName);
         WKBWriter wkbWriter = new WKBWriter();
         String sql = "INSERT INTO traffic_signals(serial_number, district, signal_type, address, coordinate) VALUES (:serialNumber, :district, :signalType, :address, ST_GeomFromWKB(:coordinate))";
 
-        try (Reader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), Charset.forName("EUC-KR")))) {
-
+        try {
 
             if (!isValidFileName(fileName)) {
                 throw new SecurityException("경로 탐색 시도 감지됨");
             }
+
+            File file = new File("src/main/resources/static/file/"+fileName);
+            Reader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), Charset.forName("EUC-KR")));
 
             List<TrafficSignal> entityList = new ArrayList<>();
 
