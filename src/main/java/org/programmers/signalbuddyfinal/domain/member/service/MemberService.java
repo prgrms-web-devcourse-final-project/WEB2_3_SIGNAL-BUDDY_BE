@@ -126,16 +126,7 @@ public class MemberService {
     public ResponseEntity<ApiResponse<Object>> resetPassword(
         ResetPasswordRequest resetPasswordRequest) {
 
-        // 서비스에 등록된 이메일인지 확인
-        Member member = memberRepository.findByEmail(resetPasswordRequest.getEmail())
-            .orElseThrow(() -> new BusinessException(MemberErrorCode.NOT_FOUND_MEMBER));
-
-        // 이메일 본인 인증을 완료한 사용자인지 확인
-        if (Boolean.FALSE.equals(redisTemplate.hasKey(
-            "auth:email:" + Purpose.NEW_PASSWORD.toString().toLowerCase() + ":"
-                + member.getEmail()))) {
-            throw new BusinessException(AuthErrorCode.EMAIL_VERIFICATION_REQUIRED);
-        }
+        Member member = validateEmailAndEmailAuthentication(Purpose.NEW_PASSWORD, resetPasswordRequest.getEmail());
 
         MemberUpdateRequest onlyUpdatePassword = MemberUpdateRequest.builder().
             password(resetPasswordRequest.getNewPassword()).
@@ -144,11 +135,32 @@ public class MemberService {
         member.updateMember(onlyUpdatePassword,
             encodedPassword(resetPasswordRequest.getNewPassword()));
 
-        // 이메일 본인 인증 데이터 삭제
-        redisTemplate.delete("auth:email:" + Purpose.NEW_PASSWORD.toString().toLowerCase() + ":"
-            + member.getEmail());
+        deleteEmailAuthenticationData(Purpose.NEW_PASSWORD, resetPasswordRequest.getEmail());
 
         return ResponseEntity.ok(ApiResponse.createSuccessWithNoData());
+    }
+
+    // 서비스에 등록된 이메일인지 확인 및 이메일 인증 여부 확인
+    private Member validateEmailAndEmailAuthentication(Purpose purpose, String email) {
+
+        // 서비스에 등록된 이메일인지 확인
+        Member member = memberRepository.findByEmail(email)
+            .orElseThrow(() -> new BusinessException(MemberErrorCode.NOT_FOUND_MEMBER));
+
+        // 이메일 본인 인증을 완료한 사용자인지 확인
+        String prefix = "auth:email:" + purpose.name().toLowerCase() + ":";
+
+        if (!redisTemplate.hasKey(prefix + email)) {
+            throw new BusinessException(AuthErrorCode.EMAIL_VERIFICATION_REQUIRED);
+        }
+
+        return member;
+    }
+
+    // 인증 데이터 사용 후, 레디스에서 삭제
+    private void deleteEmailAuthenticationData(Purpose purpose, String email){
+
+        redisTemplate.delete("auth:email:" + purpose.name().toLowerCase() + ":" + email);
     }
 
     private Member findMemberById(Long id) {
