@@ -37,7 +37,8 @@ public class AuthController {
 
     @PostMapping("/auth-code")
     public ResponseEntity<ApiResponse<Object>> authCode(@Valid @RequestBody EmailRequest email) {
-        return emailService.sendEmail(email);
+        emailService.sendEmail(email);
+        return ResponseEntity.ok().body(ApiResponse.createSuccessWithNoData());
     }
 
     @PostMapping("/verify-code")
