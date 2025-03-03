@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
+import org.programmers.signalbuddyfinal.domain.social.entity.Provider;
 import org.springframework.format.annotation.DateTimeFormat;
 
 @Getter
@@ -21,7 +22,7 @@ public class AdminMemberResponse {
 
     private String nickname;
 
-    private String oauthProvider;
+    private Provider oauthProvider;
 
     private MemberRole role;
 

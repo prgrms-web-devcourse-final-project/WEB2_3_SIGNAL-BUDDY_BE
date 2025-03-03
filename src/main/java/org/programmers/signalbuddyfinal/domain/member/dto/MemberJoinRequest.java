@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.programmers.signalbuddyfinal.domain.social.entity.Provider;
 
 @Setter
 @Builder
@@ -15,7 +16,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class MemberJoinRequest {
 
-    private String provider;
+    private Provider provider;
 
     private String SocialUserId;
 

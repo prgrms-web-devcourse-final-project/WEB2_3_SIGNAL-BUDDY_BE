@@ -14,6 +14,7 @@ import org.programmers.signalbuddyfinal.domain.admin.dto.WithdrawalMemberRespons
 import org.programmers.signalbuddyfinal.domain.member.entity.QMember;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
+import org.programmers.signalbuddyfinal.domain.social.entity.Provider;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -126,8 +127,8 @@ public class CustomMemberRepositoryImpl implements CustomMemberRepository {
         return (role != null ? member.role.eq(role) : Expressions.TRUE);
     }
 
-    private BooleanExpression eqOAuthProvider(String oauthProvider) {
-        return ((oauthProvider != null && !oauthProvider.isEmpty())
+    private BooleanExpression eqOAuthProvider(Provider oauthProvider) {
+        return ((oauthProvider != null)
             ? socialProvider.oauthProvider.eq(oauthProvider) : Expressions.TRUE);
     }
 
