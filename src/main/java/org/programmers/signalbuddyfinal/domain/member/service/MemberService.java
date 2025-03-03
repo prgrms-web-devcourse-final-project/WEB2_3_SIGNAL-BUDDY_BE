@@ -112,7 +112,10 @@ public class MemberService {
 
         if (memberJoinRequest.getProvider() != null
             && memberJoinRequest.getSocialUserId() != null) {
-            socialProviderRepository.existsByOauthProviderAndSocialId(memberJoinRequest.getProvider(), memberJoinRequest.getSocialUserId());
+            if (socialProviderRepository.existsByOauthProviderAndSocialId(
+                memberJoinRequest.getProvider(), memberJoinRequest.getSocialUserId())) {
+                throw new BusinessException(MemberErrorCode.ALREADY_EXIST_SOCIAL_ACCOUNT);
+            }
             socialProviderRepository.save(SocialProvider.builder()
                 .member(joinMember)
                 .oauthProvider(memberJoinRequest.getProvider())
