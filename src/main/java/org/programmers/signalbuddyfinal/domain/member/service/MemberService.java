@@ -11,6 +11,8 @@ import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.programmers.signalbuddyfinal.domain.member.exception.MemberErrorCode;
 import org.programmers.signalbuddyfinal.domain.member.mapper.MemberMapper;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
+import org.programmers.signalbuddyfinal.domain.social.entity.SocialProvider;
+import org.programmers.signalbuddyfinal.domain.social.repository.SocialProviderRepository;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.service.AwsFileService;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,6 +28,7 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
     private final AwsFileService awsFileService;
+    private final SocialProviderRepository socialProviderRepository;
     private BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
 
     @Value("${default.profile.image.path}")
@@ -106,6 +109,17 @@ public class MemberService {
             .role(MemberRole.USER).build();
 
         memberRepository.save(joinMember);
+
+        if (memberJoinRequest.getProvider() != null
+            && memberJoinRequest.getSocialUserId() != null) {
+            socialProviderRepository.existsByOauthProviderAndSocialId(memberJoinRequest.getProvider(), memberJoinRequest.getSocialUserId());
+            socialProviderRepository.save(SocialProvider.builder()
+                .member(joinMember)
+                .oauthProvider(memberJoinRequest.getProvider())
+                .socialId(memberJoinRequest.getSocialUserId())
+                .build());
+        }
+
         return MemberMapper.INSTANCE.toDto(joinMember);
     }
 
