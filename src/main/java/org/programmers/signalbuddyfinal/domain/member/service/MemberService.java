@@ -15,6 +15,7 @@ import org.programmers.signalbuddyfinal.domain.member.exception.MemberErrorCode;
 import org.programmers.signalbuddyfinal.domain.member.mapper.MemberMapper;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
+import org.programmers.signalbuddyfinal.global.exception.GlobalErrorCode;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
 import org.programmers.signalbuddyfinal.global.service.AwsFileService;
 import org.springframework.beans.factory.annotation.Value;
@@ -150,8 +151,12 @@ public class MemberService {
         // 이메일 본인 인증을 완료한 사용자인지 확인
         String prefix = "auth:email:" + purpose.name().toLowerCase() + ":";
 
-        if (!redisTemplate.hasKey(prefix + email)) {
+        Boolean hasKeyInMemory = redisTemplate.hasKey(prefix + email);
+
+        if (Boolean.FALSE.equals(hasKeyInMemory)) {
             throw new BusinessException(AuthErrorCode.EMAIL_VERIFICATION_REQUIRED);
+        }else if(hasKeyInMemory == null){
+            throw new BusinessException(GlobalErrorCode.SERVER_ERROR);
         }
 
         return member;
