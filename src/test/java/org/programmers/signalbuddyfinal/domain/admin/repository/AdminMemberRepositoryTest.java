@@ -12,6 +12,7 @@ import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
+import org.programmers.signalbuddyfinal.domain.social.entity.Provider;
 import org.programmers.signalbuddyfinal.domain.social.entity.SocialProvider;
 import org.programmers.signalbuddyfinal.domain.social.repository.SocialProviderRepository;
 import org.programmers.signalbuddyfinal.global.support.RepositoryTest;
@@ -55,7 +56,7 @@ class AdminMemberRepositoryTest extends RepositoryTest {
         MemberFilterRequest roleFilter = createFilter(null, MemberRole.USER, null, null, null, null);
         MemberFilterRequest statusFilter = createFilter(MemberStatus.ACTIVITY, null, null, null,
             null, null);
-        MemberFilterRequest oAuthFilter = createFilter(null, null, "naver", null, null,  null);
+        MemberFilterRequest oAuthFilter = createFilter(null, null, Provider.NAVER, null, null,  null);
 
         assertThat(memberRepository.findAllMemberWithFilter(pageable, roleFilter)
             .getTotalElements()).isEqualTo(8);
@@ -91,7 +92,7 @@ class AdminMemberRepositoryTest extends RepositoryTest {
     public void 사용자_활성_oAuth_조회() {
 
         MemberFilterRequest roleAndActivityWithOAuthAFilter = createFilter(MemberStatus.ACTIVITY,
-            MemberRole.USER, "naver", null, null,  null);
+            MemberRole.USER, Provider.NAVER, null, null,  null);
 
         assertThat(
             memberRepository.findAllMemberWithFilter(pageable, roleAndActivityWithOAuthAFilter)
@@ -126,7 +127,7 @@ class AdminMemberRepositoryTest extends RepositoryTest {
         if (oAuthProvider != null) {
             SocialProvider socialProvider = SocialProvider.builder()
                 .socialId("socialId")
-                .oauthProvider("naver")
+                .oauthProvider(Provider.NAVER)
                 .member(member)
                 .build();
             socialProviderRepository.save(socialProvider);
@@ -134,7 +135,7 @@ class AdminMemberRepositoryTest extends RepositoryTest {
     }
 
     private MemberFilterRequest createFilter(MemberStatus status, MemberRole role,
-        String oAuthProvider, LocalDateTime startDate, LocalDateTime endDate, String search) {
+        Provider oAuthProvider, LocalDateTime startDate, LocalDateTime endDate, String search) {
         return MemberFilterRequest.builder()
             .role(role)
             .status(status)

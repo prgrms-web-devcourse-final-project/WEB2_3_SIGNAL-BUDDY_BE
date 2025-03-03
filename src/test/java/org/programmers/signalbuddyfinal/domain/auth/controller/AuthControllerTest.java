@@ -26,6 +26,7 @@ import org.programmers.signalbuddyfinal.domain.auth.entity.Purpose;
 import org.programmers.signalbuddyfinal.domain.auth.service.AuthService;
 import org.programmers.signalbuddyfinal.domain.auth.service.EmailService;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
+import org.programmers.signalbuddyfinal.domain.social.entity.Provider;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
 import org.programmers.signalbuddyfinal.global.support.ControllerTest;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -87,7 +88,7 @@ class AuthControllerTest extends ControllerTest {
         //given
         String testAccessToken = "testAccessToken";
         String testRefreshToken = "testRefreshToken";
-        SocialLoginRequest socialLoginRequest = new SocialLoginRequest("google", "1234");
+        SocialLoginRequest socialLoginRequest = new SocialLoginRequest(Provider.GOOGLE, "1234");
 
         ApiResponse apiResponse = ApiResponse.createSuccessWithNoData();
         ResponseEntity<ApiResponse<MemberResponse>> response = ResponseEntity.ok()
