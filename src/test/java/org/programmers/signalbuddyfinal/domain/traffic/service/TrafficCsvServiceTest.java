@@ -105,7 +105,7 @@ public class TrafficCsvServiceTest extends ServiceTest {
         trafficCsvService.saveCsvData(fileName);
 
         //then
-        assertThat(trafficRepository.count()).isGreaterThan(1);
+        assertThat(trafficRepository.count()).isGreaterThan(1L);
 
     }
 }
