@@ -24,6 +24,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.epages.restdocs.apispec.ResourceSnippetParameters;
@@ -42,6 +43,7 @@ import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.AnswerStatu
 import org.programmers.signalbuddyfinal.domain.feedback.service.FeedbackService;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberJoinRequest;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
+import org.programmers.signalbuddyfinal.domain.member.dto.MemberRestoreRequest;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberUpdateRequest;
 import org.programmers.signalbuddyfinal.domain.member.dto.ResetPasswordRequest;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
@@ -681,7 +683,7 @@ class MemberControllerTest extends ControllerTest {
                     preprocessResponse(prettyPrint()),
                     resource(
                         ResourceSnippetParameters.builder()
-                            .tag("Auth API")
+                            .tag(tag)
                             .summary("비밀번호 재설정")
                             .requestFields(
                                 fieldWithPath("email").type(JsonFieldType.STRING)
@@ -693,7 +695,56 @@ class MemberControllerTest extends ControllerTest {
                     )
                 )
             );
-
     }
 
+    @DisplayName("계정 복구")
+    @Test
+    void successRestore() throws Exception {
+        // given
+        MemberRestoreRequest memberRestoreRequest = new MemberRestoreRequest("test@test.com");
+
+        final MemberResponse memberResponse = MemberResponse.builder().memberId(1l)
+            .memberStatus(MemberStatus.ACTIVITY)
+            .role(MemberRole.USER)
+            .email(memberRestoreRequest.getEmail())
+            .nickname("temp_nickname")
+            .profileImageUrl("profile_image.jpeg")
+            .build();
+
+        ApiResponse<MemberResponse> apiResponse = ApiResponse.createSuccess(memberResponse);
+        when(memberService.restore(any(MemberRestoreRequest.class))).thenReturn(ResponseEntity.ok(apiResponse));
+
+        // when, then
+        mockMvc.perform(post("/api/members/restore")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(memberRestoreRequest)))
+            .andExpect(status().isOk())
+            .andDo(print())
+            .andDo(MockMvcRestDocumentation.document("계정 복구",
+                    preprocessRequest(prettyPrint()),
+                    preprocessResponse(prettyPrint()),
+                    resource(
+                        ResourceSnippetParameters.builder()
+                            .tag(tag)
+                            .summary("계정 복구")
+                            .requestFields(
+                                fieldWithPath("email").type(JsonFieldType.STRING)
+                                    .description("계정을 복구하고자 하는 이메일")
+                            )
+                            .responseSchema(schema("MemberResponse")).responseFields(
+                                ArrayUtils.addAll(commonResponseFormat(),
+                                    fieldWithPath("data.memberId").type(JsonFieldType.NUMBER)
+                                        .description("유저 ID"),
+                                    fieldWithPath("data.email").type(JsonFieldType.STRING)
+                                        .description("유저 이메일"),
+                                    fieldWithPath("data.nickname").type(JsonFieldType.STRING)
+                                        .description("유저 닉네임"),
+                                    fieldWithPath("data.profileImageUrl").type(JsonFieldType.STRING)
+                                        .optional().description("프로필 이미지 URL"),
+                                    fieldWithPath("data.role").type(JsonFieldType.STRING)
+                                        .description("유저 역할"),
+                                    fieldWithPath("data.memberStatus").type(JsonFieldType.STRING)
+                                        .description("유저 상태"))).build())));
+
+    }
 }
