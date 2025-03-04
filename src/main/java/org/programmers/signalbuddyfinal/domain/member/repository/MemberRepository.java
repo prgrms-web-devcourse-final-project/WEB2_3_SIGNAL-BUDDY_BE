@@ -36,5 +36,5 @@ public interface MemberRepository extends JpaRepository<Member, Long>, CustomMem
         + "inner join SocialProvider s "
         + "on m.memberId = s.member.memberId "
         + "where s.oauthProvider = :provider and s.socialId = :socialId")
-    Optional<Member> findBySocialIdAndProviderId(Provider provider, String socialId);
+    Optional<Member> findByProviderAndSocialId(Provider provider, String socialId);
 }

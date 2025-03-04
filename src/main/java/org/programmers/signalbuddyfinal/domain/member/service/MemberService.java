@@ -1,5 +1,6 @@
 package org.programmers.signalbuddyfinal.domain.member.service;
 
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.programmers.signalbuddyfinal.domain.auth.entity.Purpose;
@@ -94,44 +95,65 @@ public class MemberService {
     @Transactional
     public MemberResponse joinMember(MemberJoinRequest memberJoinRequest, MultipartFile image) {
 
-        if (memberRepository.existsByEmail(memberJoinRequest.getEmail())) {
-            throw new BusinessException(MemberErrorCode.ALREADY_EXIST_EMAIL);
-        } else if (memberRepository.existsByNickname(memberJoinRequest.getNickname())) {
+        // 프로필 이미지 설정
+        String profileImageUrl = settingProfileImage(image);
+
+        // 소셜 회원가입
+        if(memberJoinRequest.getProvider()!=null && memberJoinRequest.getSocialUserId()!=null){
+            // 이미 소셜 회원가입을 한 경우
+            if(socialProviderRepository.existsByOauthProviderAndSocialId(memberJoinRequest.getProvider(), memberJoinRequest.getSocialUserId())){
+                throw new BusinessException(MemberErrorCode.ALREADY_EXIST_SOCIAL_ACCOUNT);
+            }
+            return MemberMapper.INSTANCE.toDto(saveMember(memberJoinRequest, profileImageUrl, "social"));
+        }
+        // 기본 회원가입
+        else{
+            if(memberJoinRequest.getEmail() == null) throw new BusinessException(MemberErrorCode.REQUIRED_EMAIL_DATA);
+            return MemberMapper.INSTANCE.toDto(saveMember(memberJoinRequest, profileImageUrl, "basic"));
+        }
+    }
+
+    // 사용자 정보 저장
+    private Member saveMember(MemberJoinRequest memberJoinRequest, String profileImageUrl,
+        String type) {
+
+        if (memberRepository.existsByNickname(memberJoinRequest.getNickname())) {
             throw new BusinessException(MemberErrorCode.ALREADY_EXIST_NICKNAME);
         }
 
-        String profilePath = saveProfileImageIfPresent(image);
-        String profileImageUrl = null;
-        if (profilePath != null) {
-            profileImageUrl = awsFileService.getFileFromS3(profilePath, memberDir).toString();
-        } else {
-            // 프로필 이미지를 저장하지 않았을 경우 기본 이미지
-            profileImageUrl = awsFileService.getFileFromS3(defaultProfileImage, memberDir)
-                .toString();
+        Optional<Member> existingMember = memberRepository.findByEmail(
+            memberJoinRequest.getEmail());
+
+        if (existingMember.isPresent()) {
+            if (type.equals("social")) {
+                return linkWithAlreadyMember(existingMember.get(), memberJoinRequest);
+            }
+            throw new BusinessException(MemberErrorCode.ALREADY_EXIST_EMAIL);
         }
 
-        Member joinMember = Member.builder().email(memberJoinRequest.getEmail())
-            .nickname(memberJoinRequest.getNickname())
+        Member savedMember = memberRepository.save(Member.builder()
+            .email(memberJoinRequest.getEmail())
             .password(encodedPassword(memberJoinRequest.getPassword()))
-            .profileImageUrl(profileImageUrl).memberStatus(MemberStatus.ACTIVITY)
-            .role(MemberRole.USER).build();
+            .nickname(memberJoinRequest.getNickname())
+            .profileImageUrl(profileImageUrl)
+            .role(MemberRole.USER)
+            .memberStatus(MemberStatus.ACTIVITY)
+            .build());
 
-        memberRepository.save(joinMember);
+        return type.equals("social") ? linkWithAlreadyMember(savedMember, memberJoinRequest)
+            : savedMember;
 
-        if (memberJoinRequest.getProvider() != null
-            && memberJoinRequest.getSocialUserId() != null) {
-            if (socialProviderRepository.existsByOauthProviderAndSocialId(
-                memberJoinRequest.getProvider(), memberJoinRequest.getSocialUserId())) {
-                throw new BusinessException(MemberErrorCode.ALREADY_EXIST_SOCIAL_ACCOUNT);
-            }
-            socialProviderRepository.save(SocialProvider.builder()
-                .member(joinMember)
+    }
+
+    // 사용자 정보와 연동
+    private Member linkWithAlreadyMember(Member member, MemberJoinRequest memberJoinRequest) {
+        socialProviderRepository.save(SocialProvider.builder()
+                .member(member)
                 .oauthProvider(memberJoinRequest.getProvider())
                 .socialId(memberJoinRequest.getSocialUserId())
-                .build());
-        }
+            .build());
 
-        return MemberMapper.INSTANCE.toDto(joinMember);
+        return member;
     }
 
     public boolean verifyPassword(String password, Long id) {
@@ -156,6 +178,20 @@ public class MemberService {
         deleteEmailAuthenticationData(Purpose.NEW_PASSWORD, resetPasswordRequest.getEmail());
 
         return ResponseEntity.ok(ApiResponse.createSuccessWithNoData());
+    }
+
+    // 프로필 이미지 설정
+    private String settingProfileImage(MultipartFile image){
+
+        String profilePath = saveProfileImageIfPresent(image);
+
+        if (profilePath != null) {
+            return awsFileService.getFileFromS3(profilePath, memberDir).toString();
+        } else {
+            // 프로필 이미지를 저장하지 않았을 경우 기본 이미지
+            return awsFileService.getFileFromS3(defaultProfileImage, memberDir)
+                .toString();
+        }
     }
 
     // 서비스에 등록된 이메일인지 확인 및 이메일 인증 여부 확인
