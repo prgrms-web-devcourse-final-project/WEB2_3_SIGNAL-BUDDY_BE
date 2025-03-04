@@ -22,6 +22,7 @@ import org.programmers.signalbuddyfinal.domain.admin.dto.MemberFilterRequest;
 import org.programmers.signalbuddyfinal.domain.admin.service.AdminMemberService;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
+import org.programmers.signalbuddyfinal.domain.social.entity.Provider;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.programmers.signalbuddyfinal.global.support.ControllerTest;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -48,9 +49,9 @@ class AdminMemberControllerTest extends ControllerTest {
     @Test
     void getAllMember() throws Exception {
         final List<AdminMemberResponse> members = List.of(
-            new AdminMemberResponse(1L, "user1@test.com", "User1", "kakao", MemberRole.USER,
+            new AdminMemberResponse(1L, "user1@test.com", "User1", Provider.KAKAO, MemberRole.USER,
                 MemberStatus.ACTIVITY, LocalDateTime.of(2025, 1, 22, 0, 0, 0)),
-            new AdminMemberResponse(2L, "user2@test.com", "User2", "google", MemberRole.USER,
+            new AdminMemberResponse(2L, "user2@test.com", "User2", Provider.GOOGLE, MemberRole.USER,
                 MemberStatus.ACTIVITY, LocalDateTime.of(2024, 2, 22, 0, 0, 0))
         );
 
@@ -103,16 +104,16 @@ class AdminMemberControllerTest extends ControllerTest {
         final MemberFilterRequest filter = MemberFilterRequest.builder()
             .role(MemberRole.USER)
             .status(MemberStatus.ACTIVITY)
-            .oAuthProvider("kakao")
+            .oAuthProvider(Provider.KAKAO)
             .startDate(LocalDateTime.of(2025, 1, 1, 0, 0, 0))
             .endDate(LocalDateTime.of(2025, 2, 20, 0, 0, 0))
             .search("user1@test.com")
             .build();
 
         final List<AdminMemberResponse> members = List.of(
-            new AdminMemberResponse(1L, "user1@test.com", "User1", "kakao", MemberRole.USER,
+            new AdminMemberResponse(1L, "user1@test.com", "User1", Provider.KAKAO, MemberRole.USER,
                 MemberStatus.ACTIVITY, LocalDateTime.of(2025, 1, 22, 0, 0, 0)),
-            new AdminMemberResponse(2L, "user2@test.com", "User2", "google", MemberRole.USER,
+            new AdminMemberResponse(2L, "user2@test.com", "User2", Provider.GOOGLE, MemberRole.USER,
                 MemberStatus.ACTIVITY, LocalDateTime.of(2024, 2, 22, 0, 0, 0)));
 
         final Pageable pageable = PageRequest.of(0, 10);
@@ -129,7 +130,7 @@ class AdminMemberControllerTest extends ControllerTest {
                     .param("size", "10")
                     .param("role", filter.getRole().toString())
                     .param("status", filter.getStatus().toString())
-                    .param("oAuthProvider", filter.getOAuthProvider())
+                    .param("oAuthProvider", filter.getOAuthProvider().getValue())
                     .param("startDate", filter.getStartDate().toString())
                     .param("endDate", filter.getEndDate().toString())
                     .param("search", filter.getSearch())

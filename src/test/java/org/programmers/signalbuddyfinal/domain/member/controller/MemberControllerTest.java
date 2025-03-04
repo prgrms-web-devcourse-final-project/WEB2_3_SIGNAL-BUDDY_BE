@@ -610,7 +610,7 @@ class MemberControllerTest extends ControllerTest {
                                     .description("나의 목적지와의 연관관계 여부"))).build())));
     }
 
-    @DisplayName("기본 회원가입 성공")
+    @DisplayName("회원가입 성공")
     @Test
     void successJoin() throws Exception {
         // given
@@ -652,6 +652,8 @@ class MemberControllerTest extends ControllerTest {
                     partWithName("memberJoinRequest").description("회원 가입 정보")
                 ),
                 requestPartFields("memberJoinRequest",
+                    fieldWithPath("provider").description("OAuth 제공자"),
+                    fieldWithPath("socialUserId").description("provider에서 제공하는 사용자 UUID"),
                     fieldWithPath("email").description("이메일"),
                     fieldWithPath("password").description("비밀번호"),
                     fieldWithPath("nickname").description("닉네임")

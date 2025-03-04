@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
+import org.programmers.signalbuddyfinal.domain.social.entity.Provider;
 
 @Getter
 @Builder
@@ -20,7 +21,7 @@ public class MemberFilterRequest {
 
     private MemberStatus status;
 
-    private String oAuthProvider;
+    private Provider oAuthProvider;
 
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDateTime startDate;

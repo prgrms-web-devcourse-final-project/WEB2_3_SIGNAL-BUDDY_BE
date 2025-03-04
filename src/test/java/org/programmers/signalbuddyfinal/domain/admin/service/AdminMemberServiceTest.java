@@ -11,6 +11,7 @@ import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
+import org.programmers.signalbuddyfinal.domain.social.entity.Provider;
 import org.programmers.signalbuddyfinal.domain.social.entity.SocialProvider;
 import org.programmers.signalbuddyfinal.domain.social.repository.SocialProviderRepository;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
@@ -86,7 +87,7 @@ public class AdminMemberServiceTest extends ServiceTest {
         if (oAuthProvider != null) {
             SocialProvider socialProvider = SocialProvider.builder()
                 .socialId("socialId")
-                .oauthProvider("naver")
+                .oauthProvider(Provider.NAVER)
                 .member(member)
                 .build();
             socialProviderRepository.save(socialProvider);
@@ -94,7 +95,7 @@ public class AdminMemberServiceTest extends ServiceTest {
     }
 
     private MemberFilterRequest createFilter(MemberStatus status, MemberRole role,
-        String oAuthProvider, LocalDateTime startDate, LocalDateTime endDate, String search) {
+        Provider oAuthProvider, LocalDateTime startDate, LocalDateTime endDate, String search) {
         return MemberFilterRequest.builder()
             .role(role)
             .status(status)

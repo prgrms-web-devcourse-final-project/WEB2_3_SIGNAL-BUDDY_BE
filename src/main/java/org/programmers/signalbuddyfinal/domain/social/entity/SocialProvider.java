@@ -19,8 +19,9 @@ public class SocialProvider extends BaseTimeEntity {
     @Column(nullable = false)
     private String socialId;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String oauthProvider;
+    private Provider oauthProvider;
 
     @ManyToOne
     @JoinColumn(name = "member_id", nullable = false)

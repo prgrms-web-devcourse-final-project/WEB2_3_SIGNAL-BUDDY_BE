@@ -2,6 +2,7 @@ package org.programmers.signalbuddyfinal.domain.member.repository;
 
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.exception.MemberErrorCode;
+import org.programmers.signalbuddyfinal.domain.social.entity.Provider;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -35,5 +36,5 @@ public interface MemberRepository extends JpaRepository<Member, Long>, CustomMem
         + "inner join SocialProvider s "
         + "on m.memberId = s.member.memberId "
         + "where s.oauthProvider = :provider and s.socialId = :socialId")
-    Optional<Member> findBySocialIdAndProviderId(String provider, String socialId);
+    Optional<Member> findBySocialIdAndProviderId(Provider provider, String socialId);
 }
