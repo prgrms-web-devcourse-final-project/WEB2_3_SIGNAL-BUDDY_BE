@@ -163,7 +163,6 @@ class AuthControllerTest extends ControllerTest {
         EmailRequest emailRequest = new EmailRequest(email);
 
         ApiResponse<Object> apiResponse = ApiResponse.createSuccessWithNoData();
-        ResponseEntity<ApiResponse<Object>> responseEntity = ResponseEntity.ok().body(apiResponse);
         doNothing().when(emailService).sendEmail(any(EmailRequest.class));
 
         //when, then

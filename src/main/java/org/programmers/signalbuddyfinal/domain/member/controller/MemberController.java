@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.programmers.signalbuddyfinal.domain.auth.dto.EmailRequest;
 import org.programmers.signalbuddyfinal.domain.bookmark.dto.BookmarkRequest;
 import org.programmers.signalbuddyfinal.domain.bookmark.dto.BookmarkResponse;
 import org.programmers.signalbuddyfinal.domain.bookmark.dto.BookmarkSequenceUpdateRequest;
@@ -13,6 +14,7 @@ import org.programmers.signalbuddyfinal.domain.feedback.service.FeedbackService;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberJoinRequest;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberUpdateRequest;
+import org.programmers.signalbuddyfinal.domain.member.dto.ResetPasswordRequest;
 import org.programmers.signalbuddyfinal.domain.member.service.MemberService;
 import org.programmers.signalbuddyfinal.domain.recentpath.dto.RecentPathRequest;
 import org.programmers.signalbuddyfinal.domain.recentpath.dto.RecentPathResponse;
@@ -153,6 +155,12 @@ public class MemberController {
         @RequestPart(value = "profileImageUrl", required = false) MultipartFile profileImage) {
         MemberResponse memberResponse = memberService.joinMember(memberJoinRequest, profileImage);
         return ResponseEntity.ok(ApiResponse.createSuccess(memberResponse));
+    }
+
+    @PostMapping("/password-reset")
+    public ResponseEntity<ApiResponse<Object>> resetPassword(@Valid @RequestBody
+        ResetPasswordRequest resetPasswordRequest) {
+        return memberService.resetPassword(resetPasswordRequest);
     }
 
 }
