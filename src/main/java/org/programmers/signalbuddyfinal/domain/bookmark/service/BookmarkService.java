@@ -155,6 +155,11 @@ public class BookmarkService {
             // sequence 값 변경 (스왑)
             bookmark.updateSequence(targetSequence);
             targetBookmark.updateSequence(originalSequence);
+
+            // sequenceMap 업데이트
+            sequenceMap.put(targetSequence, bookmark);
+            sequenceMap.put(originalSequence, targetBookmark);
+
         }
 
         return bookmarks.stream().map(BookmarkMapper.INSTANCE::toDto).toList();
