@@ -2,7 +2,7 @@ package org.programmers.signalbuddyfinal.domain.postit.service;
 
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
-import org.programmers.signalbuddyfinal.domain.crossroad.service.PointUtil;
+import org.programmers.signalbuddyfinal.global.util.PointUtil;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
 import org.programmers.signalbuddyfinal.domain.postit.dto.PostItCreateRequest;

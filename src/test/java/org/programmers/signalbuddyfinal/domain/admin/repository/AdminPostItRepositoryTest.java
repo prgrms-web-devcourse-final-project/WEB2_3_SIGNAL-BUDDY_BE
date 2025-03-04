@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Point;
 import org.programmers.signalbuddyfinal.domain.admin.dto.PostItFilterRequest;
 import org.programmers.signalbuddyfinal.domain.admin.dto.enums.Deleted;
-import org.programmers.signalbuddyfinal.domain.crossroad.service.PointUtil;
+import org.programmers.signalbuddyfinal.global.util.PointUtil;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;

@@ -112,6 +112,10 @@ dependencies {
     implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+
+    //openCsv
+    implementation 'com.opencsv:opencsv:5.7.1' // 최신 버전 확인 후 적절한 버전 사용
+
 }
 
 // JaCoCo 버전 설정
