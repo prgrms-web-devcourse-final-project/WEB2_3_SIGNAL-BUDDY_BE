@@ -56,7 +56,7 @@ public class AuthService {
     public ResponseEntity<ApiResponse<MemberResponse>> socialLogin(
         SocialLoginRequest socialLoginRequest) {
 
-        Member existMember = memberRepository.findBySocialIdAndProviderId(
+        Member existMember = memberRepository.findByProviderAndSocialId(
                 socialLoginRequest.getProvider(), socialLoginRequest.getSocialUserId())
             .orElseThrow(() -> new BusinessException(MemberErrorCode.NOT_FOUND_MEMBER));
 
