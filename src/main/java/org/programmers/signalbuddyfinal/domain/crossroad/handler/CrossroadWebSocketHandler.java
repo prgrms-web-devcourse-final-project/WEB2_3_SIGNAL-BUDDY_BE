@@ -27,6 +27,7 @@ public class CrossroadWebSocketHandler extends TextWebSocketHandler {
     protected void handleTextMessage(@NonNull WebSocketSession session,
         @NonNull TextMessage message) throws Exception {
         try {
+
             final LocationRequest locationRequest = objectMapper.readValue(message.getPayload(),
                 LocationRequest.class);
 
@@ -40,7 +41,7 @@ public class CrossroadWebSocketHandler extends TextWebSocketHandler {
             session.sendMessage(new TextMessage(response));
         } catch (Exception e) {
             session.sendMessage(new TextMessage("위치 요청 처리 중 오류 발생"));
-            log.error("Crossroad WebSocket Handler Error", e);
+            log.error("Crossroad WebSocket Handler Error: {}, \nRequest: {}", e.getMessage(), message.getPayload());
         }
     }
 
