@@ -71,4 +71,5 @@ public class Member extends BaseTimeEntity {
         this.memberStatus = MemberStatus.WITHDRAWAL;
     }
 
+    public void restore(){ this.memberStatus = MemberStatus.ACTIVITY; }
 }

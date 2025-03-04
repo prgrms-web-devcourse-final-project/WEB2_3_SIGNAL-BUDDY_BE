@@ -1,6 +1,5 @@
 package org.programmers.signalbuddyfinal.domain.postit_report.entity;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -16,7 +15,7 @@ import org.programmers.signalbuddyfinal.domain.postit.entity.Postit;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Entity(name ="postit_repost")
+@Entity(name ="postit_report")
 public class PostItReport {
 
     @Id
