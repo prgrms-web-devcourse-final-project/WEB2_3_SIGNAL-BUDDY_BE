@@ -284,8 +284,15 @@ tasks.register('copyDocument', Copy) {
     into file("src/main/resources/static/docs")
 }
 
-bootJar {
+tasks.register('copyOasToDocs', Copy) {
     dependsOn copyDocument
+
+    from file("build/api-spec")
+    into file("src/main/resources/static/docs")
+}
+
+bootJar {
+    dependsOn copyOasToDocs
     from("src/main/resources/static/docs") {
         into "static/docs" // JAR 내부에서 접근할 경로
     }
