@@ -134,7 +134,7 @@ class AuthControllerTest extends ControllerTest {
                 .header("Authorization", "Bearer " + newAccessToken)
                 .body(apiResponse);
 
-        when(authService.reissue(anyString())).thenReturn(response);
+        when(authService.reissue(anyString(), anyString())).thenReturn(response);
 
         //when, then
         mockMvc.perform(post("/api/auth/reissue")
