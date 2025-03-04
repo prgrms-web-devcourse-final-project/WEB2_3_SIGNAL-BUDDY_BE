@@ -13,6 +13,7 @@ import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackResponse;
 import org.programmers.signalbuddyfinal.domain.feedback.service.FeedbackService;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberJoinRequest;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
+import org.programmers.signalbuddyfinal.domain.member.dto.MemberRestoreRequest;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberUpdateRequest;
 import org.programmers.signalbuddyfinal.domain.member.dto.ResetPasswordRequest;
 import org.programmers.signalbuddyfinal.domain.member.service.MemberService;
@@ -161,6 +162,12 @@ public class MemberController {
     public ResponseEntity<ApiResponse<Object>> resetPassword(@Valid @RequestBody
         ResetPasswordRequest resetPasswordRequest) {
         return memberService.resetPassword(resetPasswordRequest);
+    }
+
+    @PostMapping("/restore")
+    public ResponseEntity<ApiResponse<MemberResponse>> restoreMember(@RequestBody
+    MemberRestoreRequest memberRestoreRequest) {
+        return memberService.restore(memberRestoreRequest);
     }
 
 }

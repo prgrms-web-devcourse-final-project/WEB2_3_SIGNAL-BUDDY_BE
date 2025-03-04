@@ -7,6 +7,7 @@ import org.programmers.signalbuddyfinal.domain.auth.entity.Purpose;
 import org.programmers.signalbuddyfinal.domain.auth.exception.AuthErrorCode;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberJoinRequest;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
+import org.programmers.signalbuddyfinal.domain.member.dto.MemberRestoreRequest;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberUpdateRequest;
 import org.programmers.signalbuddyfinal.domain.member.dto.ResetPasswordRequest;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
@@ -113,7 +114,38 @@ public class MemberService {
         }
     }
 
-    // 사용자 정보 저장
+    @Transactional
+    public ResponseEntity<ApiResponse<Object>> resetPassword(
+        ResetPasswordRequest resetPasswordRequest) {
+
+        Member member = validateEmailAndEmailAuthentication(Purpose.NEW_PASSWORD, resetPasswordRequest.getEmail());
+
+        MemberUpdateRequest onlyUpdatePassword = MemberUpdateRequest.builder().
+            password(resetPasswordRequest.getNewPassword()).
+            build();
+
+        member.updateMember(onlyUpdatePassword,
+            encodedPassword(resetPasswordRequest.getNewPassword()));
+
+        deleteEmailAuthenticationData(Purpose.NEW_PASSWORD, resetPasswordRequest.getEmail());
+
+        return ResponseEntity.ok(ApiResponse.createSuccessWithNoData());
+    }
+  
+  // 계정 복구
+    @Transactional
+    public ResponseEntity<ApiResponse<MemberResponse>> restore(
+        MemberRestoreRequest memberRestoreRequest){
+
+        Member authenticatedMember = validateEmailAndEmailAuthentication(Purpose.RESTORE, memberRestoreRequest.getEmail());
+        authenticatedMember.restore();
+        deleteEmailAuthenticationData(Purpose.RESTORE, memberRestoreRequest.getEmail());
+
+        MemberResponse memberResponse = MemberMapper.INSTANCE.toDto(authenticatedMember);
+        return ResponseEntity.ok(ApiResponse.createSuccess(memberResponse));
+    }
+  
+  // 사용자 정보 저장
     private Member saveMember(MemberJoinRequest memberJoinRequest, String profileImageUrl,
         String type) {
 
@@ -162,23 +194,6 @@ public class MemberService {
         return bCryptPasswordEncoder.matches(password, member.getPassword());
     }
 
-    @Transactional
-    public ResponseEntity<ApiResponse<Object>> resetPassword(
-        ResetPasswordRequest resetPasswordRequest) {
-
-        Member member = validateEmailAndEmailAuthentication(Purpose.NEW_PASSWORD, resetPasswordRequest.getEmail());
-
-        MemberUpdateRequest onlyUpdatePassword = MemberUpdateRequest.builder().
-            password(resetPasswordRequest.getNewPassword()).
-            build();
-
-        member.updateMember(onlyUpdatePassword,
-            encodedPassword(resetPasswordRequest.getNewPassword()));
-
-        deleteEmailAuthenticationData(Purpose.NEW_PASSWORD, resetPasswordRequest.getEmail());
-
-        return ResponseEntity.ok(ApiResponse.createSuccessWithNoData());
-    }
 
     // 프로필 이미지 설정
     private String settingProfileImage(MultipartFile image){
@@ -194,6 +209,7 @@ public class MemberService {
         }
     }
 
+    
     // 서비스에 등록된 이메일인지 확인 및 이메일 인증 여부 확인
     private Member validateEmailAndEmailAuthentication(Purpose purpose, String email) {
 
