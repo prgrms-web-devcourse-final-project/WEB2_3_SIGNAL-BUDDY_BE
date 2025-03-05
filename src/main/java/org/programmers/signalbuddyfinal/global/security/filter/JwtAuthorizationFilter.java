@@ -35,7 +35,8 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         "/docs/index.html", "/api/members/join", "/docs/openapi3.yaml",
         "/api/admins/join", "/api/members/files/**", "/actuator/prometheus",
         "/api/auth/auth-code", "/api/auth/verify-code", "/api/members/password-reset",
-        "/api/auth/social-login", "/api/members/restore", "/api/auth/reissue", "/api/fcm/push"
+        "/api/auth/social-login", "/api/members/restore", "/api/auth/reissue",
+        "/api/fcm/push"
     );
 
     public JwtAuthorizationFilter(JwtUtil jwtUtil, RedisTemplate<String, String> redisTemplate) {
@@ -77,7 +78,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
             request.setAttribute(EXCEPTION_ATTRIBUTE, "INVALID_TOKEN");
             throw new BusinessException(TokenErrorCode.INVALID_TOKEN);
-        };
+        }
 
         Authentication authentication = jwtUtil.getAuthentication(accessToken);
         SecurityContextHolder.getContext().setAuthentication(authentication);
