@@ -113,6 +113,9 @@ dependencies {
 
     // MockWebServer
     testImplementation 'com.squareup.okhttp3:mockwebserver:4.12.0'
+
+    // FireBase Admin SDK
+    implementation 'com.google.firebase:firebase-admin:9.4.3'
 }
 
 // JaCoCo 버전 설정
@@ -207,12 +210,16 @@ tasks.named('test') {
     finalizedBy 'jacocoTestReport'
 }
 
-/* deploy 서브 모듈에 있는 config 파일들을 resources로 복사 */
-task copyYaml(type: Copy) {
+// 서브 모듈에 있는 config 파일들을 resources로 복사
+task copyConfig(type: Copy) {
     copy {
         from './submodule/config'
-        include '*.yml'
         into 'src/main/resources'
+    }
+    // firebase 관련 파일 복사
+    copy {
+        from './submodule/firebase'
+        into 'src/main/resources/firebase'
     }
 }
 
