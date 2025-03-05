@@ -196,7 +196,7 @@ public class MemberService {
 
 
     // 프로필 이미지 설정
-    private String settingProfileImage(MultipartFile image){
+    public String settingProfileImage(MultipartFile image){
 
         String profilePath = saveProfileImageIfPresent(image);
 
