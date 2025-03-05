@@ -1,0 +1,122 @@
+[
+  {
+    "itstId": "10",
+    "itstNm": "난곡우체국앞",
+    "mapCtptIntLat": 37.4777135,
+    "mapCtptIntLot": 126.9153603,
+    "laneWidth": null,
+    "limitSpedTypeNm": null,
+    "limitSped": null,
+    "itstEngNm": null,
+    "rgtrId": "V2X",
+    "regDt": "2025-03-03T16:31:13.000+00:00"
+  },
+  {
+    "itstId": "1007",
+    "itstNm": "우리은행암사",
+    "mapCtptIntLat": 37.5547454,
+    "mapCtptIntLot": 127.1364893,
+    "laneWidth": null,
+    "limitSpedTypeNm": null,
+    "limitSped": null,
+    "itstEngNm": null,
+    "rgtrId": "V2X",
+    "regDt": "2025-03-03T16:31:13.000+00:00"
+  },
+  {
+    "itstId": "101",
+    "itstNm": "수서역",
+    "mapCtptIntLat": 37.4873221,
+    "mapCtptIntLot": 127.101742,
+    "laneWidth": null,
+    "limitSpedTypeNm": null,
+    "limitSped": null,
+    "itstEngNm": null,
+    "rgtrId": "V2X",
+    "regDt": "2025-03-03T16:31:13.000+00:00"
+  },
+  {
+    "itstId": "1014",
+    "itstNm": "선사사거리",
+    "mapCtptIntLat": 37.5547665,
+    "mapCtptIntLot": 127.1291998,
+    "laneWidth": null,
+    "limitSpedTypeNm": null,
+    "limitSped": null,
+    "itstEngNm": null,
+    "rgtrId": "V2X",
+    "regDt": "2025-03-03T16:31:13.000+00:00"
+  },
+  {
+    "itstId": "1015",
+    "itstNm": "대한볼링협회",
+    "mapCtptIntLat": 37.5311298,
+    "mapCtptIntLot": 127.137503,
+    "laneWidth": null,
+    "limitSpedTypeNm": null,
+    "limitSped": null,
+    "itstEngNm": null,
+    "rgtrId": "V2X",
+    "regDt": "2025-03-03T16:31:13.000+00:00"
+  },
+  {
+    "itstId": "1016",
+    "itstNm": "강동아트센터",
+    "mapCtptIntLat": 37.5517116,
+    "mapCtptIntLot": 127.1563351,
+    "laneWidth": null,
+    "limitSpedTypeNm": null,
+    "limitSped": null,
+    "itstEngNm": "gangdongateusenteo",
+    "rgtrId": "V2X",
+    "regDt": "2025-03-03T16:31:13.000+00:00"
+  },
+  {
+    "itstId": "1017",
+    "itstNm": "명일여고앞",
+    "mapCtptIntLat": 37.5491714,
+    "mapCtptIntLot": 127.1493232,
+    "laneWidth": null,
+    "limitSpedTypeNm": null,
+    "limitSped": null,
+    "itstEngNm": null,
+    "rgtrId": "V2X",
+    "regDt": "2025-03-03T16:31:13.000+00:00"
+  },
+  {
+    "itstId": "1029",
+    "itstNm": "풍납사거리",
+    "mapCtptIntLat": 37.528011,
+    "mapCtptIntLot": 127.1191417,
+    "laneWidth": null,
+    "limitSpedTypeNm": null,
+    "limitSped": null,
+    "itstEngNm": null,
+    "rgtrId": "V2X",
+    "regDt": "2025-03-03T16:31:13.000+00:00"
+  },
+  {
+    "itstId": "1030",
+    "itstNm": "방이2동주민센터",
+    "mapCtptIntLat": 37.5145952,
+    "mapCtptIntLot": 127.1148971,
+    "laneWidth": null,
+    "limitSpedTypeNm": null,
+    "limitSped": null,
+    "itstEngNm": null,
+    "rgtrId": "V2X",
+    "regDt": "2025-03-03T16:31:13.000+00:00"
+  },
+  {
+    "itstId": "1031",
+    "itstNm": "개롱근린공원",
+    "mapCtptIntLat": 37.4932805,
+    "mapCtptIntLot": 127.1296167,
+    "laneWidth": null,
+    "limitSpedTypeNm": null,
+    "limitSped": null,
+    "itstEngNm": null,
+    "rgtrId": "V2X",
+    "regDt": "2025-03-03T16:31:13.000+00:00"
+  }
+]

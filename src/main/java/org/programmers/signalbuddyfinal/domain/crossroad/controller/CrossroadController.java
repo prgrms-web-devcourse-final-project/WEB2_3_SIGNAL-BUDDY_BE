@@ -1,19 +1,22 @@
 package org.programmers.signalbuddyfinal.domain.crossroad.controller;
 
 import jakarta.validation.constraints.Min;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadApiResponse;
-import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadStateApiResponse;
+import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadStateResponse;
 import org.programmers.signalbuddyfinal.domain.crossroad.repository.CrossroadRepository;
 import org.programmers.signalbuddyfinal.domain.crossroad.service.CrossroadService;
-import org.springframework.http.CacheControl;
-import org.springframework.http.HttpHeaders;
+import org.programmers.signalbuddyfinal.global.response.ApiResponse;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @Validated
 @RestController
@@ -25,10 +28,12 @@ public class CrossroadController {
     private final CrossroadRepository crossroadRepository;
 
     @PostMapping("/save")
-    public ResponseEntity<Void> saveCrossroadDates(@Min(1) @RequestParam("page") int page,
-        @Min(10) @RequestParam("size") int pageSize) {
+    public ResponseEntity<ApiResponse<Object>> saveCrossroadDates(
+        @Min(1) @RequestParam("page") int page,
+        @Min(10) @RequestParam("size") int pageSize
+    ) {
         crossroadService.saveCrossroadDates(page, pageSize);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(ApiResponse.createSuccessWithNoData());
     }
 
 
@@ -41,17 +46,15 @@ public class CrossroadController {
     }
 
 
-    @GetMapping("/state/{id}") // id를 기반으로 신호등 데이터 상태 검색
-    public ResponseEntity<List<CrossroadStateApiResponse>> markerToState(@PathVariable("id") Long id) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setCacheControl(CacheControl.noCache().getHeaderValue());
-
-        List<CrossroadStateApiResponse> stateRes = crossroadService.checkSignalState(id);
-
-        return  ResponseEntity.ok()
-                .headers(headers)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(stateRes);
+    @GetMapping("/{crossroadId}/state")
+    public ResponseEntity<ApiResponse<CrossroadStateResponse>> checkSignalState(
+        @PathVariable("crossroadId") long crossroadId
+    ) {
+        return ResponseEntity.ok(
+            ApiResponse.createSuccess(
+                crossroadService.checkSignalState(crossroadId)
+            )
+        );
     }
 
     @GetMapping("/around") // 좌표 값을 기반으로 50m이내 신호등 반환

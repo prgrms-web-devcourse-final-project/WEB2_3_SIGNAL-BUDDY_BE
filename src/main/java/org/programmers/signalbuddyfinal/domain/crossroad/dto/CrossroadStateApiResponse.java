@@ -14,55 +14,59 @@ public class CrossroadStateApiResponse {
     @JsonProperty("itstId")
     private String crossroadApiId;
 
+    // UTC 시간 (timestamp 형식)
+    @JsonProperty("trsmUtcTime")
+    private Long transTimestamp;
+
     // e,w,s,n,ne,nw,se,sw 8방위
     // p : 사람, rs: remain second (남은 시간), sn: state name (상태 이름)
 
     @JsonProperty("ntPdsgRmdrCs")
-    private int nprs;
+    private Integer northTimeLeft;
 
     @JsonProperty("etPdsgRmdrCs")
-    private int eprs;
+    private Integer eastTimeLeft;
 
     @JsonProperty("stPdsgRmdrCs")
-    private int sprs;
+    private Integer southTimeLeft;
 
     @JsonProperty("wtPdsgRmdrCs")
-    private int wprs;
+    private Integer westTimeLeft;
 
     @JsonProperty("nePdsgRmdrCs")
-    private int neprs;
+    private Integer northeastTimeLeft;
 
     @JsonProperty("nwPdsgRmdrCs")
-    private int nwprs;
+    private Integer northwestTimeLeft;
 
     @JsonProperty("swPdsgRmdrCs")
-    private int swprs;
+    private Integer southwestTimeLeft;
 
     @JsonProperty("sePdsgRmdrCs")
-    private int seprs;
+    private Integer southeastTimeLeft;
 
     @JsonProperty("ntPdsgStatNm")
-    private SignalState npsn;
+    private SignalState northState;
 
     @JsonProperty("etPdsgStatNm")
-    private SignalState epsn;
+    private SignalState eastState;
 
     @JsonProperty("wtPdsgStatNm")
-    private SignalState wpsn;
+    private SignalState westState;
 
     @JsonProperty("stPdsgStatNm")
-    private SignalState spsn;
+    private SignalState southState;
 
     @JsonProperty("nePdsgStatNm")
-    private SignalState nepsn;
+    private SignalState northeastState;
 
     @JsonProperty("nwPdsgStatNm")
-    private SignalState nwpsn;
+    private SignalState northwestState;
 
     @JsonProperty("sePdsgStatNm")
-    private SignalState sepsn;
+    private SignalState southeastState;
 
     @JsonProperty("swPdsgStatNm")
-    private SignalState swpsn;
+    private SignalState southwestState;
 
 }
