@@ -134,11 +134,12 @@ class AuthControllerTest extends ControllerTest {
                 .header("Authorization", "Bearer " + newAccessToken)
                 .body(apiResponse);
 
-        when(authService.reissue(anyString())).thenReturn(response);
+        when(authService.reissue(anyString(), anyString())).thenReturn(response);
 
         //when, then
         mockMvc.perform(post("/api/auth/reissue")
-                .cookie(new Cookie("refresh-token", newRefreshToken)))
+                .cookie(new Cookie("refresh-token", newRefreshToken))
+                .header("Authorization", "Bearer " + newAccessToken))
             .andExpect(status().isOk())
             .andExpect(header().string("Authorization", "Bearer " + newAccessToken))
             .andExpect(header().string("Set-Cookie", "refresh-token="+newRefreshToken))

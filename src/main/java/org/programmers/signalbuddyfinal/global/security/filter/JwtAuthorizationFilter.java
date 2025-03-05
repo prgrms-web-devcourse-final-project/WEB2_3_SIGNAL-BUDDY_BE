@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.security.jwt.JwtUtil;
 import org.programmers.signalbuddyfinal.global.security.jwt.TokenErrorCode;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.AntPathMatcher;
@@ -24,6 +25,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
     private static final String EXCEPTION_ATTRIBUTE = "exception";
     private final AntPathMatcher antPathMatcher = new AntPathMatcher();
     private final JwtUtil jwtUtil;
+    private final RedisTemplate<String, String> redisTemplate;
     private final Set<String> excludeGetPaths = Set.of(
         "/api/feedbacks/{feedbackId}/comments", "/api/crossroads/**", "/api/feedbacks",
         "/api/crossroads/{crossroadId}/state"
@@ -33,11 +35,12 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         "/docs/index.html", "/api/members/join", "/docs/openapi3.yaml",
         "/api/admins/join", "/api/members/files/**", "/actuator/prometheus",
         "/api/auth/auth-code", "/api/auth/verify-code", "/api/members/password-reset",
-        "/api/auth/social-login", "/api/members/restore", "/api/fcm/push"
+        "/api/auth/social-login", "/api/members/restore", "/api/auth/reissue", "/api/fcm/push"
     );
 
-    public JwtAuthorizationFilter(JwtUtil jwtUtil) {
+    public JwtAuthorizationFilter(JwtUtil jwtUtil, RedisTemplate<String, String> redisTemplate) {
         this.jwtUtil = jwtUtil;
+        this.redisTemplate = redisTemplate;
     }
 
     @Override
@@ -49,14 +52,16 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
             return;
         }
 
-        String accessToken = extractAccessToken(request);
+        // 액세스 토큰 검증
+        String accessToken = jwtUtil.extractAccessToken(request.getHeader("Authorization"));
+        log.debug("Access token: {}", accessToken);
         if (accessToken == null || accessToken.isEmpty()) {
-            request.setAttribute(EXCEPTION_ATTRIBUTE, "EXPIRED_ACCESS_TOKEN");
+            request.setAttribute(EXCEPTION_ATTRIBUTE, "ACCESS_TOKEN_NOT_EXIST");
             throw new BusinessException(TokenErrorCode.ACCESS_TOKEN_NOT_EXIST);
         }
 
         try {
-            jwtUtil.validateToken(accessToken);
+            jwtUtil.parseToken(accessToken);
         } catch (MalformedJwtException | UnsupportedJwtException | IllegalArgumentException e) {
             log.info(e.getMessage());
             request.setAttribute(EXCEPTION_ATTRIBUTE, "INVALID_TOKEN");
@@ -66,6 +71,13 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
             request.setAttribute(EXCEPTION_ATTRIBUTE, "EXPIRED_ACCESS_TOKEN");
             throw new BusinessException(TokenErrorCode.EXPIRED_ACCESS_TOKEN);
         }
+
+        // 블랙리스트에 있는지 확인
+        if(checkBlacklist(accessToken)){
+
+            request.setAttribute(EXCEPTION_ATTRIBUTE, "INVALID_TOKEN");
+            throw new BusinessException(TokenErrorCode.INVALID_TOKEN);
+        };
 
         Authentication authentication = jwtUtil.getAuthentication(accessToken);
         SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -85,13 +97,8 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         return (isExcluded || isExcludedOnlyGetMethod);
     }
 
-    private String extractAccessToken(HttpServletRequest request) {
-        String bearerToken = request.getHeader("Authorization");
-        if (bearerToken == null || !bearerToken.startsWith("Bearer ")) {
-            throw new BusinessException(TokenErrorCode.ACCESS_TOKEN_NOT_EXIST);
-        }
-        return bearerToken.substring(7);
+    private boolean checkBlacklist(String accessToken) {
+        Boolean isInBlackList = redisTemplate.hasKey("blacklist:access-token:" + accessToken);
+        return Boolean.TRUE.equals(isInBlackList);
     }
-
-
 }
