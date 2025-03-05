@@ -9,6 +9,7 @@ import lombok.*;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
+@ToString
 public class CrossroadStateApiResponse {
 
     @JsonProperty("itstId")

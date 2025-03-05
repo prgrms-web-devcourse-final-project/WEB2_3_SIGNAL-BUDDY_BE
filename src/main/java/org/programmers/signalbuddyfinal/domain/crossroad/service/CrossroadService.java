@@ -27,12 +27,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class CrossroadService {
 
+    private static final String STATE_PREFIX = "crossroad-state:";
     private final CrossroadRepository crossroadRepository;
     private final CrossroadProvider crossroadProvider;
     private final HttpRequestManager httpRequestManager;
     private final RedisTemplate<Object, Object> redisTemplate;
-
-    private static final String STATE_PREFIX = "crossroad-state:";
 
     @Transactional
     public void saveCrossroadDates(int page, int pageSize) {
@@ -92,6 +91,12 @@ public class CrossroadService {
     public List<CrossroadResponse> findNearestCrossroad(double lat, double lng, int radius) {
         return crossroadRepository.findNearestCrossroads(
             lat, lng, radius);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Long> getCrossroadIdsByApiIds(List<String> apiIds) {
+        return crossroadRepository.findByCrossroadApiIdIn(apiIds).stream()
+            .map(Crossroad::getCrossroadId).toList();
     }
 
     private void putStateCache(Long crossroadId, CrossroadStateResponse response) {
