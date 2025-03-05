@@ -53,4 +53,11 @@ public class AuthController {
     public ResponseEntity<ApiResponse<MemberResponse>> socialLogin(@RequestBody SocialLoginRequest socialLoginRequest){
         return authService.socialLogin(socialLoginRequest);
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Object>> logout(
+        @CookieValue(name = "refresh-token") String refreshToken,
+        @RequestHeader("Authorization") String accessToken) {
+        return authService.logout(refreshToken, accessToken);
+    }
 }
