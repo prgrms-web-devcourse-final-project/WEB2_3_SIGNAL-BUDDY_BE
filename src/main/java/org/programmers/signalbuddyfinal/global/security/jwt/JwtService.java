@@ -12,8 +12,11 @@ import org.programmers.signalbuddyfinal.domain.auth.dto.NewTokenResponse;
 import org.programmers.signalbuddyfinal.domain.auth.exception.AuthErrorCode;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.exception.GlobalErrorCode;
+import org.programmers.signalbuddyfinal.global.response.ApiResponse;
 import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -39,6 +42,11 @@ public class JwtService {
         String memberIdFromRefreshToken = claimsRefreshToken.getSubject();
 
         if (!memberIdFromRefreshToken.equals(memberIdFromAccessToken)) {
+            throw new BusinessException(GlobalErrorCode.BAD_REQUEST);
+        }
+
+        if(validateAccessTokenBlacklist(extractAccessToken)){
+            logout(accessToken);
             throw new BusinessException(GlobalErrorCode.BAD_REQUEST);
         }
 
@@ -75,7 +83,6 @@ public class JwtService {
 
     }
 
-    // 토큰 재발급 시, 액세스 토큰 검증
     private void validateAccessTokenExpiration(Claims accessTokenClaims, String accessToken) {
 
             Date accessTokenExpirationDate = accessTokenClaims.getExpiration();
@@ -83,6 +90,10 @@ public class JwtService {
             if(accessTokenExpirationDate.after(new Date())) {
                 addBlackListExistingAccessToken(accessToken, accessTokenExpirationDate);
             }
+    }
+
+    private boolean validateAccessTokenBlacklist(String accessToken) {
+        return Boolean.TRUE.equals(redisTemplate.hasKey("blacklist:access-token:"+accessToken));
     }
 
     private Claims extractClaimsFromToken(String type, String token) {
@@ -108,4 +119,30 @@ public class JwtService {
                 Duration.between(new Date().toInstant(), expirationDate.toInstant()).getSeconds(),
                 TimeUnit.SECONDS);
     }
+
+    // 테스트용 코드
+    public ResponseEntity<ApiResponse<Object>> addBlackListExistingAccessTokenForTest(
+        String accessToken){
+
+        String extractAccessToken = jwtUtil.extractAccessToken(accessToken);
+        Claims claimsAccessToken = jwtUtil.parseToken(extractAccessToken);
+        addBlackListExistingAccessToken(extractAccessToken, claimsAccessToken.getExpiration());
+        return ResponseEntity.ok(ApiResponse.createSuccessWithNoData());
+    }
+
+    public ResponseEntity<ApiResponse<Object>> deleteBlackListExistingAccessTokenForTest(String accessToken){
+
+        String extractAccessToken = jwtUtil.extractAccessToken(accessToken);
+        redisTemplate.delete("blacklist:access-token:" + extractAccessToken);
+        return ResponseEntity.ok(ApiResponse.createSuccessWithNoData());
+    }
+
+    public ResponseEntity<ApiResponse<Object>> createShortTimeAccessToken(Long memberId){
+        String accessToken = jwtUtil.generateAccessTokenWithShortExpiration(memberId);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization", "Bearer " + accessToken);
+        return ResponseEntity.ok().headers(headers).body(ApiResponse.createSuccessWithNoData());
+    }
+
+
 }
