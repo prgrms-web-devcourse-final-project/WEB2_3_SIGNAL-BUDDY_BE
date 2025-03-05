@@ -35,8 +35,8 @@ public class AuthService {
     private final MemberRepository memberRepository;
 
     // 토큰 재발행
-    public ResponseEntity<ApiResponse<Object>> reissue(String refreshToken) {
-        NewTokenResponse newTokenResponse = jwtService.reissue(refreshToken);
+    public ResponseEntity<ApiResponse<Object>> reissue(String refreshToken, String accessToken) {
+        NewTokenResponse newTokenResponse = jwtService.reissue(refreshToken, accessToken);
         HttpHeaders headers = new HttpHeaders();
         accessTokenSend2Client(headers, newTokenResponse.getAccessToken());
         refreshTokenSend2Client(headers, newTokenResponse.getRefreshToken());

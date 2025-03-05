@@ -11,6 +11,7 @@ import org.programmers.signalbuddyfinal.global.security.jwt.JwtUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
@@ -38,13 +39,14 @@ public class SecurityConfig {
     private final JwtUtil jwtUtil;
     private final CustomUserDetailsService customUserDetailsService;
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+    private final RedisTemplate<String, String> redisTemplate;
 
     private static final String ADMIN = "ADMIN";
     private static final String USER = "USER";
 
     @Bean
-    public JwtAuthorizationFilter jwtAuthorizationFilter(JwtUtil jwtUtil) {
-        return new JwtAuthorizationFilter(jwtUtil);
+    public JwtAuthorizationFilter jwtAuthorizationFilter(JwtUtil jwtUtil, RedisTemplate<String, String> redisTemplate) {
+        return new JwtAuthorizationFilter(jwtUtil, redisTemplate);
     }
 
     @Bean
@@ -119,7 +121,7 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable);
 
         http
-            .addFilterAfter(jwtAuthorizationFilter(jwtUtil),
+            .addFilterAfter(jwtAuthorizationFilter(jwtUtil, redisTemplate),
                 UsernamePasswordAuthenticationFilter.class);
 
         http.exceptionHandling(

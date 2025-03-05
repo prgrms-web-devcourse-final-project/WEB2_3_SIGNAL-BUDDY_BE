@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadApiResponse;
+import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadResponse;
 import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadStateApiResponse;
 import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadStateResponse;
 import org.programmers.signalbuddyfinal.domain.crossroad.entity.Crossroad;
@@ -86,6 +87,11 @@ public class CrossroadService {
         }
 
         return responseList;
+    }
+
+    public List<CrossroadResponse> findNearestCrossroad(double lat, double lng, int radius) {
+        return crossroadRepository.findNearestCrossroads(
+            lat, lng, radius);
     }
 
     private void putStateCache(Long crossroadId, CrossroadStateResponse response) {

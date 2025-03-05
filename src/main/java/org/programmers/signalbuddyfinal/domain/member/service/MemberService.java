@@ -131,8 +131,8 @@ public class MemberService {
 
         return ResponseEntity.ok(ApiResponse.createSuccessWithNoData());
     }
-  
-  // 계정 복구
+
+    // 계정 복구
     @Transactional
     public ResponseEntity<ApiResponse<MemberResponse>> restore(
         MemberRestoreRequest memberRestoreRequest){
@@ -144,23 +144,29 @@ public class MemberService {
         MemberResponse memberResponse = MemberMapper.INSTANCE.toDto(authenticatedMember);
         return ResponseEntity.ok(ApiResponse.createSuccess(memberResponse));
     }
-  
-  // 사용자 정보 저장
+
+    // 사용자 정보 저장
     private Member saveMember(MemberJoinRequest memberJoinRequest, String profileImageUrl,
         String type) {
-
-        if (memberRepository.existsByNickname(memberJoinRequest.getNickname())) {
-            throw new BusinessException(MemberErrorCode.ALREADY_EXIST_NICKNAME);
-        }
 
         Optional<Member> existingMember = memberRepository.findByEmail(
             memberJoinRequest.getEmail());
 
         if (existingMember.isPresent()) {
+
+            Member member = existingMember.get();
+
+            if(member.getMemberStatus() == MemberStatus.WITHDRAWAL) {
+                throw new BusinessException(MemberErrorCode.WITHDRAWN_MEMBER);
+            }
             if (type.equals("social")) {
                 return linkWithAlreadyMember(existingMember.get(), memberJoinRequest);
             }
             throw new BusinessException(MemberErrorCode.ALREADY_EXIST_EMAIL);
+        }
+
+        if (memberRepository.existsByNickname(memberJoinRequest.getNickname())) {
+            throw new BusinessException(MemberErrorCode.ALREADY_EXIST_NICKNAME);
         }
 
         Member savedMember = memberRepository.save(Member.builder()
@@ -174,15 +180,14 @@ public class MemberService {
 
         return type.equals("social") ? linkWithAlreadyMember(savedMember, memberJoinRequest)
             : savedMember;
-
     }
 
     // 사용자 정보와 연동
     private Member linkWithAlreadyMember(Member member, MemberJoinRequest memberJoinRequest) {
         socialProviderRepository.save(SocialProvider.builder()
-                .member(member)
-                .oauthProvider(memberJoinRequest.getProvider())
-                .socialId(memberJoinRequest.getSocialUserId())
+            .member(member)
+            .oauthProvider(memberJoinRequest.getProvider())
+            .socialId(memberJoinRequest.getSocialUserId())
             .build());
 
         return member;
@@ -209,7 +214,7 @@ public class MemberService {
         }
     }
 
-    
+
     // 서비스에 등록된 이메일인지 확인 및 이메일 인증 여부 확인
     private Member validateEmailAndEmailAuthentication(Purpose purpose, String email) {
 

@@ -1,5 +1,7 @@
 package org.programmers.signalbuddyfinal.global.security.jwt;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -7,6 +9,7 @@ import java.security.Key;
 import java.util.Date;
 import javax.crypto.SecretKey;
 import lombok.extern.slf4j.Slf4j;
+import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
 import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Value;
@@ -69,30 +72,27 @@ public class JwtUtil {
         return refreshToken;
     }
 
-    // 토큰 검증
-    public boolean validateToken(String token) {
-            Jwts.parser()
-                .verifyWith((SecretKey) key)
-                .build()
-                .parseSignedClaims(token);
-
-            return true;
-    }
-
-    public String extractMemberId(String token) {
+    public Claims parseToken(String token) {
 
         return Jwts.parser()
-            .verifyWith((SecretKey) key)
-            .build()
-            .parseSignedClaims(token)
-            .getPayload()
-            .getSubject();
+                .verifyWith((SecretKey) key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+
+    public String extractAccessToken(String bearerToken){
+
+        if (bearerToken == null || !bearerToken.startsWith("Bearer ")) {
+            throw new BusinessException(TokenErrorCode.ACCESS_TOKEN_NOT_EXIST);
+        }
+        return bearerToken.substring(7);
     }
 
     // authentication 추출
     public Authentication getAuthentication(String token) {
 
-        String memberId = extractMemberId(token);
+        String memberId = parseToken(token).getSubject();
 
         CustomUserDetails customUserDetails = customUserDetailsService.loadUserByUsername(String.valueOf(memberId));
         return new UsernamePasswordAuthenticationToken(customUserDetails, null, customUserDetails.getAuthorities());

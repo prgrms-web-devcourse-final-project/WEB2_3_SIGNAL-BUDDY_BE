@@ -1,14 +1,19 @@
 package org.programmers.signalbuddyfinal.global.security.jwt;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.UnsupportedJwtException;
+import io.jsonwebtoken.JwtException;
+import java.time.Duration;
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.programmers.signalbuddyfinal.domain.auth.dto.NewTokenResponse;
 import org.programmers.signalbuddyfinal.domain.auth.exception.AuthErrorCode;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
+import org.programmers.signalbuddyfinal.global.exception.GlobalErrorCode;
 import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -21,23 +26,26 @@ public class JwtService {
 
     private final RefreshTokenRepository refreshTokenRepository;
     private final JwtUtil jwtUtil;
+    private final RedisTemplate<String, String> redisTemplate;
 
+    public NewTokenResponse reissue(String refreshToken, String accessToken) {
 
-    public NewTokenResponse reissue(String token) {
+        String extractAccessToken = jwtUtil.extractAccessToken(accessToken);
 
-        try {
-            jwtUtil.validateToken(token);
-        } catch (MalformedJwtException | UnsupportedJwtException | IllegalArgumentException e) {
-            log.info(e.getMessage());
-            throw new BusinessException(TokenErrorCode.INVALID_TOKEN);
-        } catch (ExpiredJwtException e) {
-            log.info(e.getMessage());
-            throw new BusinessException(TokenErrorCode.EXPIRED_REFRESH_TOKEN);
+        Claims claimsAccessToken = extractMemberIdFromToken("accessToken", extractAccessToken);
+        Claims claimsRefreshToken = extractMemberIdFromToken("refreshToken", refreshToken);
+
+        String memberIdFromAccessToken = claimsAccessToken.getSubject();
+        String memberIdFromRefreshToken = claimsRefreshToken.getSubject();
+
+        if (!memberIdFromRefreshToken.equals(memberIdFromAccessToken)) {
+            throw new BusinessException(GlobalErrorCode.BAD_REQUEST);
         }
 
-        String memberId = jwtUtil.extractMemberId(token);
-        String refreshToken = refreshTokenRepository.findByMemberId(memberId);
-        if (refreshToken == null) {
+        validateAccessTokenExpiration(claimsAccessToken, extractAccessToken);
+
+        String existingRefreshToken = refreshTokenRepository.findByMemberId(memberIdFromRefreshToken);
+        if (existingRefreshToken == null) {
             throw new BusinessException(AuthErrorCode.UNAUTHORIZED);
         }
 
@@ -51,5 +59,39 @@ public class JwtService {
         SecurityContextHolder.getContext().setAuthentication(newAuthentication);
 
         return new NewTokenResponse(newAccessToken, newRefreshToken);
+    }
+
+    // 액세스 토큰 검증
+    private void validateAccessTokenExpiration(Claims accessTokenClaims, String accessToken) {
+
+            Date accessTokenExpirationDate = accessTokenClaims.getExpiration();
+
+            if(accessTokenExpirationDate.after(new Date())) {
+                addBlackListExistingAccessToken(accessToken, accessTokenExpirationDate);
+            }
+    }
+
+    private Claims extractMemberIdFromToken(String type, String token) {
+
+        try {
+            return jwtUtil.parseToken(token);
+        } catch (ExpiredJwtException e) {
+            log.info(e.getMessage());
+            if (type.equals("accessToken")) {
+                return e.getClaims();
+            }
+            throw new BusinessException(TokenErrorCode.EXPIRED_REFRESH_TOKEN);
+        } catch (JwtException e) {
+            log.info(e.getMessage());
+            throw new BusinessException(TokenErrorCode.INVALID_TOKEN);
+        }
+    }
+
+    // 기존의 액세스 토큰을 블랙리스트로 추가
+    private void addBlackListExistingAccessToken(String accessToken, Date expirationDate) {
+        redisTemplate.opsForValue()
+            .set("blacklist:access-token:" + accessToken, expirationDate.toString(),
+                Duration.between(new Date().toInstant(), expirationDate.toInstant()).getSeconds(),
+                TimeUnit.SECONDS);
     }
 }
