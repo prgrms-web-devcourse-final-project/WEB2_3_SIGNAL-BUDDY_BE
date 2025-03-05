@@ -39,7 +39,7 @@ public class AuthService {
         NewTokenResponse newTokenResponse = jwtService.reissue(refreshToken, accessToken);
         HttpHeaders headers = new HttpHeaders();
         accessTokenSend2Client(headers, newTokenResponse.getAccessToken());
-        refreshTokenSend2Client(headers, newTokenResponse.getRefreshToken());
+        refreshTokenSend2Client(headers, newTokenResponse.getRefreshToken(), 7);
 
         return ResponseEntity.ok()
             .headers(headers)
@@ -73,11 +73,23 @@ public class AuthService {
 
         HttpHeaders headers = new HttpHeaders();
         accessTokenSend2Client(headers, accessToken);
-        refreshTokenSend2Client(headers, refreshToken);
+        refreshTokenSend2Client(headers, refreshToken, 7);
 
         return ResponseEntity.ok()
             .headers(headers)
             .body(ApiResponse.createSuccess(createResponseBody(authentication)));
+    }
+
+    public ResponseEntity<ApiResponse<Object>> logout(String refreshToken, String accessToken) {
+
+        jwtService.logout(accessToken);
+
+        HttpHeaders headers = new HttpHeaders();
+        refreshTokenSend2Client(headers, refreshToken, 0);
+
+        return ResponseEntity.ok()
+            .headers(headers)
+            .body(ApiResponse.createSuccessWithNoData());
     }
 
     // Authentication 객체 생성
@@ -92,12 +104,12 @@ public class AuthService {
     }
 
     // RefreshToken을 Set-Cookie 헤더에 설정
-    private void refreshTokenSend2Client(HttpHeaders headers, String refreshToken) {
+    private void refreshTokenSend2Client(HttpHeaders headers, String refreshToken, long duration) {
         ResponseCookie refreshTokenCookie = ResponseCookie.from("refresh-token", refreshToken)
             .httpOnly(true)
             .secure(true)
             .path("/")
-            .maxAge(Duration.ofDays(7))
+            .maxAge(Duration.ofDays(duration))
             .sameSite("None")
             .build();
 

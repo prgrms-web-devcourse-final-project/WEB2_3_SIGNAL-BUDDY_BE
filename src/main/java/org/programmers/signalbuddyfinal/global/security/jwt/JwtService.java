@@ -32,8 +32,8 @@ public class JwtService {
 
         String extractAccessToken = jwtUtil.extractAccessToken(accessToken);
 
-        Claims claimsAccessToken = extractMemberIdFromToken("accessToken", extractAccessToken);
-        Claims claimsRefreshToken = extractMemberIdFromToken("refreshToken", refreshToken);
+        Claims claimsAccessToken = extractClaimsFromToken("accessToken", extractAccessToken);
+        Claims claimsRefreshToken = extractClaimsFromToken("refreshToken", refreshToken);
 
         String memberIdFromAccessToken = claimsAccessToken.getSubject();
         String memberIdFromRefreshToken = claimsRefreshToken.getSubject();
@@ -61,7 +61,21 @@ public class JwtService {
         return new NewTokenResponse(newAccessToken, newRefreshToken);
     }
 
-    // 액세스 토큰 검증
+    public void logout(String accessToken) {
+
+        String extractAccessToken = jwtUtil.extractAccessToken(accessToken);
+        Claims claimsAccessToken = extractClaimsFromToken("accessToken", extractAccessToken);
+
+        // 액세스 토큰 블랙리스트 처리
+        addBlackListExistingAccessToken(extractAccessToken, claimsAccessToken.getExpiration());
+
+        // 리프레시 토큰 삭제
+        if(!refreshTokenRepository.findByMemberId(claimsAccessToken.getSubject()).isEmpty())
+        {refreshTokenRepository.delete(claimsAccessToken.getSubject());}
+
+    }
+
+    // 토큰 재발급 시, 액세스 토큰 검증
     private void validateAccessTokenExpiration(Claims accessTokenClaims, String accessToken) {
 
             Date accessTokenExpirationDate = accessTokenClaims.getExpiration();
@@ -71,7 +85,7 @@ public class JwtService {
             }
     }
 
-    private Claims extractMemberIdFromToken(String type, String token) {
+    private Claims extractClaimsFromToken(String type, String token) {
 
         try {
             return jwtUtil.parseToken(token);
