@@ -45,6 +45,8 @@ class AuthControllerTest extends ControllerTest {
     @MockitoBean
     private EmailService emailService;
 
+    private String tag = "Auth API";
+
     @DisplayName("기본 로그인 성공")
     @Test
     void successLogin() throws Exception {
@@ -74,7 +76,7 @@ class AuthControllerTest extends ControllerTest {
                     preprocessResponse(prettyPrint()),
                     resource(
                         ResourceSnippetParameters.builder()
-                            .tag("Auth API")
+                            .tag(tag)
                             .summary("기본 로그인")
                             .build()
                     )
@@ -112,7 +114,7 @@ class AuthControllerTest extends ControllerTest {
                     preprocessResponse(prettyPrint()),
                     resource(
                         ResourceSnippetParameters.builder()
-                            .tag("Auth API")
+                            .tag(tag)
                             .summary("소셜 로그인")
                             .build()
                     )
@@ -149,7 +151,7 @@ class AuthControllerTest extends ControllerTest {
                     preprocessResponse(prettyPrint()),
                     resource(
                         ResourceSnippetParameters.builder()
-                            .tag("Auth API")
+                            .tag(tag)
                             .summary("토큰 재발행")
                             .build()
                     )
@@ -177,7 +179,7 @@ class AuthControllerTest extends ControllerTest {
                 preprocessResponse(prettyPrint()),
                 resource(
                     ResourceSnippetParameters.builder()
-                        .tag("Auth API")
+                        .tag(tag)
                         .summary("인증 코드 이메일 전송")
                         .requestFields(
                             fieldWithPath("email")
@@ -206,7 +208,7 @@ class AuthControllerTest extends ControllerTest {
                 preprocessResponse(prettyPrint()),
                 resource(
                     ResourceSnippetParameters.builder()
-                        .tag("Auth API")
+                        .tag(tag)
                         .summary("인증 코드 검증")
                         .requestFields(
                             fieldWithPath("purpose")
@@ -219,6 +221,40 @@ class AuthControllerTest extends ControllerTest {
                                 .type(JsonFieldType.STRING)
                                 .description("인증 코드")
                         ).build())));
+    }
+
+    @DisplayName("로그아웃")
+    @Test
+    void successLogout() throws Exception {
+
+        //given
+        String refreshToken = "refreshToken";
+        String accessToken = "accessToken";
+
+        ApiResponse apiResponse = ApiResponse.createSuccessWithNoData();
+        ResponseEntity<ApiResponse<Object>> response = ResponseEntity.ok()
+            .header("Set-Cookie","refresh-token=" + refreshToken)
+            .header("Authorization", "Bearer " + accessToken)
+            .body(apiResponse);
+
+        when(authService.reissue(anyString(), anyString())).thenReturn(response);
+
+        //when, then
+        mockMvc.perform(post("/api/auth/reissue")
+                .cookie(new Cookie("refresh-token", refreshToken))
+                .header("Authorization", "Bearer " + accessToken))
+            .andExpect(status().isOk())
+            .andDo(document("로그아웃",
+                    preprocessRequest(prettyPrint()),
+                    preprocessResponse(prettyPrint()),
+                    resource(
+                        ResourceSnippetParameters.builder()
+                            .tag(tag)
+                            .summary("로그아웃")
+                            .build()
+                    )
+                )
+            );
     }
 
 }
