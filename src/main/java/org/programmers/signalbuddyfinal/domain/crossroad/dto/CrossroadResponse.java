@@ -29,6 +29,4 @@ public class CrossroadResponse {
     private Double lng;
 
     private String status;
-
-    private Double distance;
 }

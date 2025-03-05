@@ -74,9 +74,11 @@ public class SecurityConfig {
                 // 문서화 api
                 .requestMatchers("/",
                     "/docs/**",
-                    "/ws/**",
                     "/actuator/health",
                     "/webjars/**").permitAll()
+                // 웹소켓
+                .requestMatchers("/ws/location").permitAll()
+                .requestMatchers("/ws/navigation").hasAnyRole(ADMIN, USER) // 회원만 길찾기 가능.
                 // 로그인, 회원가입
                 .requestMatchers("/api/auth/login","/api/auth/social-login", "/api/auth/reissue", "/api/members/join",
                     "/api/admins/join", "/api/members/files/**", "/api/auth/auth-code",

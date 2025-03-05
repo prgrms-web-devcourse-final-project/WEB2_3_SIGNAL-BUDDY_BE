@@ -79,6 +79,8 @@ class CrossroadControllerTest extends ControllerTest {
                                     commonResponseFormat(),
                                     fieldWithPath("data.crossroadId")
                                         .description("해당 교차로 ID(PK)"),
+                                    fieldWithPath("data.crossroadApiId")
+                                        .description("교차로 API ID(itstId)"),
                                     fieldWithPath("data.transTimestamp")
                                         .description("전송 시간 (UTC 기준, timestamp 형식)"),
                                     fieldWithPath("data.northTimeLeft")

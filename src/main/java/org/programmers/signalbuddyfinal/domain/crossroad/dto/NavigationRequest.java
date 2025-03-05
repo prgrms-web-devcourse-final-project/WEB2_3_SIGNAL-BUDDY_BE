@@ -9,9 +9,7 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class LocationRequest {
-
-    private Double lat;
-    private Double lng;
-    private Integer radius;
+public class NavigationRequest {
+    private String[] crossroadApiIds;
+    private Boolean isFinished;
 }

@@ -19,6 +19,8 @@ public class CrossroadStateResponse implements Serializable {
 
     private Long crossroadId;
 
+    private String crossroadApiId;
+
     private Long transTimestamp;
 
     private Integer northTimeLeft;
