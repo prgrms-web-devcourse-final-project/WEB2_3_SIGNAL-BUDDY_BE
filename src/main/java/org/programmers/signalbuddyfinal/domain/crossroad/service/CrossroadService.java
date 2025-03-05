@@ -92,6 +92,7 @@ public class CrossroadService {
     public List<CrossroadResponse> findNearestCrossroad(double lat, double lng, int radius) {
         return crossroadRepository.findNearestCrossroads(
             lat, lng, radius);
+    }
 
     private void putStateCache(Long crossroadId, CrossroadStateResponse response) {
         ValueOperations<Object, Object> operations = redisTemplate.opsForValue();
