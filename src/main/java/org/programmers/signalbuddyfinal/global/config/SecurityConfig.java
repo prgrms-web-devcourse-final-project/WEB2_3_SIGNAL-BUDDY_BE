@@ -105,6 +105,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/members/**", "/members/**").hasRole(USER)
                 // Prometheus 엔드포인트 허용
                 .requestMatchers("/actuator/prometheus").permitAll()
+                // FCM 알림
+                .requestMatchers("/api/fcm/**").permitAll()
                 .anyRequest().authenticated()
             );
 
