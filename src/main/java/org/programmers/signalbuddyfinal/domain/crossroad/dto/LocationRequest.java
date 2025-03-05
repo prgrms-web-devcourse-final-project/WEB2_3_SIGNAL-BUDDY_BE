@@ -1,6 +1,5 @@
 package org.programmers.signalbuddyfinal.domain.crossroad.dto;
 
-import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,7 +11,7 @@ import lombok.ToString;
 @ToString
 public class LocationRequest {
 
-    private double lat;
-    private double lng;
-    private int radius;
+    private Double lat;
+    private Double lng;
+    private Integer radius;
 }
