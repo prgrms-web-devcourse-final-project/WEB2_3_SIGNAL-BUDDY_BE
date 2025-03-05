@@ -101,4 +101,6 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         Boolean isInBlackList = redisTemplate.hasKey("blacklist:access-token:" + accessToken);
         return Boolean.TRUE.equals(isInBlackList);
     }
+
+
 }
