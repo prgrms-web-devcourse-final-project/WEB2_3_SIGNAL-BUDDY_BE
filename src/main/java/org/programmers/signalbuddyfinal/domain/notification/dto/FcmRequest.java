@@ -18,5 +18,5 @@ public class FcmRequest {
     private String title;
 
     @NotBlank(message = "알림 내용은 비어있을 수 없습니다.")
-    private String content;
+    private String body;
 }
