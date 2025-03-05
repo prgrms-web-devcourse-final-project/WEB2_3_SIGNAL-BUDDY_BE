@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -31,8 +32,10 @@ public class AuthController {
     }
 
     @PostMapping("/reissue")
-    public ResponseEntity<ApiResponse<Object>> reissue(@CookieValue(name = "refresh-token") String refreshToken){
-        return authService.reissue(refreshToken);
+    public ResponseEntity<ApiResponse<Object>> reissue(
+        @CookieValue(name = "refresh-token") String refreshToken,
+        @RequestHeader("Authorization") String accessToken) {
+        return authService.reissue(refreshToken, accessToken);
     }
 
     @PostMapping("/auth-code")
