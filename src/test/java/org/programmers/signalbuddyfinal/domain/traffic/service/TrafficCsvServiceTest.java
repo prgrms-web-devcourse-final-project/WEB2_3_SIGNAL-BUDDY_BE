@@ -21,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Transactional
-public class TrafficCsvServiceTest extends ServiceTest {
+class TrafficCsvServiceTest extends ServiceTest {
 
     @Autowired
     private TrafficRepository trafficRepository;

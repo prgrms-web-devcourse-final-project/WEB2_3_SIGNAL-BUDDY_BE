@@ -33,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(TrafficController.class)
 @Import(WebConfig.class)
-public class TrafficControllerTest extends ControllerTest {
+class TrafficControllerTest extends ControllerTest {
 
     private final String tag = "Traffic API";
 

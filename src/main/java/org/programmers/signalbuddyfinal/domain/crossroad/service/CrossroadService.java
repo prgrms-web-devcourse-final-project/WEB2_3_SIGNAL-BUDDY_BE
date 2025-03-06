@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.locationtech.jts.geom.Point;
 import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadApiResponse;
 import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadResponse;
 import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadStateApiResponse;
@@ -12,7 +13,10 @@ import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadStateRespo
 import org.programmers.signalbuddyfinal.domain.crossroad.entity.Crossroad;
 import org.programmers.signalbuddyfinal.domain.crossroad.exception.CrossroadErrorCode;
 import org.programmers.signalbuddyfinal.domain.crossroad.mapper.CrossroadMapper;
+import org.programmers.signalbuddyfinal.domain.crossroad.repository.CrossroadRedisRepository;
 import org.programmers.signalbuddyfinal.domain.crossroad.repository.CrossroadRepository;
+import org.programmers.signalbuddyfinal.domain.crossroad.repository.CustomCrossroadRepository;
+import org.programmers.signalbuddyfinal.domain.crossroad.repository.CustomCrossroadRepositoryImpl;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.monitoring.HttpRequestManager;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -20,6 +24,9 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -29,6 +36,8 @@ public class CrossroadService {
 
     private static final String STATE_PREFIX = "crossroad-state:";
     private final CrossroadRepository crossroadRepository;
+    private final CrossroadRedisRepository crossroadRedisRepository;
+    private final CustomCrossroadRepositoryImpl customCrossroadRepository;
     private final CrossroadProvider crossroadProvider;
     private final HttpRequestManager httpRequestManager;
     private final RedisTemplate<Object, Object> redisTemplate;
@@ -50,6 +59,30 @@ public class CrossroadService {
         } catch (DataIntegrityViolationException e) {
             throw new BusinessException(CrossroadErrorCode.ALREADY_EXIST_CROSSROAD);
         }
+    }
+
+    public void saveAroundCrossroad(Double lat, Double lng){
+        List<CrossroadResponse> aroundCrossroads = new ArrayList<>();
+
+        aroundCrossroads.addAll(customCrossroadRepository.findAroundCrossroads(lat, lng));
+
+        for(CrossroadResponse response : aroundCrossroads){
+            if (response.getCrossroadId() != null) {
+                crossroadRedisRepository.save(new Crossroad(response));
+            }
+        }
+    }
+
+    public CrossroadResponse crossraodFindById(Object id) {
+
+        CrossroadResponse response = new CrossroadResponse(crossroadRedisRepository.findById(id));
+
+        if(response.getCrossroadId() == null){
+            throw new BusinessException(CrossroadErrorCode.NOT_FOUND_CROSSROAD);
+        }
+
+        return response;
+
     }
 
     public CrossroadStateResponse checkSignalState(Long crossroadId) {
@@ -115,4 +148,6 @@ public class CrossroadService {
         ValueOperations<Object, Object> operations = redisTemplate.opsForValue();
         return (CrossroadStateResponse) operations.get(STATE_PREFIX + crossroadId);
     }
+
+
 }
