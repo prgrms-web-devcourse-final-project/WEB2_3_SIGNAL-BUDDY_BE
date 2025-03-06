@@ -35,7 +35,8 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         "/docs/index.html", "/api/members/join", "/docs/openapi3.yaml",
         "/api/admins/join", "/api/members/files/**", "/actuator/prometheus",
         "/api/auth/auth-code", "/api/auth/verify-code", "/api/members/password-reset",
-        "/api/auth/social-login", "/api/members/restore", "/api/auth/reissue"
+        "/api/auth/social-login", "/api/members/restore", "/api/auth/reissue",
+        "/api/auth/test/blacklist-expire", "/api/auth/test/time-expire/**"
     );
 
     public JwtAuthorizationFilter(JwtUtil jwtUtil, RedisTemplate<String, String> redisTemplate) {

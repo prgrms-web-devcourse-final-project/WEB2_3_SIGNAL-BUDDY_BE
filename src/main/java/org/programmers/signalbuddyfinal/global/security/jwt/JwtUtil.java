@@ -102,4 +102,14 @@ public class JwtUtil {
         return (CustomUserDetails) authentication.getPrincipal();
     }
 
+    // 테스트용
+    public String generateAccessTokenWithShortExpiration(Long memberId) {
+
+        return Jwts.builder()
+            .subject(String.valueOf(memberId))
+            .issuedAt(new Date())
+            .expiration(new Date(new Date().getTime() + 10 * 1000))
+            .signWith(key)
+            .compact();
+    }
 }
