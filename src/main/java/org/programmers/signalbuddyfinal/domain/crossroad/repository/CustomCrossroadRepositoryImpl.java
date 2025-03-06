@@ -5,10 +5,13 @@ import com.querydsl.core.types.QBean;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Point;
+import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadApiResponse;
 import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadResponse;
+import org.programmers.signalbuddyfinal.domain.crossroad.entity.Crossroad;
 import static org.programmers.signalbuddyfinal.domain.crossroad.entity.QCrossroad.crossroad;
 import org.springframework.stereotype.Repository;
 
@@ -23,6 +26,44 @@ public class CustomCrossroadRepositoryImpl implements CustomCrossroadRepository 
         Expressions.numberTemplate(Double.class, "ST_X({0})", crossroad.coordinate).as("lng"),
         crossroad.status);
     private final JPAQueryFactory jqf;
+
+    @Override
+    public List<CrossroadApiResponse> findNearByCrossroads(double latitude, double longitude) {
+
+        List<CrossroadApiResponse> res = new ArrayList<>();
+        // ST_Distance_Sphere SQL 함수 사용
+        String distanceExpression = "ST_Distance_Sphere(POINT({0}, {1}), coordinate)";
+
+        List<Crossroad> nearCrossroads = jqf.selectFrom(crossroad).where(
+                Expressions.numberTemplate(Double.class, distanceExpression, longitude, latitude)
+                    .loe(80)) // 거리 조건
+            .fetch();
+
+        for (Crossroad near : nearCrossroads) {
+            res.add(new CrossroadApiResponse(near));
+        }
+
+        return res;
+    }
+
+
+    public List<CrossroadResponse> findAroundCrossroads(double latitude, double longitude) {
+
+        List<CrossroadResponse> crossroadRes = new ArrayList<>();
+
+        // ST_Distance_Sphere SQL 함수 사용
+        String distanceExpression = "ST_Distance_Sphere(POINT({0}, {1}), coordinate)";
+
+        List<Crossroad> arounds = jqf.selectFrom(crossroad)
+                .where(Expressions.numberTemplate(Double.class, distanceExpression, longitude, latitude).loe(1000)) // 거리 조건
+                .fetch();
+
+        for(Crossroad around : arounds){
+            crossroadRes.add(new CrossroadResponse(around));
+        }
+
+        return crossroadRes;
+    }
 
     @Override
     public List<CrossroadResponse> findNearestCrossroads(double lat, double lng, int radius) {
