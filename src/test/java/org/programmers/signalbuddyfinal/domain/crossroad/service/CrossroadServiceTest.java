@@ -52,29 +52,29 @@ class CrossroadServiceTest extends ServiceTest implements RedisTestContainer {
         Long crossroadId = crossroad.getCrossroadId();
         String crossroadApiId = crossroad.getCrossroadApiId();
         CrossroadStateApiResponse apiResponse = CrossroadStateApiResponse.builder()
-            .crossroadApiId(crossroadApiId).transTimestamp(1741054218628L)
-            .northTimeLeft(349).northState(SignalState.RED)
-            .eastTimeLeft(9).eastState(SignalState.YELLOW)
-            .southTimeLeft(349).eastState(SignalState.RED)
-            .build();
+                .crossroadApiId(crossroadApiId).transTimestamp(1741054218628L)
+                .northTimeLeft(349).northState(SignalState.RED)
+                .eastTimeLeft(9).eastState(SignalState.YELLOW)
+                .southTimeLeft(349).eastState(SignalState.RED)
+                .build();
 
         given(crossroadProvider.requestCrossroadStateApi(crossroadApiId))
-            .willReturn(List.of(apiResponse));
+                .willReturn(List.of(apiResponse));
 
         // When
         CrossroadStateResponse actual = crossroadService.checkSignalState(crossroadId);
 
         // Then
         CrossroadStateResponse cache = (CrossroadStateResponse) redisTemplate.opsForValue()
-            .get("crossroad-state:" + crossroadId);
+                .get("crossroad-state:" + crossroadId);
         SoftAssertions.assertSoftly(softAssertions -> {
-           softAssertions.assertThat(actual).isNotNull();
-           softAssertions.assertThat(actual.getCrossroadId()).isEqualTo(crossroadId);
-           softAssertions.assertThat(actual.getTransTimestamp()).isEqualTo(1741054218628L);
-           softAssertions.assertThat(actual.getNorthState()).isEqualTo(SignalState.RED);
-           softAssertions.assertThat(actual.getEastTimeLeft()).isEqualTo(9);
-           softAssertions.assertThat(cache).isNotNull();
-           softAssertions.assertThat(actual.getSouthTimeLeft()).isEqualTo(cache.getSouthTimeLeft());
+            softAssertions.assertThat(actual).isNotNull();
+            softAssertions.assertThat(actual.getCrossroadId()).isEqualTo(crossroadId);
+            softAssertions.assertThat(actual.getTransTimestamp()).isEqualTo(1741054218628L);
+            softAssertions.assertThat(actual.getNorthState()).isEqualTo(SignalState.RED);
+            softAssertions.assertThat(actual.getEastTimeLeft()).isEqualTo(9);
+            softAssertions.assertThat(cache).isNotNull();
+            softAssertions.assertThat(actual.getSouthTimeLeft()).isEqualTo(cache.getSouthTimeLeft());
         });
     }
 
@@ -85,14 +85,14 @@ class CrossroadServiceTest extends ServiceTest implements RedisTestContainer {
         Long crossroadId = crossroad.getCrossroadId();
         String crossroadApiId = crossroad.getCrossroadApiId();
         CrossroadStateApiResponse apiResponse = CrossroadStateApiResponse.builder()
-            .crossroadApiId(crossroadApiId).transTimestamp(1741054218628L)
-            .northTimeLeft(349).northState(SignalState.RED)
-            .eastTimeLeft(9).eastState(SignalState.YELLOW)
-            .southTimeLeft(349).eastState(SignalState.RED)
-            .build();
+                .crossroadApiId(crossroadApiId).transTimestamp(1741054218628L)
+                .northTimeLeft(349).northState(SignalState.RED)
+                .eastTimeLeft(9).eastState(SignalState.YELLOW)
+                .southTimeLeft(349).eastState(SignalState.RED)
+                .build();
 
         given(crossroadProvider.requestCrossroadStateApi(crossroadApiId))
-            .willReturn(List.of(apiResponse));
+                .willReturn(List.of(apiResponse));
 
         // When
         CrossroadStateResponse actual = crossroadService.checkSignalState(crossroadId);
@@ -104,7 +104,7 @@ class CrossroadServiceTest extends ServiceTest implements RedisTestContainer {
 
     private Crossroad saveCrossroad(String apiId, String name, double lat, double lng) {
         return crossroadRepository.save(new Crossroad(
-            CrossroadApiResponse.builder().crossroadApiId(apiId).name(name).lat(lat).lng(lng)
-                .build()));
+                CrossroadApiResponse.builder().crossroadApiId(apiId).name(name).lat(lat).lng(lng)
+                        .build()));
     }
 }

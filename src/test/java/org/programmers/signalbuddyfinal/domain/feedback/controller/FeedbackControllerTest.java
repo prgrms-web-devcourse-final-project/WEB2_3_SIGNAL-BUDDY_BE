@@ -79,13 +79,13 @@ class FeedbackControllerTest extends ControllerTest {
     void writeFeedback() throws Exception {
         // Given
         FeedbackRequest request = FeedbackRequest.builder()
-            .subject("test subject").content("test content").secret(Boolean.FALSE)
-            .category(FeedbackCategory.ETC).crossroadId(1L)
-            .build();
+                .subject("test subject").content("test content").secret(Boolean.FALSE)
+                .category(FeedbackCategory.ETC).crossroadId(1L)
+                .build();
         MockMultipartFile requestPart = new MockMultipartFile(
-            "request", "",
-            MediaType.APPLICATION_JSON_VALUE,
-            objectMapper.writeValueAsBytes(request)
+                "request", "",
+                MediaType.APPLICATION_JSON_VALUE,
+                objectMapper.writeValueAsBytes(request)
         );
         MockMultipartFile imageFile = getMockImageFile(imageFormName);
 
@@ -94,73 +94,73 @@ class FeedbackControllerTest extends ControllerTest {
         FeedbackResponse response = makeFeedbackResponse(member, crossroad);
 
         given(
-            feedbackService.writeFeedback(
-                any(FeedbackRequest.class), any(MultipartFile.class), any(CustomUser2Member.class)
-            )
+                feedbackService.writeFeedback(
+                        any(FeedbackRequest.class), any(MultipartFile.class), any(CustomUser2Member.class)
+                )
         ).willReturn(response);
 
         // When
         ResultActions result = mockMvc.perform(
-            multipart("/api/feedbacks")
-                .file(imageFile)
-                .file(requestPart)
-                .contentType(MediaType.MULTIPART_FORM_DATA_VALUE)
-                .header(HttpHeaders.AUTHORIZATION, getTokenExample())
+                multipart("/api/feedbacks")
+                        .file(imageFile)
+                        .file(requestPart)
+                        .contentType(MediaType.MULTIPART_FORM_DATA_VALUE)
+                        .header(HttpHeaders.AUTHORIZATION, getTokenExample())
         );
 
         // Then
         result.andExpect(status().isCreated())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.data.feedbackId").isNumber())
-            .andDo(
-                document(
-                    "피드백 작성",
-                    preprocessRequest(prettyPrint()),
-                    preprocessResponse(prettyPrint()),
-                    requestParts(
-                        partWithName("request")
-                            .description("피드백 작성 요청 JSON 데이터"),
-                        partWithName("imageFile")
-                            .description("첨부 이미지 파일 (선택 사항)").optional()
-                    ),
-                    requestPartFields(
-                        "request",
-                        fieldWithPath("subject")
-                            .type(JsonFieldType.STRING)
-                            .description("피드백 제목"),
-                        fieldWithPath("content")
-                            .type(JsonFieldType.STRING)
-                            .description("피드백 내용"),
-                        fieldWithPath("category")
-                            .type(JsonFieldType.STRING)
-                            .description("""
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.data.feedbackId").isNumber())
+                .andDo(
+                        document(
+                                "피드백 작성",
+                                preprocessRequest(prettyPrint()),
+                                preprocessResponse(prettyPrint()),
+                                requestParts(
+                                        partWithName("request")
+                                                .description("피드백 작성 요청 JSON 데이터"),
+                                        partWithName("imageFile")
+                                                .description("첨부 이미지 파일 (선택 사항)").optional()
+                                ),
+                                requestPartFields(
+                                        "request",
+                                        fieldWithPath("subject")
+                                                .type(JsonFieldType.STRING)
+                                                .description("피드백 제목"),
+                                        fieldWithPath("content")
+                                                .type(JsonFieldType.STRING)
+                                                .description("피드백 내용"),
+                                        fieldWithPath("category")
+                                                .type(JsonFieldType.STRING)
+                                                .description("""
                                 피드백 유형
                                 - `DELAY` : 신호 지연
                                 - `MALFUNCTION` : 오작동
                                 - `ADD_SIGNAL` : 신호등 추가
                                 - `ETC` : 기타
                                 """),
-                        fieldWithPath("secret")
-                            .type(JsonFieldType.BOOLEAN)
-                            .description("비밀글 여부"),
-                        fieldWithPath("crossroadId")
-                            .type(JsonFieldType.NUMBER)
-                            .description("피드백하려는 교차로 ID")
-                    ),
-                    resource(
-                        ResourceSnippetParameters.builder()
-                            .tag(tag)
-                            .summary("피드백 작성")
-                            .requestHeaders(
-                                jwtFormat()
-                            )
-                            .responseFields(
-                                feedbackDetailResponseDocs()
-                            )
-                            .build()
-                    )
-                )
-            );
+                                        fieldWithPath("secret")
+                                                .type(JsonFieldType.BOOLEAN)
+                                                .description("비밀글 여부"),
+                                        fieldWithPath("crossroadId")
+                                                .type(JsonFieldType.NUMBER)
+                                                .description("피드백하려는 교차로 ID")
+                                ),
+                                resource(
+                                        ResourceSnippetParameters.builder()
+                                                .tag(tag)
+                                                .summary("피드백 작성")
+                                                .requestHeaders(
+                                                        jwtFormat()
+                                                )
+                                                .responseFields(
+                                                        feedbackDetailResponseDocs()
+                                                )
+                                                .build()
+                                )
+                        )
+                );
     }
 
     @DisplayName("피드백 목록을 검색한다.")
@@ -174,82 +174,82 @@ class FeedbackControllerTest extends ControllerTest {
             feedbacks.add(makeFeedbackResponse(member, i));
         }
         PageResponse<FeedbackResponse> response = new PageResponse<>(
-            new PageImpl<>(feedbacks, pageable, 55)
+                new PageImpl<>(feedbacks, pageable, 55)
         );
 
         given(
-            feedbackService.searchFeedbackList(
-                any(Pageable.class), any(SearchTarget.class),
-                any(FeedbackSearchRequest.class),  anyLong()
-            )
+                feedbackService.searchFeedbackList(
+                        any(Pageable.class), any(SearchTarget.class),
+                        any(FeedbackSearchRequest.class),  anyLong()
+                )
         ).willReturn(response);
 
         // When
         ResultActions result = mockMvc.perform(
-            get("/api/feedbacks")
-                .queryParam("page", String.valueOf(pageable.getPageNumber()))
-                .queryParam("size", String.valueOf(pageable.getPageSize()))
-                .queryParam("target", "content")
-                .queryParam("status", AnswerStatus.BEFORE.getValue())
-                .queryParam("category",
-                    FeedbackCategory.ETC.getValue(), FeedbackCategory.DELAY.getValue())
-                .queryParam("crossroadId", String.valueOf(1L))
-                .queryParam("keyword", "test search")
+                get("/api/feedbacks")
+                        .queryParam("page", String.valueOf(pageable.getPageNumber()))
+                        .queryParam("size", String.valueOf(pageable.getPageSize()))
+                        .queryParam("target", "content")
+                        .queryParam("status", AnswerStatus.BEFORE.getValue())
+                        .queryParam("category",
+                                FeedbackCategory.ETC.getValue(), FeedbackCategory.DELAY.getValue())
+                        .queryParam("crossroadId", String.valueOf(1L))
+                        .queryParam("keyword", "test search")
         );
 
         // Then
         result.andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(
-                jsonPath("$.data.searchResults[0].feedbackId")
-                    .value(response.getSearchResults().get(0).getFeedbackId())
-            )
-            .andDo(
-                document(
-                    "피드백 목록 조회",
-                    preprocessRequest(prettyPrint()),
-                    preprocessResponse(prettyPrint()),
-                    resource(
-                        ResourceSnippetParameters.builder()
-                            .tag(tag)
-                            .summary("피드백 목록 조회")
-                            .queryParameters(
-                                parameterWithName("page").type(SimpleType.NUMBER)
-                                    .description("페이지 번호 (기본값 : 0, 0부터 시작)").optional(),
-                                parameterWithName("size").type(SimpleType.NUMBER)
-                                    .description("페이지 크기 (기본값 : 10)").optional(),
-                                parameterWithName("target").type(SimpleType.STRING)
-                                    .description("""
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(
+                        jsonPath("$.data.searchResults[0].feedbackId")
+                                .value(response.getSearchResults().get(0).getFeedbackId())
+                )
+                .andDo(
+                        document(
+                                "피드백 목록 조회",
+                                preprocessRequest(prettyPrint()),
+                                preprocessResponse(prettyPrint()),
+                                resource(
+                                        ResourceSnippetParameters.builder()
+                                                .tag(tag)
+                                                .summary("피드백 목록 조회")
+                                                .queryParameters(
+                                                        parameterWithName("page").type(SimpleType.NUMBER)
+                                                                .description("페이지 번호 (기본값 : 0, 0부터 시작)").optional(),
+                                                        parameterWithName("size").type(SimpleType.NUMBER)
+                                                                .description("페이지 크기 (기본값 : 10)").optional(),
+                                                        parameterWithName("target").type(SimpleType.STRING)
+                                                                .description("""
                                         피드백 검색 범위 (기본값 : `content`, 택 1)
                                         - `content` : 제목 + 내용
                                         - `writer` : 작성자
                                         """).optional(),
-                                parameterWithName("status").type(SimpleType.STRING)
-                                    .description("""
+                                                        parameterWithName("status").type(SimpleType.STRING)
+                                                                .description("""
                                         피드백 답변 상태 (택 1)
                                         - `before` : 답변 전
                                         - `completion` : 답변 완료
                                         """).optional(),
-                                parameterWithName("category").type(SimpleType.STRING)
-                                    .description("""
+                                                        parameterWithName("category").type(SimpleType.STRING)
+                                                                .description("""
                                         피드백 유형 (여러 개 선택 가능)
                                         - `delay` : 신호 지연
                                         - `malfunction` : 오작동
                                         - `add-signal` : 신호등 추가
                                         - `etc` : 기타
                                         """).optional(),
-                                parameterWithName("crossroadId").type(SimpleType.NUMBER)
-                                    .description("교차로 ID").optional(),
-                                parameterWithName("keyword").type(SimpleType.STRING)
-                                    .description("검색어").optional()
-                            )
-                            .responseFields(
-                                feedbackPageResponseDocs()
-                            )
-                            .build()
-                    )
-                )
-            );
+                                                        parameterWithName("crossroadId").type(SimpleType.NUMBER)
+                                                                .description("교차로 ID").optional(),
+                                                        parameterWithName("keyword").type(SimpleType.STRING)
+                                                                .description("검색어").optional()
+                                                )
+                                                .responseFields(
+                                                        feedbackPageResponseDocs()
+                                                )
+                                                .build()
+                                )
+                        )
+                );
     }
 
     @DisplayName("피드백을 상세 조회한다.")
@@ -262,45 +262,45 @@ class FeedbackControllerTest extends ControllerTest {
         FeedbackResponse response = makeFeedbackResponse(member, crossroad);
 
         given(feedbackService.searchFeedbackDetail(anyLong(), any(CustomUser2Member.class)))
-            .willReturn(response);
+                .willReturn(response);
 
         // When
         ResultActions result = mockMvc.perform(
-            get("/api/feedbacks/{feedbackId}", response.getFeedbackId())
-                .header("authorization", getTokenExample())
+                get("/api/feedbacks/{feedbackId}", response.getFeedbackId())
+                        .header("authorization", getTokenExample())
         );
 
         // Then
         result.andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.data.feedbackId").isNumber())
-            .andExpect(
-                jsonPath("$.data.feedbackId")
-                    .value(response.getFeedbackId())
-            )
-            .andDo(
-                document(
-                    "피드백 상세 조회",
-                    preprocessRequest(prettyPrint()),
-                    preprocessResponse(prettyPrint()),
-                    resource(
-                        ResourceSnippetParameters.builder()
-                            .tag(tag)
-                            .summary("피드백 상세 조회")
-                            .requestHeaders(
-                                jwtFormat().optional()
-                            )
-                            .pathParameters(
-                                parameterWithName("feedbackId").type(SimpleType.NUMBER)
-                                    .description("상세 조회하려는 피드백 ID")
-                            )
-                            .responseFields(
-                                feedbackDetailResponseDocs()
-                            )
-                            .build()
-                    )
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.data.feedbackId").isNumber())
+                .andExpect(
+                        jsonPath("$.data.feedbackId")
+                                .value(response.getFeedbackId())
                 )
-            );
+                .andDo(
+                        document(
+                                "피드백 상세 조회",
+                                preprocessRequest(prettyPrint()),
+                                preprocessResponse(prettyPrint()),
+                                resource(
+                                        ResourceSnippetParameters.builder()
+                                                .tag(tag)
+                                                .summary("피드백 상세 조회")
+                                                .requestHeaders(
+                                                        jwtFormat().optional()
+                                                )
+                                                .pathParameters(
+                                                        parameterWithName("feedbackId").type(SimpleType.NUMBER)
+                                                                .description("상세 조회하려는 피드백 ID")
+                                                )
+                                                .responseFields(
+                                                        feedbackDetailResponseDocs()
+                                                )
+                                                .build()
+                                )
+                        )
+                );
     }
 
     @DisplayName("피드백을 수정한다.")
@@ -310,97 +310,97 @@ class FeedbackControllerTest extends ControllerTest {
         // Given
         String updatedSubject = "update test subject";
         FeedbackRequest request = FeedbackRequest.builder()
-            .subject(updatedSubject).content("test content").secret(Boolean.FALSE)
-            .category(FeedbackCategory.DELAY).crossroadId(1L)
-            .build();
+                .subject(updatedSubject).content("test content").secret(Boolean.FALSE)
+                .category(FeedbackCategory.DELAY).crossroadId(1L)
+                .build();
         MockMultipartFile requestPart = new MockMultipartFile(
-            "request", "",
-            MediaType.APPLICATION_JSON_VALUE,
-            objectMapper.writeValueAsBytes(request)
+                "request", "",
+                MediaType.APPLICATION_JSON_VALUE,
+                objectMapper.writeValueAsBytes(request)
         );
         MockMultipartFile imageFile = getMockImageFile(imageFormName);
 
         MemberResponse member = makeMemberResponse();
         CrossroadResponse crossroad = makeCrossroadResponse();
         FeedbackResponse response = FeedbackResponse.builder()
-            .feedbackId(1L).secret(Boolean.FALSE)
-            .subject(updatedSubject).content("test content")
-            .answerStatus(AnswerStatus.BEFORE).category(FeedbackCategory.DELAY)
-            .createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now())
-            .imageUrl("https://image.com/dfsdfsdf").likeCount(0L)
-            .member(member).crossroad(crossroad)
-            .build();
+                .feedbackId(1L).secret(Boolean.FALSE)
+                .subject(updatedSubject).content("test content")
+                .answerStatus(AnswerStatus.BEFORE).category(FeedbackCategory.DELAY)
+                .createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now())
+                .imageUrl("https://image.com/dfsdfsdf").likeCount(0L)
+                .member(member).crossroad(crossroad)
+                .build();
 
         given(
-            feedbackService.updateFeedback(
-                anyLong(), any(FeedbackRequest.class),
-                any(MultipartFile.class), any(CustomUser2Member.class)
-            )
+                feedbackService.updateFeedback(
+                        anyLong(), any(FeedbackRequest.class),
+                        any(MultipartFile.class), any(CustomUser2Member.class)
+                )
         ).willReturn(response);
 
         // When
         ResultActions result = mockMvc.perform(
-            multipart(HttpMethod.PATCH, "/api/feedbacks/{feedbackId}", 1L)
-                .file(imageFile)
-                .file(requestPart)
-                .contentType(MediaType.MULTIPART_FORM_DATA_VALUE)
-                .header(HttpHeaders.AUTHORIZATION, getTokenExample())
+                multipart(HttpMethod.PATCH, "/api/feedbacks/{feedbackId}", 1L)
+                        .file(imageFile)
+                        .file(requestPart)
+                        .contentType(MediaType.MULTIPART_FORM_DATA_VALUE)
+                        .header(HttpHeaders.AUTHORIZATION, getTokenExample())
         );
 
         // Then
         result.andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.data.subject").value(updatedSubject))
-            .andExpect(jsonPath("$.data.category").value(FeedbackCategory.DELAY.name()))
-            .andDo(
-                document(
-                    "피드백 수정",
-                    preprocessRequest(prettyPrint()),
-                    preprocessResponse(prettyPrint()),
-                    requestParts(
-                        partWithName("request")
-                            .description("피드백 수정 요청 JSON 데이터"),
-                        partWithName("imageFile")
-                            .description("첨부 이미지 파일 (선택 사항)").optional()
-                    ),
-                    requestPartFields(
-                        "request",
-                        fieldWithPath("subject")
-                            .type(JsonFieldType.STRING)
-                            .description("피드백 제목 (수정되지 않아도 원래 값 담기)"),
-                        fieldWithPath("content")
-                            .type(JsonFieldType.STRING)
-                            .description("피드백 내용 (수정되지 않아도 원래 값 담기)"),
-                        fieldWithPath("category")
-                            .type(JsonFieldType.STRING)
-                            .description("""
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.data.subject").value(updatedSubject))
+                .andExpect(jsonPath("$.data.category").value(FeedbackCategory.DELAY.name()))
+                .andDo(
+                        document(
+                                "피드백 수정",
+                                preprocessRequest(prettyPrint()),
+                                preprocessResponse(prettyPrint()),
+                                requestParts(
+                                        partWithName("request")
+                                                .description("피드백 수정 요청 JSON 데이터"),
+                                        partWithName("imageFile")
+                                                .description("첨부 이미지 파일 (선택 사항)").optional()
+                                ),
+                                requestPartFields(
+                                        "request",
+                                        fieldWithPath("subject")
+                                                .type(JsonFieldType.STRING)
+                                                .description("피드백 제목 (수정되지 않아도 원래 값 담기)"),
+                                        fieldWithPath("content")
+                                                .type(JsonFieldType.STRING)
+                                                .description("피드백 내용 (수정되지 않아도 원래 값 담기)"),
+                                        fieldWithPath("category")
+                                                .type(JsonFieldType.STRING)
+                                                .description("""
                                 피드백 유형 (수정되지 않아도 원래 값 담기)
                                 - `DELAY` : 신호 지연
                                 - `MALFUNCTION` : 오작동
                                 - `ADD_SIGNAL` : 신호등 추가
                                 - `ETC` : 기타
                                 """),
-                        fieldWithPath("secret")
-                            .type(JsonFieldType.BOOLEAN)
-                            .description("비밀글 여부 (수정되지 않아도 원래 값 담기)"),
-                        fieldWithPath("crossroadId")
-                            .type(JsonFieldType.NUMBER)
-                            .description("피드백하려는 교차로 ID (수정되지 않아도 원래 값 담기)")
-                    ),
-                    resource(
-                        ResourceSnippetParameters.builder()
-                            .tag(tag)
-                            .summary("피드백 수정")
-                            .requestHeaders(
-                                jwtFormat()
-                            )
-                            .responseFields(
-                                feedbackDetailResponseDocs()
-                            )
-                            .build()
-                    )
-                )
-            );
+                                        fieldWithPath("secret")
+                                                .type(JsonFieldType.BOOLEAN)
+                                                .description("비밀글 여부 (수정되지 않아도 원래 값 담기)"),
+                                        fieldWithPath("crossroadId")
+                                                .type(JsonFieldType.NUMBER)
+                                                .description("피드백하려는 교차로 ID (수정되지 않아도 원래 값 담기)")
+                                ),
+                                resource(
+                                        ResourceSnippetParameters.builder()
+                                                .tag(tag)
+                                                .summary("피드백 수정")
+                                                .requestHeaders(
+                                                        jwtFormat()
+                                                )
+                                                .responseFields(
+                                                        feedbackDetailResponseDocs()
+                                                )
+                                                .build()
+                                )
+                        )
+                );
     }
 
     @DisplayName("피드백을 삭제한다.")
@@ -412,70 +412,70 @@ class FeedbackControllerTest extends ControllerTest {
 
         // When
         ResultActions result = mockMvc.perform(
-            delete("/api/feedbacks/{feedbackId}", 1L)
-                .header(HttpHeaders.AUTHORIZATION, getTokenExample())
+                delete("/api/feedbacks/{feedbackId}", 1L)
+                        .header(HttpHeaders.AUTHORIZATION, getTokenExample())
         );
 
         // Then
         result.andExpect(status().isOk())
-            .andDo(
-                document(
-                    "피드백 삭제",
-                    preprocessRequest(prettyPrint()),
-                    preprocessResponse(prettyPrint()),
-                    resource(
-                        ResourceSnippetParameters.builder()
-                            .tag(tag)
-                            .summary("피드백 삭제")
-                            .requestHeaders(
-                                jwtFormat()
-                            )
-                            .pathParameters(
-                                parameterWithName("feedbackId").type(SimpleType.NUMBER)
-                                    .description("삭제하려는 피드백 ID")
-                            )
-                            .build()
-                    )
-                )
-            );
+                .andDo(
+                        document(
+                                "피드백 삭제",
+                                preprocessRequest(prettyPrint()),
+                                preprocessResponse(prettyPrint()),
+                                resource(
+                                        ResourceSnippetParameters.builder()
+                                                .tag(tag)
+                                                .summary("피드백 삭제")
+                                                .requestHeaders(
+                                                        jwtFormat()
+                                                )
+                                                .pathParameters(
+                                                        parameterWithName("feedbackId").type(SimpleType.NUMBER)
+                                                                .description("삭제하려는 피드백 ID")
+                                                )
+                                                .build()
+                                )
+                        )
+                );
     }
 
     private MemberResponse makeMemberResponse() {
         return MemberResponse.builder()
-            .memberId(1L).email("test@test.com").nickname("test")
-            .profileImageUrl("https://image.com/sfdfs")
-            .role(MemberRole.USER).memberStatus(MemberStatus.ACTIVITY)
-            .build();
+                .memberId(1L).email("test@test.com").nickname("test")
+                .profileImageUrl("https://image.com/sfdfs")
+                .role(MemberRole.USER).memberStatus(MemberStatus.ACTIVITY)
+                .build();
     }
 
     private FeedbackResponse makeFeedbackResponse(
-        MemberResponse member, CrossroadResponse crossroad
+            MemberResponse member, CrossroadResponse crossroad
     ) {
         return FeedbackResponse.builder()
-            .feedbackId(1L).secret(Boolean.FALSE)
-            .subject("test subject").content("test content")
-            .answerStatus(AnswerStatus.BEFORE).category(FeedbackCategory.ETC)
-            .createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now())
-            .imageUrl("https://image.com/dfsdfsdf").likeCount(0L)
-            .member(member).crossroad(crossroad)
-            .build();
+                .feedbackId(1L).secret(Boolean.FALSE)
+                .subject("test subject").content("test content")
+                .answerStatus(AnswerStatus.BEFORE).category(FeedbackCategory.ETC)
+                .createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now())
+                .imageUrl("https://image.com/dfsdfsdf").likeCount(0L)
+                .member(member).crossroad(crossroad)
+                .build();
     }
 
     private FeedbackResponse makeFeedbackResponse(MemberResponse member, int num) {
         return FeedbackResponse.builder()
-            .feedbackId((long) num).secret(Boolean.FALSE)
-            .subject("test subject" + num).content("test content" + num)
-            .answerStatus(AnswerStatus.BEFORE).category(FeedbackCategory.ETC)
-            .createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now())
-            .imageUrl("https://image.com/dfsdfsdf").member(member).likeCount(21L % num)
-            .build();
+                .feedbackId((long) num).secret(Boolean.FALSE)
+                .subject("test subject" + num).content("test content" + num)
+                .answerStatus(AnswerStatus.BEFORE).category(FeedbackCategory.ETC)
+                .createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now())
+                .imageUrl("https://image.com/dfsdfsdf").member(member).likeCount(21L % num)
+                .build();
     }
 
     private CrossroadResponse makeCrossroadResponse() {
         return CrossroadResponse.builder()
-            .crossroadId(1L).lat(37.1212).lng(127.11212)
-            .name("00사거리").status("TRUE")
-            .build();
+                .crossroadId(1L).lat(37.1212).lng(127.11212)
+                .name("00사거리").status("TRUE")
+                .build();
     }
 
     private FieldDescriptor[] feedbackDetailResponseDocs() {
@@ -483,17 +483,17 @@ class FeedbackControllerTest extends ControllerTest {
 
         FieldDescriptor[] feedbackDetailDocs = new FieldDescriptor[16];
         feedbackDetailDocs[0] = fieldWithPath("data.feedbackId")
-            .type(JsonFieldType.NUMBER)
-            .description("피드백 ID");
+                .type(JsonFieldType.NUMBER)
+                .description("피드백 ID");
         feedbackDetailDocs[1] = fieldWithPath("data.subject")
-            .type(JsonFieldType.STRING)
-            .description("피드백 제목");
+                .type(JsonFieldType.STRING)
+                .description("피드백 제목");
         feedbackDetailDocs[2] = fieldWithPath("data.content")
-            .type(JsonFieldType.STRING)
-            .description("피드백 내용");
+                .type(JsonFieldType.STRING)
+                .description("피드백 내용");
         feedbackDetailDocs[3] = fieldWithPath("data.category")
-            .type(JsonFieldType.STRING)
-            .description("""
+                .type(JsonFieldType.STRING)
+                .description("""
                 피드백 유형
                 - `DELAY` : 신호 지연
                 - `MALFUNCTION` : 오작동
@@ -501,48 +501,48 @@ class FeedbackControllerTest extends ControllerTest {
                 - `ETC` : 기타
                 """);
         feedbackDetailDocs[4] = fieldWithPath("data.likeCount")
-            .type(JsonFieldType.NUMBER)
-            .description("피드백의 좋아요 개수");
+                .type(JsonFieldType.NUMBER)
+                .description("피드백의 좋아요 개수");
         feedbackDetailDocs[5] = fieldWithPath("data.secret")
-            .type(JsonFieldType.BOOLEAN)
-            .description("비밀글 여부");
+                .type(JsonFieldType.BOOLEAN)
+                .description("비밀글 여부");
         feedbackDetailDocs[6] = fieldWithPath("data.answerStatus")
-            .type(JsonFieldType.STRING)
-            .description("""
+                .type(JsonFieldType.STRING)
+                .description("""
                 피드백의 답변 여부
                 - `BEFORE` : 답변 전
                 - `COMPLETION` : 답변 완료
                 """);
         feedbackDetailDocs[7] = fieldWithPath("data.imageUrl")
-            .type(JsonFieldType.STRING)
-            .description("이미지 URL");
+                .type(JsonFieldType.STRING)
+                .description("이미지 URL");
         feedbackDetailDocs[8] = fieldWithPath("data.createdAt")
-            .type(JsonFieldType.STRING)
-            .description("피드백 작성일");
+                .type(JsonFieldType.STRING)
+                .description("피드백 작성일");
         feedbackDetailDocs[9] = fieldWithPath("data.updatedAt")
-            .type(JsonFieldType.STRING)
-            .description("피드백 수정일");
+                .type(JsonFieldType.STRING)
+                .description("피드백 수정일");
         feedbackDetailDocs[10] = fieldWithPath("data.crossroad")
-            .type(JsonFieldType.OBJECT)
-            .description("교차로 정보");
+                .type(JsonFieldType.OBJECT)
+                .description("교차로 정보");
         feedbackDetailDocs[11] = fieldWithPath("data.crossroad.crossroadId")
-            .type(JsonFieldType.NUMBER)
-            .description("교차로 ID(PK)");
+                .type(JsonFieldType.NUMBER)
+                .description("교차로 ID(PK)");
         feedbackDetailDocs[12] = fieldWithPath("data.crossroad.lat")
-            .type(JsonFieldType.NUMBER)
-            .description("교차로의 위도 좌표");
+                .type(JsonFieldType.NUMBER)
+                .description("교차로의 위도 좌표");
         feedbackDetailDocs[13] = fieldWithPath("data.crossroad.lng")
-            .type(JsonFieldType.NUMBER)
-            .description("교차로의 경도 좌표");
+                .type(JsonFieldType.NUMBER)
+                .description("교차로의 경도 좌표");
         feedbackDetailDocs[14] = fieldWithPath("data.crossroad.name")
-            .type(JsonFieldType.STRING)
-            .description("교차로 이름");
+                .type(JsonFieldType.STRING)
+                .description("교차로 이름");
         feedbackDetailDocs[15] = fieldWithPath("data.crossroad.status")
-            .type(JsonFieldType.STRING)
-            .description("잔여 시간 API 제공 여부");
+                .type(JsonFieldType.STRING)
+                .description("잔여 시간 API 제공 여부");
 
         return Stream.concat(Arrays.stream(commonDocs), Arrays.stream(feedbackDetailDocs))
-            .toArray(FieldDescriptor[]::new);
+                .toArray(FieldDescriptor[]::new);
     }
 
     private FieldDescriptor[] feedbackPageResponseDocs() {
@@ -550,17 +550,17 @@ class FeedbackControllerTest extends ControllerTest {
 
         FieldDescriptor[] feedbackListDocs = new FieldDescriptor[10];
         feedbackListDocs[0] = fieldWithPath("data.searchResults[].feedbackId")
-            .type(JsonFieldType.NUMBER)
-            .description("피드백 ID");
+                .type(JsonFieldType.NUMBER)
+                .description("피드백 ID");
         feedbackListDocs[1] = fieldWithPath("data.searchResults[].subject")
-            .type(JsonFieldType.STRING)
-            .description("피드백 제목");
+                .type(JsonFieldType.STRING)
+                .description("피드백 제목");
         feedbackListDocs[2] = fieldWithPath("data.searchResults[].content")
-            .type(JsonFieldType.STRING)
-            .description("피드백 내용");
+                .type(JsonFieldType.STRING)
+                .description("피드백 내용");
         feedbackListDocs[3] = fieldWithPath("data.searchResults[].category")
-            .type(JsonFieldType.STRING)
-            .description("""
+                .type(JsonFieldType.STRING)
+                .description("""
                 피드백 유형
                 - `DELAY` : 신호 지연
                 - `MALFUNCTION` : 오작동
@@ -568,29 +568,29 @@ class FeedbackControllerTest extends ControllerTest {
                 - `ETC` : 기타
                 """);
         feedbackListDocs[4] = fieldWithPath("data.searchResults[].likeCount")
-            .type(JsonFieldType.NUMBER)
-            .description("피드백의 좋아요 개수");
+                .type(JsonFieldType.NUMBER)
+                .description("피드백의 좋아요 개수");
         feedbackListDocs[5] = fieldWithPath("data.searchResults[].secret")
-            .type(JsonFieldType.BOOLEAN)
-            .description("비밀글 여부");
+                .type(JsonFieldType.BOOLEAN)
+                .description("비밀글 여부");
         feedbackListDocs[6] = fieldWithPath("data.searchResults[].answerStatus")
-            .type(JsonFieldType.STRING)
-            .description("""
+                .type(JsonFieldType.STRING)
+                .description("""
                 피드백의 답변 여부
                 - `BEFORE` : 답변 전
                 - `COMPLETION` : 답변 완료
                 """);
         feedbackListDocs[7] = fieldWithPath("data.searchResults[].imageUrl")
-            .type(JsonFieldType.STRING)
-            .description("이미지 URL");
+                .type(JsonFieldType.STRING)
+                .description("이미지 URL");
         feedbackListDocs[8] = fieldWithPath("data.searchResults[].createdAt")
-            .type(JsonFieldType.STRING)
-            .description("피드백 작성일");
+                .type(JsonFieldType.STRING)
+                .description("피드백 작성일");
         feedbackListDocs[9] = fieldWithPath("data.searchResults[].updatedAt")
-            .type(JsonFieldType.STRING)
-            .description("피드백 수정일");
+                .type(JsonFieldType.STRING)
+                .description("피드백 수정일");
 
         return Stream.concat(Arrays.stream(pageDocs), Arrays.stream(feedbackListDocs))
-            .toArray(FieldDescriptor[]::new);
+                .toArray(FieldDescriptor[]::new);
     }
 }

@@ -36,7 +36,6 @@ public class CrossroadController {
         return ResponseEntity.ok(ApiResponse.createSuccessWithNoData());
     }
 
-
     @GetMapping("/marker") // 저장된 DB 데이터를 기반으로 map에 찍을 marker의 데이터를 point로 가져오기
     public ResponseEntity<List<CrossroadApiResponse>> pointToMarker(){
         List<CrossroadApiResponse> markers = crossroadService.getAllMarkers();
@@ -44,7 +43,6 @@ public class CrossroadController {
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(markers);
     }
-
 
     @GetMapping("/{crossroadId}/state")
     public ResponseEntity<ApiResponse<CrossroadStateResponse>> checkSignalState(

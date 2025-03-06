@@ -76,16 +76,16 @@ class FeedbackServiceTest extends ServiceTest {
         String content = "test content";
         Long crossroadId = crossroad.getCrossroadId();
         FeedbackRequest request = FeedbackRequest.builder()
-            .subject(subject).content(content).secret(Boolean.FALSE)
-            .category(FeedbackCategory.ETC).crossroadId(crossroadId)
-            .build();
+                .subject(subject).content(content).secret(Boolean.FALSE)
+                .category(FeedbackCategory.ETC).crossroadId(crossroadId)
+                .build();
         MockMultipartFile imageFile = getMockImageFile(imageFormName);
         CustomUser2Member user = getCurrentMember(member.getMemberId(), MemberRole.USER);
 
         // When
         URL mockURL = mock(URL.class);
         when(awsFileService.uploadFileToS3(any(MockMultipartFile.class), anyString()))
-            .thenReturn(imageFile.getName());
+                .thenReturn(imageFile.getName());
         when(awsFileService.getFileFromS3(anyString(), anyString())).thenReturn(mockURL);
         FeedbackResponse actual = feedbackService.writeFeedback(request, imageFile, user);
 
@@ -94,9 +94,9 @@ class FeedbackServiceTest extends ServiceTest {
             softAssertions.assertThat(actual.getFeedbackId()).isNotNull();
             softAssertions.assertThat(actual.getSubject()).isEqualTo(subject);
             softAssertions.assertThat(actual.getCrossroad().getCrossroadId())
-                .isEqualTo(crossroadId);
+                    .isEqualTo(crossroadId);
             softAssertions.assertThat(actual.getMember().getMemberId())
-                .isEqualTo(user.getMemberId());
+                    .isEqualTo(user.getMemberId());
             softAssertions.assertThat(actual.getImageUrl()).isNotNull();
         });
     }
@@ -106,14 +106,14 @@ class FeedbackServiceTest extends ServiceTest {
     void getFeedbacksByMember() {
         // feedbackNoMemberDto
         final PageResponse<FeedbackResponse> feedbacks = feedbackService.findPagedExcludingMember(
-            member.getMemberId(), Pageable.ofSize(10));
+                member.getMemberId(), Pageable.ofSize(10));
 
         assertThat(feedbacks).isNotNull();
         assertThat(feedbacks.getTotalElements()).isEqualTo(3);
 
         // Member 조회 결과가 없어야 함.
         assertThat(feedbacks.getSearchResults()).isNotEmpty().allSatisfy(
-            feedback -> assertThat(feedback.getMember()).isNull());
+                feedback -> assertThat(feedback.getMember()).isNull());
     }
 
     @DisplayName("피드백 상세 조회를 한다.")
@@ -129,9 +129,9 @@ class FeedbackServiceTest extends ServiceTest {
         SoftAssertions.assertSoftly(softAssertions -> {
             assertThat(response.getFeedbackId()).isEqualTo(feedbackId);
             assertThat(response.getMember().getMemberId())
-                .isEqualTo(member.getMemberId());
+                    .isEqualTo(member.getMemberId());
             assertThat(response.getCrossroad().getCrossroadId())
-                .isEqualTo(crossroad.getCrossroadId());
+                    .isEqualTo(crossroad.getCrossroadId());
         });
     }
 
@@ -140,13 +140,13 @@ class FeedbackServiceTest extends ServiceTest {
     void searchSecretFeedbackDetail_Success() {
         // Given
         Feedback secret = saveSecretFeedback(
-            "test subject5", "test content5", member, crossroad
+                "test subject5", "test content5", member, crossroad
         );
         CustomUser2Member user = getCurrentMember(member.getMemberId(), MemberRole.USER);
 
         // When
         FeedbackResponse response = feedbackService.searchFeedbackDetail(
-            secret.getFeedbackId(), user
+                secret.getFeedbackId(), user
         );
 
         // Then
@@ -154,9 +154,9 @@ class FeedbackServiceTest extends ServiceTest {
             assertThat(response.getFeedbackId()).isEqualTo(secret.getFeedbackId());
             assertThat(response.getSecret()).isTrue();
             assertThat(response.getMember().getMemberId())
-                .isEqualTo(member.getMemberId());
+                    .isEqualTo(member.getMemberId());
             assertThat(response.getCrossroad().getCrossroadId())
-                .isEqualTo(crossroad.getCrossroadId());
+                    .isEqualTo(crossroad.getCrossroadId());
         });
     }
 
@@ -165,7 +165,7 @@ class FeedbackServiceTest extends ServiceTest {
     void searchSecretFeedbackDetail_Failure() {
         // Given
         Feedback secret = saveSecretFeedback(
-            "test subject5", "test content5", member, crossroad
+                "test subject5", "test content5", member, crossroad
         );
         Member otherMember = saveMember("test2@test.com", "tester2");
         CustomUser2Member user = getCurrentMember(otherMember.getMemberId(), MemberRole.USER);
@@ -175,7 +175,7 @@ class FeedbackServiceTest extends ServiceTest {
             feedbackService.searchFeedbackDetail(secret.getFeedbackId(), user);
         } catch (BusinessException e) {
             assertThat(e.getErrorCode())
-                .isEqualTo(FeedbackErrorCode.SECRET_FEEDBACK_NOT_AUTHORIZED);
+                    .isEqualTo(FeedbackErrorCode.SECRET_FEEDBACK_NOT_AUTHORIZED);
         }
     }
 
@@ -184,14 +184,14 @@ class FeedbackServiceTest extends ServiceTest {
     void searchSecretFeedbackDetailByAdmin_Success() {
         // Given
         Feedback secret = saveSecretFeedback(
-            "test subject5", "test content5", member, crossroad
+                "test subject5", "test content5", member, crossroad
         );
         Member admin = saveAdmin("test@test.com", "tester2");
         CustomUser2Member user = getCurrentMember(admin.getMemberId(), MemberRole.ADMIN);
 
         // When
         FeedbackResponse response = feedbackService.searchFeedbackDetail(
-            secret.getFeedbackId(), user
+                secret.getFeedbackId(), user
         );
 
         // Then
@@ -199,11 +199,11 @@ class FeedbackServiceTest extends ServiceTest {
             assertThat(response.getFeedbackId()).isEqualTo(secret.getFeedbackId());
             assertThat(response.getSecret()).isTrue();
             assertThat(response.getMember().getMemberId())
-                .isEqualTo(member.getMemberId());
+                    .isEqualTo(member.getMemberId());
             assertThat(response.getMember().getMemberId())
-                .isNotEqualTo(user.getMemberId());
+                    .isNotEqualTo(user.getMemberId());
             assertThat(response.getCrossroad().getCrossroadId())
-                .isEqualTo(crossroad.getCrossroadId());
+                    .isEqualTo(crossroad.getCrossroadId());
         });
     }
 
@@ -212,25 +212,25 @@ class FeedbackServiceTest extends ServiceTest {
     void updateFeedback() {
         // Given
         Feedback feedback = saveFeedback(
-            "test subject", "test content", member, crossroad
+                "test subject", "test content", member, crossroad
         );
         Long feedbackId = feedback.getFeedbackId();
         FeedbackCategory updatedCategory = FeedbackCategory.DELAY;
         String updatedContent = "update test content";
         FeedbackRequest request = FeedbackRequest.builder()
-            .subject(feedback.getSubject()).content(updatedContent).secret(Boolean.FALSE)
-            .category(updatedCategory).crossroadId(crossroad.getCrossroadId())
-            .build();
+                .subject(feedback.getSubject()).content(updatedContent).secret(Boolean.FALSE)
+                .category(updatedCategory).crossroadId(crossroad.getCrossroadId())
+                .build();
         MockMultipartFile updatedImageFile = getMockImageFile(imageFormName);
         CustomUser2Member user = getCurrentMember(member.getMemberId(), MemberRole.USER);
 
         // When
         URL mockURL = mock(URL.class);
         when(awsFileService.uploadFileToS3(any(MockMultipartFile.class), anyString()))
-            .thenReturn(updatedImageFile.getName());
+                .thenReturn(updatedImageFile.getName());
         when(awsFileService.getFileFromS3(anyString(), anyString())).thenReturn(mockURL);
         FeedbackResponse actual = feedbackService.updateFeedback(
-            feedbackId, request, updatedImageFile, user
+                feedbackId, request, updatedImageFile, user
         );
 
         // Then
@@ -248,9 +248,9 @@ class FeedbackServiceTest extends ServiceTest {
         // Given
         Long feedbackId = 2L;
         FeedbackRequest request = FeedbackRequest.builder()
-            .subject("updated").content("aaaa").crossroadId(1L)
-            .category(FeedbackCategory.ETC).secret(Boolean.FALSE)
-            .build();
+                .subject("updated").content("aaaa").crossroadId(1L)
+                .category(FeedbackCategory.ETC).secret(Boolean.FALSE)
+                .build();
         Member otherMember = saveMember("test@test.com", "tester2");
         CustomUser2Member user = getCurrentMember(otherMember.getMemberId(), MemberRole.USER);
 
@@ -259,7 +259,7 @@ class FeedbackServiceTest extends ServiceTest {
             feedbackService.updateFeedback(feedbackId, request, null, user);
         } catch (BusinessException e) {
             assertThat(e.getErrorCode())
-                .isEqualTo(FeedbackErrorCode.FEEDBACK_MODIFIER_NOT_AUTHORIZED);
+                    .isEqualTo(FeedbackErrorCode.FEEDBACK_MODIFIER_NOT_AUTHORIZED);
         }
     }
 
@@ -290,7 +290,7 @@ class FeedbackServiceTest extends ServiceTest {
             feedbackService.deleteFeedback(feedbackId, user);
         } catch (BusinessException e) {
             assertThat(e.getErrorCode())
-                .isEqualTo(FeedbackErrorCode.FEEDBACK_ELIMINATOR_NOT_AUTHORIZED);
+                    .isEqualTo(FeedbackErrorCode.FEEDBACK_ELIMINATOR_NOT_AUTHORIZED);
         }
     }
 
@@ -311,48 +311,48 @@ class FeedbackServiceTest extends ServiceTest {
 
     private Member saveMember(String email, String nickname) {
         return memberRepository.save(
-            Member.builder().email(email).password("123456").role(MemberRole.USER)
-                .nickname(nickname).memberStatus(MemberStatus.ACTIVITY)
-                .profileImageUrl("https://test-image.com/test-123131").build());
+                Member.builder().email(email).password("123456").role(MemberRole.USER)
+                        .nickname(nickname).memberStatus(MemberStatus.ACTIVITY)
+                        .profileImageUrl("https://test-image.com/test-123131").build());
     }
 
     private Member saveAdmin(String email, String nickname) {
         return memberRepository.save(
-            Member.builder().email(email).password("123456").role(MemberRole.ADMIN)
-                .nickname(nickname).memberStatus(MemberStatus.ACTIVITY)
-                .profileImageUrl("https://test-image.com/test-123131").build());
+                Member.builder().email(email).password("123456").role(MemberRole.ADMIN)
+                        .nickname(nickname).memberStatus(MemberStatus.ACTIVITY)
+                        .profileImageUrl("https://test-image.com/test-123131").build());
     }
 
     private Crossroad saveCrossroad(String apiId, String name, double lat, double lng) {
         return crossroadRepository.save(new Crossroad(
-            CrossroadApiResponse.builder().crossroadApiId(apiId).name(name).lat(lat).lng(lng)
-                .build()));
+                CrossroadApiResponse.builder().crossroadApiId(apiId).name(name).lat(lat).lng(lng)
+                        .build()));
     }
 
     private Feedback saveFeedback(String subject, String content, Member member, Crossroad crossroad) {
         return feedbackRepository.save(
-            Feedback.create().subject(subject).content(content).secret(Boolean.FALSE)
-                .category(FeedbackCategory.ETC).member(member).crossroad(crossroad).build());
+                Feedback.create().subject(subject).content(content).secret(Boolean.FALSE)
+                        .category(FeedbackCategory.ETC).member(member).crossroad(crossroad).build());
     }
 
     private Feedback saveSecretFeedback(String subject, String content, Member member, Crossroad crossroad) {
         return feedbackRepository.save(
-            Feedback.create().subject(subject).content(content).secret(Boolean.TRUE)
-                .category(FeedbackCategory.ETC).member(member).crossroad(crossroad).build());
+                Feedback.create().subject(subject).content(content).secret(Boolean.TRUE)
+                        .category(FeedbackCategory.ETC).member(member).crossroad(crossroad).build());
     }
 
     private void saveSoftDeleteFeedback(String subject, String content, Member member,
-        Crossroad crossroad) {
+                                        Crossroad crossroad) {
         final Feedback feedback = Feedback.create().subject(subject).content(content)
-            .secret(Boolean.FALSE).category(FeedbackCategory.ETC).member(member)
-            .crossroad(crossroad).build();
+                .secret(Boolean.FALSE).category(FeedbackCategory.ETC).member(member)
+                .crossroad(crossroad).build();
         feedback.delete();
         feedbackRepository.save(feedback);
     }
 
     private CustomUser2Member getCurrentMember(Long id, MemberRole role) {
         return new CustomUser2Member(
-            new CustomUserDetails(id, "", "",
-                "", "", role, MemberStatus.ACTIVITY));
+                new CustomUserDetails(id, "", "",
+                        "", "", role, MemberStatus.ACTIVITY));
     }
 }

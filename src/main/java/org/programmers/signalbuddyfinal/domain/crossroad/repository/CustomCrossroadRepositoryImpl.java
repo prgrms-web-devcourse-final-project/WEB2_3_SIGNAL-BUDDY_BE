@@ -15,6 +15,9 @@ import org.programmers.signalbuddyfinal.domain.crossroad.entity.Crossroad;
 import static org.programmers.signalbuddyfinal.domain.crossroad.entity.QCrossroad.crossroad;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Repository
 @RequiredArgsConstructor
 public class CustomCrossroadRepositoryImpl implements CustomCrossroadRepository {
