@@ -6,6 +6,7 @@ import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.Notification;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
 import org.programmers.signalbuddyfinal.domain.notification.dto.FcmMessage;
@@ -18,6 +19,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -28,8 +30,12 @@ public class FcmService {
     private final MemberRepository memberRepository;
 
     @Async("customTaskExecutor")
-    public void sendMessage(FcmMessage request, CustomUser2Member user) {
-        FcmToken fcmToken = fcmTokenRepository.findByMemberIdOrThrow(user.getMemberId());
+    public void sendMessage(FcmMessage request, Long receiverId) {
+        Optional<FcmToken> fcmToken = fcmTokenRepository.findByMemberId(receiverId);
+
+        if (fcmToken.isEmpty()) {
+            return;
+        }
 
         Notification notification = Notification.builder()
             .setTitle(request.getTitle())
@@ -37,12 +43,13 @@ public class FcmService {
             .build();
 
         Message message = Message.builder()
-            .setToken(fcmToken.getDeviceToken())
+            .setToken(fcmToken.get().getDeviceToken())
             .setNotification(notification)
             .build();
 
         try {
-            firebaseMessaging.send(message);
+            String notiId = firebaseMessaging.send(message);
+            log.info("notification ID : {}", notiId);
         } catch (FirebaseMessagingException e) {
             throw new BusinessException(FcmErrorCode.FCM_SEND_ERROR);
         }

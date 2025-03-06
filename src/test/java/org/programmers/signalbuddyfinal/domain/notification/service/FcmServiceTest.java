@@ -64,13 +64,36 @@ class FcmServiceTest extends ServiceTest {
         when(firebaseMessaging.send(any(Message.class))).thenReturn("mock_message_id");
 
         // When
-        fcmService.sendMessage(request, user);
+        fcmService.sendMessage(request, user.getMemberId());
 
         // Then
         await()
             .atMost(5, TimeUnit.SECONDS)
             .untilAsserted(() ->
                 verify(firebaseMessaging, times(1)).send(any(Message.class))
+            );
+    }
+
+    @DisplayName("알림 메시지를 보내려고 하지만 사용자가 디바이스 토큰 등록을 하지 않아 알림 전송이 되지 않는다.")
+    @Test
+    void sendMessageNotDeviceToken_Success() throws FirebaseMessagingException {
+        // Given
+        FcmMessage request = FcmMessage.builder()
+            .title("test title").body("test body")
+            .build();
+        Member otherMember = saveMember("test1 email", "other tester");
+        CustomUser2Member user = getCurrentMember(otherMember.getMemberId());
+
+        when(firebaseMessaging.send(any(Message.class))).thenReturn("mock_message_id");
+
+        // When
+        fcmService.sendMessage(request, user.getMemberId());
+
+        // Then
+        await()
+            .atMost(5, TimeUnit.SECONDS)
+            .untilAsserted(() ->
+                verify(firebaseMessaging, times(0)).send(any(Message.class))
             );
     }
 
@@ -96,7 +119,7 @@ class FcmServiceTest extends ServiceTest {
 
         // When & Then
         try {
-            fcmService.sendMessage(request, user);
+            fcmService.sendMessage(request, user.getMemberId());
         } catch (BusinessException e) {
             assertThat(e.getErrorCode()).isEqualTo(FcmErrorCode.FCM_SEND_ERROR);
         }
