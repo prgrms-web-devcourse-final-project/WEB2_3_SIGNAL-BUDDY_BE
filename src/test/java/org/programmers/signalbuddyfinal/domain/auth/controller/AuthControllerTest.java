@@ -26,7 +26,6 @@ import org.programmers.signalbuddyfinal.domain.auth.dto.VerifyCodeRequest;
 import org.programmers.signalbuddyfinal.domain.auth.entity.Purpose;
 import org.programmers.signalbuddyfinal.domain.auth.service.AuthService;
 import org.programmers.signalbuddyfinal.domain.auth.service.EmailService;
-import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
 import org.programmers.signalbuddyfinal.domain.social.entity.Provider;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
 import org.programmers.signalbuddyfinal.global.support.ControllerTest;
@@ -56,7 +55,7 @@ class AuthControllerTest extends ControllerTest {
         String testRefreshToken = "testRefreshToken";
 
         ApiResponse apiResponse = ApiResponse.createSuccessWithNoData();
-        ResponseEntity<ApiResponse<MemberResponse>> response = ResponseEntity.ok()
+        ResponseEntity<ApiResponse<?>> response = ResponseEntity.ok()
             .header("Set-Cookie","refresh-token=" + testRefreshToken)
             .header("Authorization", "Bearer " + testAccessToken)
             .body(apiResponse);
@@ -94,7 +93,7 @@ class AuthControllerTest extends ControllerTest {
         SocialLoginRequest socialLoginRequest = new SocialLoginRequest(Provider.GOOGLE, "1234");
 
         ApiResponse apiResponse = ApiResponse.createSuccessWithNoData();
-        ResponseEntity<ApiResponse<MemberResponse>> response = ResponseEntity.ok()
+        ResponseEntity<ApiResponse<?>> response = ResponseEntity.ok()
             .header("Set-Cookie","refresh-token=" + testRefreshToken)
             .header("Authorization", "Bearer " + testAccessToken)
             .body(apiResponse);
