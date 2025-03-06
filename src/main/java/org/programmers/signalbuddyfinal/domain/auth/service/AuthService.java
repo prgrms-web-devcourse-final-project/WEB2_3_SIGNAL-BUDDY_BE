@@ -62,7 +62,8 @@ public class AuthService {
             .orElse(null);
 
         if (existMember == null) {
-            return ResponseEntity.ok().body(ApiResponse.createSuccess(new ErrorResponse(MemberErrorCode.NOT_FOUND_MEMBER)));
+            return ResponseEntity.ok().body(ApiResponse.createError(
+                new ErrorResponse(MemberErrorCode.NOT_FOUND_MEMBER).getMessage()));
         }
 
         return commonLogin(existMember.getEmail(), null);
@@ -75,7 +76,8 @@ public class AuthService {
         try {
             authentication = createAuthentication(email, password);
         } catch (BusinessException e) {
-            return ResponseEntity.ok().body(ApiResponse.createSuccess(new ErrorResponse(e.getErrorCode())));
+            return ResponseEntity.ok()
+                .body(ApiResponse.createError(new ErrorResponse(e.getErrorCode()).getMessage()));
         }
 
         String accessToken = jwtUtil.generateAccessToken(authentication);
