@@ -10,6 +10,15 @@ import lombok.ToString;
 @AllArgsConstructor
 @ToString
 public class NavigationRequest {
-    private String[] crossroadApiIds;
+    private Coordinate[] coordinates;
     private Boolean isFinished;
+    private Integer radius;
+
+    @Getter
+    @AllArgsConstructor
+    @ToString
+    public static class Coordinate {
+        private Double lat;
+        private Double lng;
+    }
 }
