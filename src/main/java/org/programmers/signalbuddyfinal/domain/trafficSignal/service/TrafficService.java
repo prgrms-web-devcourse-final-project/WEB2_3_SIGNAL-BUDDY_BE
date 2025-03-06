@@ -7,7 +7,6 @@ import org.programmers.signalbuddyfinal.domain.trafficSignal.dto.TrafficResponse
 import org.programmers.signalbuddyfinal.domain.trafficSignal.exception.TrafficErrorCode;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.repository.CustomTrafficRepositoryImpl;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.repository.TrafficRedisRepository;
-import org.programmers.signalbuddyfinal.domain.trafficSignal.repository.TrafficRepository;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,48 +20,36 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class TrafficService {
 
+    private static final String KEY_PREFIX = "traffic:";
+
     private final CustomTrafficRepositoryImpl customTrafficRepository;
     private final TrafficRedisRepository trafficRedisRepository;
-    private final TrafficRepository trafficRepository;
 
-    public void searchAndSaveTraffic(Double lat, Double lng, Integer radius) {
-
+    public void saveAroundTraffic(Double lat, Double lng){
         List<TrafficResponse> aroundTraffics = new ArrayList<>();
 
-        try{
-            aroundTraffics.addAll(customTrafficRepository.findNearestTraffics(lat, lng, radius));
+        aroundTraffics.addAll(customTrafficRepository.findAroundTraffics(lat, lng));
 
-            for(TrafficResponse response : aroundTraffics){
-                if (response.getSerialNumber() != null
-                    && trafficRedisRepository.findBySerial(String.valueOf(response.getSerialNumber()))!=null) {
-                    trafficRedisRepository.save(response);
-                }
+        for(TrafficResponse response : aroundTraffics){
+            if (response.getSerialNumber() != null) {
+                trafficRedisRepository.save(response);
             }
-        } catch (NullPointerException e) {
-            log.error("❌ traffic Not Found : {}", e.getMessage(), e);
-            throw new BusinessException(TrafficErrorCode.NOT_FOUND_TRAFFIC);
         }
     }
 
-    public TrafficResponse trafficFindById(Long serialNumber) {
+    public TrafficResponse trafficFindById(String id) {
 
-        TrafficResponse responseRedis = trafficRedisRepository.findBySerial( String.valueOf(serialNumber) );
+        if( !id.startsWith(KEY_PREFIX)){
+            id = KEY_PREFIX+id;
+        }
 
-        try{
+        TrafficResponse response = trafficRedisRepository.findById(id);
 
-            if (responseRedis == null) {
-                TrafficResponse responseDB = new TrafficResponse( trafficRepository.findBySerialNumber(serialNumber) );
-
-                trafficRedisRepository.save(responseDB);
-                responseRedis = trafficRedisRepository.findBySerial( String.valueOf(serialNumber) );
-            }
-
-        } catch (NullPointerException e) {
-            log.error("❌ traffic Not Found : {}", e.getMessage(), e);
+        if(response.getSerialNumber() == null){
             throw new BusinessException(TrafficErrorCode.NOT_FOUND_TRAFFIC);
         }
 
-        return responseRedis;
+        return response;
 
     }
 }

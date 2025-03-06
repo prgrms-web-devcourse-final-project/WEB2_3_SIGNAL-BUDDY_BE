@@ -22,29 +22,29 @@ public class SignalController {
     @PostMapping("/save")
     public ResponseEntity<ApiResponse<Object>> saveSignalInfo(
         @RequestParam(value="lat") Double lat,
-        @RequestParam(value="lng") Double lng,
-        @RequestParam(value="radius") Integer radius
+        @RequestParam(value="lng") Double lng
     ){
-        crossroadService.searchAndSaveCrossroad(lat,lng,radius);
-        trafficService.searchAndSaveTraffic(lat,lng,radius);
+        crossroadService.saveAroundCrossroad(lat,lng);
+        trafficService.saveAroundTraffic(lat,lng);
 
         return ResponseEntity.ok(ApiResponse.createSuccessWithNoData());
     }
 
-    @GetMapping("find-info/crossroad/{apiId}")
+    @GetMapping("find-info/crossroad/{id}")
     public ResponseEntity<ApiResponse<Object>> findCrossInfo(
-            @PathVariable Long apiId
+            @PathVariable String id
     ){
-        CrossroadResponse crossroad = crossroadService.crossroadFindById(apiId);
+        CrossroadResponse crossroad = crossroadService.crossraodFindById(id);
 
         return ResponseEntity.ok(ApiResponse.createSuccess(crossroad));
+
     }
 
-    @GetMapping("find-info/traffic/{serialNumber}")
+    @GetMapping("find-info/traffic/{id}")
     public ResponseEntity<ApiResponse<Object>> findTrafficInfo(
-            @PathVariable Long serialNumber
+            @PathVariable String id
     ){
-        TrafficResponse traffic = trafficService.trafficFindById(serialNumber);
+        TrafficResponse traffic = trafficService.trafficFindById(id);
 
         return ResponseEntity.ok(ApiResponse.createSuccess(traffic));
     }

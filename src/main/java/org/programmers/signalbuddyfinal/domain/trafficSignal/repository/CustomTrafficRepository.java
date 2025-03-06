@@ -5,7 +5,5 @@ import org.programmers.signalbuddyfinal.domain.trafficSignal.dto.TrafficResponse
 import java.util.List;
 
 public interface CustomTrafficRepository {
-
-    List<TrafficResponse> findNearestTraffics(double lat, double lng, int radius);
-
+    List<TrafficResponse> findAroundTraffics(double latitude, double longitude);
 }

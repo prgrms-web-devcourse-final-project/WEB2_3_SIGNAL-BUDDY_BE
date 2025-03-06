@@ -33,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class CrossroadService {
 
+    private static final String KEY_PREFIX = "crossroad:";
     private static final String STATE_PREFIX = "crossroad-state:";
 
     private final CrossroadRepository crossroadRepository;
@@ -61,42 +62,31 @@ public class CrossroadService {
         }
     }
 
-    public void searchAndSaveCrossroad(Double lat, Double lng, int radius){
+    public void saveAroundCrossroad(Double lat, Double lng){
         List<CrossroadResponse> aroundCrossroads = new ArrayList<>();
 
-        try{
-            aroundCrossroads.addAll(customCrossroadRepository.findNearestCrossroads(lat, lng, radius));
+        aroundCrossroads.addAll(customCrossroadRepository.findAroundCrossroads(lat, lng));
 
-            for(CrossroadResponse response : aroundCrossroads){
-                if (response.getCrossroadId() != null
-                    && crossroadRedisRepository.findById(Long.valueOf(response.getCrossroadApiId() ) ) != null ) {
-                    crossroadRedisRepository.save(response);
-                }
+        for(CrossroadResponse response : aroundCrossroads){
+            if (response.getCrossroadId() != null) {
+                crossroadRedisRepository.save(response);
             }
-        } catch (NullPointerException e) {
-            log.error("❌ crossroad Not Found : {}", e.getMessage(), e);
-            throw new BusinessException(CrossroadErrorCode.NOT_FOUND_CROSSROAD);
         }
     }
 
-    public CrossroadResponse crossroadFindById(Long apiId) {
+    public CrossroadResponse crossraodFindById(String id) {
 
-        CrossroadResponse responseRedis = crossroadRedisRepository.findById(apiId);
+        if( !id.startsWith(KEY_PREFIX)){
+            id = KEY_PREFIX+id;
+        }
 
-        try {
-            if (responseRedis == null) {
-                CrossroadResponse responseDB = new CrossroadResponse(
-                    crossroadRepository.findByCrossroadApiId( String.valueOf(apiId) ) );
+        CrossroadResponse response = crossroadRedisRepository.findById(id);
 
-                crossroadRedisRepository.save(responseDB);
-                responseRedis = crossroadRedisRepository.findById(apiId);
-            }
-        } catch (NullPointerException e) {
-            log.error("❌ crossroad Not Found : {}", e.getMessage(), e);
+        if(response.getCrossroadId() == null){
             throw new BusinessException(CrossroadErrorCode.NOT_FOUND_CROSSROAD);
         }
 
-        return responseRedis;
+        return response;
 
     }
 

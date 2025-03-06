@@ -30,13 +30,8 @@ public class TrafficRedisRepository {
         );
     }
 
-    public TrafficResponse findBySerial(String serialNumber) {
-
-        if( !serialNumber.startsWith(KEY_PREFIX)){
-            serialNumber = KEY_PREFIX + serialNumber;
-        }
-
-        return (TrafficResponse) operations.get(serialNumber);
+    public TrafficResponse findById(String id) {
+        return (TrafficResponse) operations.get(id);
     }
 
 }
