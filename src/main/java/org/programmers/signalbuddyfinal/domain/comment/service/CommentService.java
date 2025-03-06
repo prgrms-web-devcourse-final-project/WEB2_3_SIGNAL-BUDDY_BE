@@ -11,6 +11,8 @@ import org.programmers.signalbuddyfinal.domain.feedback.repository.FeedbackRepos
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
+import org.programmers.signalbuddyfinal.domain.notification.dto.FcmMessage;
+import org.programmers.signalbuddyfinal.domain.notification.service.FcmService;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
@@ -27,6 +29,7 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final MemberRepository memberRepository;
     private final FeedbackRepository feedbackRepository;
+    private final FcmService fcmService;
 
     @Transactional
     public void writeComment(Long feedbackId, CommentRequest request, CustomUser2Member user) {
@@ -44,6 +47,13 @@ public class CommentService {
         }
 
         commentRepository.save(comment);
+
+        // 작성자 본인의 댓글은 알림 발송 안 함
+        if (Member.isNotSameMember(user, feedback.getMember())) {
+            // 피드백 작성자에게 댓글 알림 발송
+            FcmMessage message = makeCommentNotiMessage(user.getNickname(), feedback.getSubject());
+            fcmService.sendMessage(message, feedback.getMember().getMemberId());
+        }
     }
 
     public PageResponse<CommentResponse> searchCommentList(Long feedbackId, Pageable pageable) {
@@ -81,5 +91,14 @@ public class CommentService {
         }
 
         commentRepository.deleteById(commentId);
+    }
+
+    private FcmMessage makeCommentNotiMessage(
+        String commentWriterNickname, String feedbackSubject
+    ) {
+        return FcmMessage.builder()
+            .title("\uD83D\uDEA6 [" + commentWriterNickname + "]님이 당신의 피드백에 답변을 남겼어요!")
+            .body("\"" + feedbackSubject + "\"에 [" + commentWriterNickname + "]님의 의견이 추가되었습니다. 확인해 보시겠어요?")
+            .build();
     }
 }
