@@ -136,7 +136,7 @@ public class SignalControllerTest extends ControllerTest {
                                 .tag(tag)
                                 .summary("신호등 정보 호출")
                                 .pathParameters(
-                                        parameterWithName("id").type(SimpleType.NUMBER).description("Redis Id -> Crossroad_api_id")
+                                        parameterWithName("id").description("Redis Id -> Crossroad_api_id")
                                 )
                                 .responseFields(
                                         fieldWithPath("data.crossroadId").description("id 값"),
@@ -181,7 +181,7 @@ public class SignalControllerTest extends ControllerTest {
                                                 .tag(tag)
                                                 .summary("보행등 정보 호출")
                                                 .pathParameters(
-                                                        parameterWithName("id").type(SimpleType.NUMBER).description("Redis Id -> Traffic_serialNumber")
+                                                        parameterWithName("id").description("Redis Id -> Traffic_serialNumber")
                                                 )
                                                 .responseFields(
                                                         fieldWithPath("data.serialNumber").description("serialNumber 값"),
