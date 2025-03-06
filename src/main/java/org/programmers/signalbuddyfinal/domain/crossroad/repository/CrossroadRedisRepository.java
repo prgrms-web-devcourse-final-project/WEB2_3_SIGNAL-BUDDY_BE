@@ -16,7 +16,7 @@ public class CrossroadRedisRepository {
     private final RedisTemplate<Object, Object> redisTemplate;
     private ValueOperations<Object, Object> operations;
 
-    private static final String KEY_PREFIX = "Crossroad_";
+    private static final String KEY_PREFIX = "crossroad:";
 
     @PostConstruct
     private void init() {

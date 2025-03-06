@@ -20,6 +20,8 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class TrafficService {
 
+    private static final String KEY_PREFIX = "traffic:";
+
     private final CustomTrafficRepositoryImpl customTrafficRepository;
     private final TrafficRedisRepository trafficRedisRepository;
 
@@ -37,8 +39,8 @@ public class TrafficService {
 
     public TrafficResponse trafficFindById(String id) {
 
-        if( !id.startsWith("Traffic_")){
-            id = "Traffic_"+id;
+        if( !id.startsWith(KEY_PREFIX)){
+            id = KEY_PREFIX+id;
         }
 
         TrafficResponse response = trafficRedisRepository.findById(id);

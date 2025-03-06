@@ -16,7 +16,7 @@ public class TrafficRedisRepository {
     private final RedisTemplate<Object, Object> redisTemplate;
     private ValueOperations<Object, Object> operations;
 
-    private static final String KEY_PREFIX = "Traffic_";
+    private static final String KEY_PREFIX = "traffic:";
 
     @PostConstruct
     private void init() {

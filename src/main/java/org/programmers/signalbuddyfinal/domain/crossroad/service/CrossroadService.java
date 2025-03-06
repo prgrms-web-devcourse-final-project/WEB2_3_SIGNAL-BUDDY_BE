@@ -33,7 +33,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class CrossroadService {
 
+    private static final String KEY_PREFIX = "crossroad:";
     private static final String STATE_PREFIX = "crossroad-state:";
+
     private final CrossroadRepository crossroadRepository;
     private final CrossroadRedisRepository crossroadRedisRepository;
     private final CustomCrossroadRepositoryImpl customCrossroadRepository;
@@ -74,8 +76,8 @@ public class CrossroadService {
 
     public CrossroadResponse crossraodFindById(String id) {
 
-        if( !id.startsWith("Crossroad_")){
-            id = "Traffic_"+id;
+        if( !id.startsWith(KEY_PREFIX)){
+            id = KEY_PREFIX+id;
         }
 
         CrossroadResponse response = crossroadRedisRepository.findById(id);
