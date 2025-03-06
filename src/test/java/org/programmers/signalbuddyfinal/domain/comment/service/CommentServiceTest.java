@@ -1,6 +1,11 @@
 package org.programmers.signalbuddyfinal.domain.comment.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.util.Optional;
 import org.assertj.core.api.SoftAssertions;
@@ -25,11 +30,14 @@ import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
+import org.programmers.signalbuddyfinal.domain.notification.dto.FcmMessage;
+import org.programmers.signalbuddyfinal.domain.notification.service.FcmService;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
 import org.programmers.signalbuddyfinal.global.support.ServiceTest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 
 @Transactional
@@ -51,6 +59,9 @@ class CommentServiceTest extends ServiceTest {
     @Autowired
     private CrossroadRepository crossroadRepository;
 
+    @MockitoBean
+    private FcmService fcmService;
+
     private Member member;
     private Member admin;
     private Feedback feedback;
@@ -58,48 +69,28 @@ class CommentServiceTest extends ServiceTest {
 
     @BeforeEach
     void setup() {
-        member = Member.builder().email("test@test.com").password("123456").role(MemberRole.USER)
-            .nickname("tester").memberStatus(MemberStatus.ACTIVITY)
-            .profileImageUrl("https://test-image.com/test-123131").build();
-        member = memberRepository.save(member);
+        member = saveMember("test@test.com", "tester");
+        admin = saveAdmin("admin@test.com", "admin");
 
-        admin = Member.builder().email("admin@test.com").password("123456").role(MemberRole.ADMIN)
-            .nickname("admin").memberStatus(MemberStatus.ACTIVITY)
-            .profileImageUrl("https://test-image.com/test-123131").build();
-        admin = memberRepository.save(admin);
+        Crossroad crossroad = saveCrossroad("13214", "00사거리", 37.12222, 127.12132);
 
-        Crossroad crossroad = new Crossroad(CrossroadApiResponse.builder()
-            .crossroadApiId("13214").name("00사거리")
-            .lat(37.12222).lng(127.12132)
-            .build());
-        crossroad = crossroadRepository.save(crossroad);
+        feedback = saveFeedback("test subject", "test content", member, crossroad);
 
-        String subject = "test subject";
-        String content = "test content";
-        Feedback entity = Feedback.create()
-            .subject(subject).content(content).secret(Boolean.FALSE)
-            .category(FeedbackCategory.ETC)
-            .member(member).crossroad(crossroad)
-            .build();
-        feedback = feedbackRepository.save(entity);
-
-        comment = Comment.create()
-            .content("test comment content")
-            .feedback(feedback).member(member).build();
-        comment = commentRepository.save(comment);
+        comment = saveComment("test comment content", member, feedback);
     }
 
-    @DisplayName("일반 사용자가 댓글을 작성한다.")
+    @DisplayName("일반 사용자가 자신의 피드백이 아닌 글에 댓글을 작성한다.")
     @Test
     @Order(1)
     void writeComment() {
         // given
         Long feedbackId = feedback.getFeedbackId();
+        Member otherMember = saveMember("other@test.com", "other tester");
         String content = "test comment content";
         CommentRequest request = new CommentRequest(content);
-        CustomUser2Member user = new CustomUser2Member(
-            new CustomUserDetails(member.getMemberId(), "", "",
-                "", "", MemberRole.USER, MemberStatus.ACTIVITY));
+        CustomUser2Member user = getCurrentMember(otherMember.getMemberId(), MemberRole.USER);
+
+        doNothing().when(fcmService).sendMessage(any(FcmMessage.class), anyLong());
 
         // when
         commentService.writeComment(feedbackId, request, user);
@@ -115,19 +106,51 @@ class CommentServiceTest extends ServiceTest {
             softAssertions.assertThat(actual.get().getFeedback().getFeedbackId())
                 .isEqualTo(feedbackId);
         });
+        verify(fcmService, times(1))
+            .sendMessage(any(FcmMessage.class), anyLong());
+    }
+
+    @DisplayName("사용자가 자신의 피드백에 댓글을 남긴다.")
+    @Test
+    @Order(2)
+    void writeComment_SameWriter() {
+        // given
+        Long feedbackId = feedback.getFeedbackId();
+        String content = "test comment content";
+        CommentRequest request = new CommentRequest(content);
+        CustomUser2Member user = getCurrentMember(member.getMemberId(), MemberRole.USER);
+
+        doNothing().when(fcmService).sendMessage(any(FcmMessage.class), anyLong());
+
+        // when
+        commentService.writeComment(feedbackId, request, user);
+
+        // then
+        Optional<Comment> actual = commentRepository.findById(2L);
+        SoftAssertions.assertSoftly(softAssertions -> {
+            softAssertions.assertThat(actual).get().isNotNull();
+            softAssertions.assertThat(actual.get().getCommentId()).isNotNull();
+            softAssertions.assertThat(actual.get().getContent()).isEqualTo(content);
+            softAssertions.assertThat(actual.get().getMember().getMemberId())
+                .isEqualTo(user.getMemberId());
+            softAssertions.assertThat(actual.get().getFeedback().getFeedbackId())
+                .isEqualTo(feedbackId);
+        });
+        verify(fcmService, times(0))
+            .sendMessage(any(FcmMessage.class), anyLong());
     }
 
     @DisplayName("관리자가 댓글(답변)을 작성한다.")
     @Test
-    @Order(2)
+    @Order(3)
     void writeCommentByAdmin() {
         // given
         Long feedbackId = feedback.getFeedbackId();
         String content = "test admin comment content";
         CommentRequest request = new CommentRequest(content);
-        CustomUser2Member user = new CustomUser2Member(
-            new CustomUserDetails(admin.getMemberId(), "", "",
-                "", "", MemberRole.ADMIN, MemberStatus.ACTIVITY));
+        CustomUser2Member user = getCurrentMember(admin.getMemberId(), MemberRole.ADMIN);
+
+        doNothing().when(fcmService).sendMessage(any(FcmMessage.class), anyLong());
 
         // when
         commentService.writeComment(feedbackId, request, user);
@@ -145,18 +168,18 @@ class CommentServiceTest extends ServiceTest {
             softAssertions.assertThat(actual.get().getFeedback().getAnswerStatus())
                 .isEqualTo(AnswerStatus.COMPLETION);
         });
+        verify(fcmService, times(1))
+            .sendMessage(any(FcmMessage.class), anyLong());
     }
 
     @DisplayName("본인의 댓글을 수정한다.")
     @Test
-    @Order(3)
+    @Order(4)
     void updateComment() {
         // given
         String updatedContent = "update comment content";
         CommentRequest request = new CommentRequest(updatedContent);
-        CustomUser2Member user = new CustomUser2Member(
-            new CustomUserDetails(member.getMemberId(), "", "",
-                "", "", MemberRole.USER, MemberStatus.ACTIVITY));
+        CustomUser2Member user = getCurrentMember(member.getMemberId(), MemberRole.USER);
 
         // when
         commentService.updateComment(comment.getCommentId(), request, user);
@@ -173,14 +196,12 @@ class CommentServiceTest extends ServiceTest {
 
     @DisplayName("댓글 작성자와 다른 사람이 수정 시, 실패한다.")
     @Test
-    @Order(4)
+    @Order(5)
     void updateCommentFailure() {
         // given
         String updatedContent = "update comment content";
         CommentRequest request = new CommentRequest(updatedContent);
-        CustomUser2Member user = new CustomUser2Member(
-            new CustomUserDetails(999999L, "", "",
-                "", "", MemberRole.USER, MemberStatus.ACTIVITY));
+        CustomUser2Member user = getCurrentMember(999999L, MemberRole.USER);
 
         // when & then
         try {
@@ -193,12 +214,10 @@ class CommentServiceTest extends ServiceTest {
 
     @DisplayName("일반 사용자가 본인 댓글을 삭제한다.")
     @Test
-    @Order(5)
+    @Order(6)
     void deleteComment() {
         // given
-        CustomUser2Member user = new CustomUser2Member(
-            new CustomUserDetails(member.getMemberId(), "", "",
-                "", "", MemberRole.USER, MemberStatus.ACTIVITY));
+        CustomUser2Member user = getCurrentMember(member.getMemberId(), MemberRole.USER);
 
         // when
         commentService.deleteComment(comment.getCommentId(), user);
@@ -209,12 +228,10 @@ class CommentServiceTest extends ServiceTest {
 
     @DisplayName("관리자가 일반 사용자의 댓글을 삭제한다.")
     @Test
-    @Order(6)
+    @Order(7)
     void deleteCommentByAdmin() {
         // given
-        CustomUser2Member user = new CustomUser2Member(
-            new CustomUserDetails(admin.getMemberId(), "", "",
-                "", "", MemberRole.ADMIN, MemberStatus.ACTIVITY));
+        CustomUser2Member user = getCurrentMember(admin.getMemberId(), MemberRole.ADMIN);
 
         // when
         commentService.deleteComment(comment.getCommentId(), user);
@@ -225,12 +242,10 @@ class CommentServiceTest extends ServiceTest {
 
     @DisplayName("댓글 작성자와 다른 사람이 삭제 시, 실패한다.")
     @Test
-    @Order(7)
+    @Order(8)
     void deleteCommentFailure() {
         // given
-        CustomUser2Member user = new CustomUser2Member(
-            new CustomUserDetails(999999L, "", "",
-                "", "", MemberRole.USER, MemberStatus.ACTIVITY));
+        CustomUser2Member user = getCurrentMember(999999L, MemberRole.USER);
 
         // when & then
         try {
@@ -243,15 +258,13 @@ class CommentServiceTest extends ServiceTest {
 
     @DisplayName("관리자 본인의 댓글(답변)을 삭제한다.")
     @Test
-    @Order(8)
+    @Order(9)
     void deleteAdminComment() {
         // given
         Long feedbackId = feedback.getFeedbackId();
         String content = "test admin comment content";
         CommentRequest request = new CommentRequest(content);
-        CustomUser2Member user = new CustomUser2Member(
-            new CustomUserDetails(admin.getMemberId(), "", "",
-                "", "", MemberRole.ADMIN, MemberStatus.ACTIVITY));
+        CustomUser2Member user = getCurrentMember(admin.getMemberId(), MemberRole.ADMIN);
 
         // when
         commentService.writeComment(feedbackId, request, user);
@@ -264,5 +277,42 @@ class CommentServiceTest extends ServiceTest {
                     feedbackRepository.findById(feedback.getFeedbackId()).get().getAnswerStatus())
                 .isEqualTo(AnswerStatus.BEFORE);
         });
+    }
+
+    private Member saveMember(String email, String nickname) {
+        return memberRepository.save(
+            Member.builder().email(email).password("123456").role(MemberRole.USER)
+                .nickname(nickname).memberStatus(MemberStatus.ACTIVITY)
+                .profileImageUrl("https://test-image.com/test-123131").build());
+    }
+
+    private Member saveAdmin(String email, String nickname) {
+        return memberRepository.save(
+            Member.builder().email(email).password("123456").role(MemberRole.ADMIN)
+                .nickname(nickname).memberStatus(MemberStatus.ACTIVITY)
+                .profileImageUrl("https://test-image.com/test-123131").build());
+    }
+
+    private Crossroad saveCrossroad(String apiId, String name, double lat, double lng) {
+        return crossroadRepository.save(new Crossroad(
+            CrossroadApiResponse.builder().crossroadApiId(apiId).name(name).lat(lat).lng(lng)
+                .build()));
+    }
+
+    private Feedback saveFeedback(String subject, String content, Member member, Crossroad crossroad) {
+        return feedbackRepository.save(
+            Feedback.create().subject(subject).content(content).secret(Boolean.FALSE)
+                .category(FeedbackCategory.ETC).member(member).crossroad(crossroad).build());
+    }
+
+    private Comment saveComment(String content, Member member, Feedback feedback) {
+        return commentRepository.save(
+            Comment.create().content(content).feedback(feedback).member(member).build());
+    }
+
+    private CustomUser2Member getCurrentMember(Long id, MemberRole role) {
+        return new CustomUser2Member(
+            new CustomUserDetails(id, "", "",
+                "", "", role, MemberStatus.ACTIVITY));
     }
 }
