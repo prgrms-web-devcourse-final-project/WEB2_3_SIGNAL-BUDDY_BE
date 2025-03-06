@@ -27,7 +27,7 @@ public class AuthController {
     private final EmailService emailService;
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<MemberResponse>> login(@RequestBody LoginRequest loginRequest){
+    public ResponseEntity<ApiResponse<?>> login(@RequestBody LoginRequest loginRequest){
         return authService.login(loginRequest);
     }
 
@@ -50,7 +50,7 @@ public class AuthController {
     }
 
     @PostMapping("/social-login")
-    public ResponseEntity<ApiResponse<MemberResponse>> socialLogin(@RequestBody SocialLoginRequest socialLoginRequest){
+    public ResponseEntity<ApiResponse<?>> socialLogin(@RequestBody SocialLoginRequest socialLoginRequest){
         return authService.socialLogin(socialLoginRequest);
     }
 
