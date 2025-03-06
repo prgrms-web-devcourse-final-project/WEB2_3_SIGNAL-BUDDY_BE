@@ -35,11 +35,4 @@ public class TrafficSignal {
     @Column(nullable = false)
     private Point coordinate;
 
-    public TrafficSignal(TrafficFileResponse response) {
-        this.serialNumber = response.getSerial();
-        this.district = response.getDistrict();
-        this.signalType = response.getSignalType();
-        this.address = response.getAddress();
-        this.coordinate = response.toPoint();
-    }
 }
