@@ -4,6 +4,7 @@ import com.opencsv.bean.CsvBindByName;
 import com.opencsv.bean.CsvNumber;
 import lombok.*;
 import org.locationtech.jts.geom.Point;
+import org.programmers.signalbuddyfinal.domain.trafficSignal.entity.TrafficSignal;
 import org.programmers.signalbuddyfinal.global.util.PointUtil;
 
 @Getter
