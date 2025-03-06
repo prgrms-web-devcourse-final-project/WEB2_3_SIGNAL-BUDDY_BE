@@ -10,6 +10,7 @@ import org.programmers.signalbuddyfinal.global.util.PointUtil;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor
 public class TrafficResponse {
+
     private Long serialNumber;
 
     private String district;

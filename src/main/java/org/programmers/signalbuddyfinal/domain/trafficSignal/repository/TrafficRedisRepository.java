@@ -2,6 +2,7 @@ package org.programmers.signalbuddyfinal.domain.trafficSignal.repository;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import org.programmers.signalbuddyfinal.domain.trafficSignal.dto.TrafficResponse;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.entity.TrafficSignal;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
@@ -23,15 +24,15 @@ public class TrafficRedisRepository {
         this.operations = redisTemplate.opsForValue();
     }
 
-    public void save(TrafficSignal TrafficSignal) {
+    public void save(TrafficResponse trafficResponse) {
         operations.set(
-                KEY_PREFIX + TrafficSignal.getSerialNumber(), TrafficSignal,
+                KEY_PREFIX + trafficResponse.getSerialNumber(), trafficResponse,
                 Duration.ofMinutes(5)
         );
     }
 
-    public TrafficSignal findById(Object id) {
-        return (TrafficSignal) operations.get(id);
+    public TrafficResponse findById(String id) {
+        return (TrafficResponse) operations.get(id);
     }
 
 }

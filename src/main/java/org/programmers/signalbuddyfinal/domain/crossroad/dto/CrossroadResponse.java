@@ -16,6 +16,9 @@ import lombok.ToString;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
+@ToString
+@EqualsAndHashCode
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class CrossroadResponse {
 
     private Long crossroadId;
@@ -36,6 +39,7 @@ public class CrossroadResponse {
 
     public CrossroadResponse(Crossroad crossroad) {
         this.crossroadId = crossroad.getCrossroadId();
+        this.crossroadApiId = crossroad.getCrossroadApiId();
         this.name = crossroad.getName();
         this.lat = crossroad.getCoordinate().getY();
         this.lng = crossroad.getCoordinate().getX();

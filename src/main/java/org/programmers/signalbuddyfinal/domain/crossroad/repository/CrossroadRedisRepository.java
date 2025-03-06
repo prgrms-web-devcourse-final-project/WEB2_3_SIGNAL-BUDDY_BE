@@ -2,7 +2,7 @@ package org.programmers.signalbuddyfinal.domain.crossroad.repository;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import org.programmers.signalbuddyfinal.domain.crossroad.entity.Crossroad;
+import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadResponse;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Repository;
@@ -23,15 +23,15 @@ public class CrossroadRedisRepository {
         this.operations = redisTemplate.opsForValue();
     }
 
-    public void save(Crossroad crossroad) {
+    public void save(CrossroadResponse crossroadResponse) {
         operations.set(
-                KEY_PREFIX + crossroad.getCrossroadApiId(), crossroad,
+                KEY_PREFIX + crossroadResponse.getCrossroadApiId(), crossroadResponse,
                 Duration.ofMinutes(5)
         );
     }
 
-    public Crossroad findById(Object id) {
-        return (Crossroad) operations.get(id);
+    public CrossroadResponse findById(String id) {
+        return (CrossroadResponse) operations.get(id);
     }
 
 }

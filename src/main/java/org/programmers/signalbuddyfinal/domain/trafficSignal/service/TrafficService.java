@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.programmers.signalbuddyfinal.domain.crossroad.exception.CrossroadErrorCode;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.dto.TrafficResponse;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.entity.TrafficSignal;
+import org.programmers.signalbuddyfinal.domain.trafficSignal.exception.TrafficErrorCode;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.repository.CustomTrafficRepositoryImpl;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.repository.TrafficRedisRepository;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
@@ -31,17 +32,21 @@ public class TrafficService {
 
         for(TrafficResponse response : aroundTraffics){
             if (response.getSerialNumber() != null) {
-                trafficRedisRepository.save(new TrafficSignal(response));
+                trafficRedisRepository.save(response);
             }
         }
     }
 
-    public TrafficResponse trafficFindById(Object id) {
+    public TrafficResponse trafficFindById(String id) {
 
-        TrafficResponse response = new TrafficResponse(trafficRedisRepository.findById(id));
+        if( !id.startsWith("Traffic_")){
+            id = "Traffic_"+id;
+        }
+
+        TrafficResponse response = trafficRedisRepository.findById(id);
 
         if(response.getSerialNumber() == null){
-            throw new BusinessException(CrossroadErrorCode.NOT_FOUND_CROSSROAD);
+            throw new BusinessException(TrafficErrorCode.NOT_FOUND_TRAFFIC);
         }
 
         return response;

@@ -44,12 +44,4 @@ public class TrafficSignal {
         this.coordinate = response.toPoint();
     }
 
-    public TrafficSignal(TrafficResponse response) {
-        this.serialNumber = response.getSerialNumber();
-        this.district = response.getDistrict();
-        this.signalType = response.getSignalType();
-        this.address = response.getAddress();
-        this.coordinate = response.toPoint();
-    }
-
 }

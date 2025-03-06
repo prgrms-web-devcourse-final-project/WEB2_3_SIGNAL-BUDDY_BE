@@ -1,7 +1,9 @@
 package org.programmers.signalbuddyfinal.domain.unifiedSignal.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadResponse;
 import org.programmers.signalbuddyfinal.domain.crossroad.service.CrossroadService;
+import org.programmers.signalbuddyfinal.domain.trafficSignal.dto.TrafficResponse;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.service.TrafficService;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
 import org.springframework.http.ResponseEntity;
@@ -19,8 +21,8 @@ public class SignalController {
 
     @PostMapping("/save")
     public ResponseEntity<ApiResponse<Object>> saveSignalInfo(
-        @RequestParam(value="lat") double lat,
-        @RequestParam(value="lng") double lng
+        @RequestParam(value="lat") Double lat,
+        @RequestParam(value="lng") Double lng
     ){
         crossroadService.saveAroundCrossroad(lat,lng);
         trafficService.saveAroundTraffic(lat,lng);
@@ -28,20 +30,22 @@ public class SignalController {
         return ResponseEntity.ok(ApiResponse.createSuccessWithNoData());
     }
 
-    @GetMapping("find-info/{id}")
-    public ResponseEntity<ApiResponse<Object>> findSignalInfo(
+    @GetMapping("find-info/crossroad/{id}")
+    public ResponseEntity<ApiResponse<Object>> findCrossInfo(
             @PathVariable String id
     ){
-        Object signal = new Object();
+        CrossroadResponse crossroad = crossroadService.crossraodFindById(id);
 
-        if(id.startsWith("Crossroad")){
-            signal = crossroadService.crossraodFindById(id);
-        } else if (id.startsWith("Traffic")){
-            signal = trafficService.trafficFindById(id);
-        }
-
-        return ResponseEntity.ok(ApiResponse.createSuccess(signal));
+        return ResponseEntity.ok(ApiResponse.createSuccess(crossroad));
 
     }
 
+    @GetMapping("find-info/traffic/{id}")
+    public ResponseEntity<ApiResponse<Object>> findTrafficInfo(
+            @PathVariable String id
+    ){
+        TrafficResponse traffic = trafficService.trafficFindById(id);
+
+        return ResponseEntity.ok(ApiResponse.createSuccess(traffic));
+    }
 }

@@ -28,9 +28,6 @@ import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -76,9 +73,13 @@ public class CrossroadService {
         }
     }
 
-    public CrossroadResponse crossraodFindById(Object id) {
+    public CrossroadResponse crossraodFindById(String id) {
 
-        CrossroadResponse response = new CrossroadResponse(crossroadRedisRepository.findById(id));
+        if( !id.startsWith("Crossroad_")){
+            id = "Traffic_"+id;
+        }
+
+        CrossroadResponse response = crossroadRedisRepository.findById(id);
 
         if(response.getCrossroadId() == null){
             throw new BusinessException(CrossroadErrorCode.NOT_FOUND_CROSSROAD);
