@@ -12,6 +12,7 @@ import org.programmers.signalbuddyfinal.domain.member.exception.MemberErrorCode;
 import org.programmers.signalbuddyfinal.domain.member.mapper.MemberMapper;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
+import org.programmers.signalbuddyfinal.global.exception.advice.dto.ErrorResponse;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
 import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
 import org.programmers.signalbuddyfinal.global.security.jwt.JwtService;
@@ -47,26 +48,35 @@ public class AuthService {
     }
 
     // 기본 로그인
-    public ResponseEntity<ApiResponse<MemberResponse>> login(LoginRequest loginRequest) {
+    public ResponseEntity<ApiResponse<?>> login(LoginRequest loginRequest) {
 
         return commonLogin(loginRequest.getId(), loginRequest.getPassword());
     }
 
     // 소셜 로그인
-    public ResponseEntity<ApiResponse<MemberResponse>> socialLogin(
+    public ResponseEntity<ApiResponse<?>> socialLogin(
         SocialLoginRequest socialLoginRequest) {
 
         Member existMember = memberRepository.findByProviderAndSocialId(
                 socialLoginRequest.getProvider(), socialLoginRequest.getSocialUserId())
-            .orElseThrow(() -> new BusinessException(MemberErrorCode.NOT_FOUND_MEMBER));
+            .orElse(null);
+
+        if (existMember == null) {
+            return ResponseEntity.ok().body(ApiResponse.createSuccess(new ErrorResponse(MemberErrorCode.NOT_FOUND_MEMBER)));
+        }
 
         return commonLogin(existMember.getEmail(), null);
     }
 
     // 공통 로그인 로직
-    private ResponseEntity<ApiResponse<MemberResponse>> commonLogin(String email, String password) {
+    private ResponseEntity<ApiResponse<?>> commonLogin(String email, String password) {
 
-        Authentication authentication = createAuthentication(email, password);
+        Authentication authentication = null;
+        try {
+            authentication = createAuthentication(email, password);
+        } catch (BusinessException e) {
+            return ResponseEntity.ok().body(ApiResponse.createSuccess(new ErrorResponse(e.getErrorCode())));
+        }
 
         String accessToken = jwtUtil.generateAccessToken(authentication);
         String refreshToken = jwtUtil.generateRefreshToken(authentication);
