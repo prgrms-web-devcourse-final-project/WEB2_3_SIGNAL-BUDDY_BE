@@ -17,7 +17,6 @@ import org.programmers.signalbuddyfinal.domain.crossroad.exception.CrossroadErro
 import org.programmers.signalbuddyfinal.domain.crossroad.mapper.CrossroadMapper;
 import org.programmers.signalbuddyfinal.domain.crossroad.repository.CrossroadRedisRepository;
 import org.programmers.signalbuddyfinal.domain.crossroad.repository.CrossroadRepository;
-import org.programmers.signalbuddyfinal.domain.crossroad.repository.CustomCrossroadRepository;
 import org.programmers.signalbuddyfinal.domain.crossroad.repository.CustomCrossroadRepositoryImpl;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.monitoring.HttpRequestManager;

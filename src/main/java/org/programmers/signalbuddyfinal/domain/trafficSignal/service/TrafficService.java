@@ -3,9 +3,7 @@ package org.programmers.signalbuddyfinal.domain.trafficSignal.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.programmers.signalbuddyfinal.domain.crossroad.exception.CrossroadErrorCode;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.dto.TrafficResponse;
-import org.programmers.signalbuddyfinal.domain.trafficSignal.entity.TrafficSignal;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.exception.TrafficErrorCode;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.repository.CustomTrafficRepositoryImpl;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.repository.TrafficRedisRepository;

@@ -10,7 +10,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.locationtech.jts.geom.Point;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.dto.TrafficFileResponse;
-import org.programmers.signalbuddyfinal.domain.trafficSignal.dto.TrafficResponse;
 
 @Entity(name = "traffic_signals")
 @Getter

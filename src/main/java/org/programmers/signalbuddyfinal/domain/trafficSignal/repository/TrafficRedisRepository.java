@@ -3,7 +3,6 @@ package org.programmers.signalbuddyfinal.domain.trafficSignal.repository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.dto.TrafficResponse;
-import org.programmers.signalbuddyfinal.domain.trafficSignal.entity.TrafficSignal;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Repository;
