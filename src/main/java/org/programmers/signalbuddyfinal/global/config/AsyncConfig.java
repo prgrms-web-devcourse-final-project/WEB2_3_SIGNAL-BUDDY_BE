@@ -19,14 +19,16 @@ public class AsyncConfig implements AsyncConfigurer {
     }
 
     @Override
-    @Bean(name = "emailExecutor")
+    @Bean(name = "customTaskExecutor")
     public Executor getAsyncExecutor() {
+        int processors = Runtime.getRuntime().availableProcessors();
+
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(10);
-        executor.setMaxPoolSize(50);
-        executor.setQueueCapacity(20);
-        executor.setKeepAliveSeconds(30);
-        executor.setThreadNamePrefix("AsyncEmailExecutor-");
+        executor.setCorePoolSize(processors);
+        executor.setMaxPoolSize(processors * 2);
+        executor.setQueueCapacity(1000);
+        executor.setKeepAliveSeconds(60);
+        executor.setThreadNamePrefix("AsyncExecutor-");
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         executor.initialize();
 
