@@ -1,6 +1,7 @@
 package org.programmers.signalbuddyfinal.domain.crossroad.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -69,6 +70,16 @@ public class MapWebSocketHandler extends TextWebSocketHandler {
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
         log.info("Map WebSocket Disconnected: {}\nCode: {}\nReason: {}", session.getId(),
             status.getCode(), (status.getReason() != null ? status.getReason() : NO_REASON));
+    }
+
+    @Override
+    public void handleTransportError(WebSocketSession session, Throwable exception) {
+        log.error("WebSocket Transport Error: {}", exception.getMessage(), exception);
+        try {
+            session.close(new CloseStatus(CloseStatus.SERVER_ERROR.getCode(), SERVER_ERROR));
+        } catch (IOException e) {
+            log.error("Error closing WebSocket session", e);
+        }
     }
 
 

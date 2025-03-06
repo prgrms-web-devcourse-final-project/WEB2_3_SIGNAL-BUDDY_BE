@@ -9,6 +9,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import static org.mockito.Mockito.doAnswer;
@@ -20,6 +21,7 @@ import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadStateResponse;
 import org.programmers.signalbuddyfinal.domain.crossroad.dto.NavigationRequest;
+import org.programmers.signalbuddyfinal.domain.crossroad.dto.NavigationRequest.Coordinate;
 import org.programmers.signalbuddyfinal.domain.crossroad.service.CrossroadService;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
 import org.springframework.web.socket.TextMessage;
@@ -50,7 +52,9 @@ class NavigationWebSocketHandlerTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        navigationRequest = new NavigationRequest(new String[]{"1", "2", "3"}, false);
+        navigationRequest = new NavigationRequest(
+            new Coordinate[]{new Coordinate(37.6042, 127.0251), new Coordinate(37.5773, 126.9880)},
+            false, 50);
 
         mockResponse = List.of(
             CrossroadStateResponse.builder().crossroadId(1L).eastTimeLeft(30).westTimeLeft(20)
@@ -60,20 +64,22 @@ class NavigationWebSocketHandlerTest {
             CrossroadStateResponse.builder().crossroadId(3L).northTimeLeft(35).southTimeLeft(15)
                 .build());
 
-        lenient().when(objectMapper.writeValueAsString(any()))
-            .thenAnswer(invocation -> new ObjectMapper().writeValueAsString(invocation.getArgument(0)));
+        lenient().when(objectMapper.writeValueAsString(any())).thenAnswer(
+            invocation -> new ObjectMapper().writeValueAsString(invocation.getArgument(0)));
     }
 
 
     @DisplayName("WebSocket 메시지를 처리하면 신호 상태 응답 반환")
     @Test
     void handleTextSuccess() throws Exception {
-        final String payload = "{\"crossroadApiIds\":[\"1\",\"2\",\"3\"],\"isFinished\":false}";
+        final String payload = "{\"coordinates\":[{\"lat\":37.6042,\"lng\":127.0251},{\"lat\":37.5773,\"lng\":126.9880}],\"isFinished\":false,\"radius\":50}";
         final TextMessage message = new TextMessage(payload);
 
-        when(objectMapper.readValue(payload, NavigationRequest.class)).thenReturn(navigationRequest);
-        when(crossroadService.getCrossroadIdsByApiIds(any())).thenReturn(List.of(1L, 2L, 3L));
-        when(crossroadService.checkSignalState(any(Long.class))).thenReturn(mockResponse.get(0), mockResponse.get(1), mockResponse.get(2));
+        when(objectMapper.readValue(payload, NavigationRequest.class)).thenReturn(
+            navigationRequest);
+        when(crossroadService.getCrossroadIdsByCoordinates(any(), anyInt())).thenReturn(List.of(1L, 2L, 3L));
+        when(crossroadService.checkSignalState(any(Long.class))).thenReturn(mockResponse.get(0),
+            mockResponse.get(1), mockResponse.get(2));
 
         final CompletableFuture<String> futureResponse = new CompletableFuture<>();
         doAnswer(invocation -> {
@@ -85,18 +91,21 @@ class NavigationWebSocketHandlerTest {
         webSocketHandler.handleTextMessage(session, message);
 
         final String responsePayload = futureResponse.get();
-        assertThat(responsePayload).isEqualTo(objectMapper.writeValueAsString(ApiResponse.createSuccess(mockResponse)));
+        assertThat(responsePayload).isEqualTo(
+            objectMapper.writeValueAsString(ApiResponse.createSuccess(mockResponse)));
 
-        verify(crossroadService, times(1)).getCrossroadIdsByApiIds(any());
+        verify(crossroadService, times(1)).getCrossroadIdsByCoordinates(any(), anyInt());
         verify(crossroadService, times(3)).checkSignalState(any(Long.class));
     }
 
     @DisplayName("경로 안내가 종료되면 WebSocket 연결 종료")
     @Test
     void handleTextFinished() throws Exception {
-        final String payload = "{\"crossroadApiIds\":[\"1\",\"2\",\"3\"],\"isFinished\":true}";
+        final String payload = "{\"coordinates\":[{\"lat\":37.6042,\"lng\":127.0251},{\"lat\":37.5773,\"lng\":126.9880}],\"isFinished\":true,\"radius\":50}";
         final TextMessage message = new TextMessage(payload);
-        final NavigationRequest finishedRequest = new NavigationRequest(new String[]{"1", "2", "3"}, true);
+        final NavigationRequest finishedRequest = new NavigationRequest(
+            new Coordinate[]{new Coordinate(37.6042, 127.0251), new Coordinate(37.5773, 126.9880)},
+            true, 50);
 
         when(objectMapper.readValue(payload, NavigationRequest.class)).thenReturn(finishedRequest);
 
@@ -110,7 +119,8 @@ class NavigationWebSocketHandlerTest {
         webSocketHandler.handleTextMessage(session, message);
 
         final String responsePayload = futureResponse.get();
-        assertThat(responsePayload).isEqualTo(objectMapper.writeValueAsString(ApiResponse.createSuccess(NAVIGATION_COMPLETE_MESSAGE)));
+        assertThat(responsePayload).isEqualTo(objectMapper.writeValueAsString(
+            ApiResponse.createSuccess(NAVIGATION_COMPLETE_MESSAGE)));
 
         verify(session, times(1)).sendMessage(any(TextMessage.class));
         verify(session, times(1)).close(any());
@@ -119,10 +129,11 @@ class NavigationWebSocketHandlerTest {
     @DisplayName("예외 발생 시 서버 오류 메시지 반환")
     @Test
     void handleTextServerError() throws Exception {
-        final String payload = "{\"crossroadApiIds\":[\"1\",\"2\",\"3\"],\"isFinished\":false}";
+        final String payload = "{\"coordinates\":[{\"lat\":37.6042,\"lng\":127.0251},{\"lat\":37.5773,\"lng\":126.9880}],\"isFinished\":false,\"radius\":50}";
         final TextMessage message = new TextMessage(payload);
 
-        when(objectMapper.readValue(payload, NavigationRequest.class)).thenThrow(new RuntimeException("Parsing Error"));
+        when(objectMapper.readValue(payload, NavigationRequest.class)).thenThrow(
+            new RuntimeException("Parsing Error"));
 
         final CompletableFuture<String> futureResponse = new CompletableFuture<>();
         doAnswer(invocation -> {
@@ -134,7 +145,8 @@ class NavigationWebSocketHandlerTest {
         webSocketHandler.handleTextMessage(session, message);
 
         final String responsePayload = futureResponse.get();
-        assertThat(responsePayload).isEqualTo(objectMapper.writeValueAsString(ApiResponse.createError(SERVER_ERROR)));
+        assertThat(responsePayload).isEqualTo(
+            objectMapper.writeValueAsString(ApiResponse.createError(SERVER_ERROR)));
 
         verify(session, times(1)).sendMessage(any(TextMessage.class));
         verify(session, times(1)).close(any());
