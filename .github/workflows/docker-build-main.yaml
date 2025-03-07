@@ -1,9 +1,9 @@
-name: develop 브랜치 도커 이미지 생성
+name: main 브랜치 도커 이미지 생성
 
 on:
   push:
     branches:
-      - develop
+      - main
 
 jobs:
   build:
@@ -46,6 +46,6 @@ jobs:
         run: |
           TAG=$(git rev-parse --short HEAD)
           DOCKER_IMAGE=${{ secrets.DOCKER_REGISTRY }}/signal-buddy:$TAG
-          docker build -t test -f submodule/docker/Dockerfile .
+          docker build -t test -f submodule/docker/prod.Dockerfile .
           docker tag test $DOCKER_IMAGE
           docker push $DOCKER_IMAGE
