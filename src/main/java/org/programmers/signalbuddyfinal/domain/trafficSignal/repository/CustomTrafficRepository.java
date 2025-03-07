@@ -1,5 +1,7 @@
 package org.programmers.signalbuddyfinal.domain.trafficSignal.repository;
 
+import org.locationtech.jts.geom.Point;
+import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadResponse;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.dto.TrafficResponse;
 
 import java.util.List;
