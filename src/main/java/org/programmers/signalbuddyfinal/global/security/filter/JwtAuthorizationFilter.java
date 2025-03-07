@@ -28,7 +28,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
     private final RedisTemplate<String, String> redisTemplate;
     private final Set<String> excludeGetPaths = Set.of(
         "/api/feedbacks/{feedbackId}/comments", "/api/crossroads/**", "/api/feedbacks",
-        "/api/crossroads/{crossroadId}/state", "/api/feedbacks/{feedbackId}"
+        "/api/crossroads/{crossroadId}/state", "/api/feedbacks/{feedbackId}", "/sse/weather"
     );
     private final Set<String> excludeAllPaths = Set.of(
         "/", "/docs/**", "/ws/**", "/actuator/health", "/webjars/**", "/api/auth/login",
