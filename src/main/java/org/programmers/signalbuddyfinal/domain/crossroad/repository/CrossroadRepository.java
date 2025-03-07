@@ -15,4 +15,6 @@ public interface CrossroadRepository extends JpaRepository<Crossroad, Long>,
         return findById(id).orElseThrow(
             () -> new BusinessException(CrossroadErrorCode.NOT_FOUND_CROSSROAD));
     }
+
+    Crossroad findByCrossroadApiId(String CrossroadApiId);
 }
