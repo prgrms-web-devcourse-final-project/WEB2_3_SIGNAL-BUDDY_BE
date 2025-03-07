@@ -119,8 +119,6 @@ dependencies {
 
     // Apache poi
     implementation 'org.apache.poi:poi-ooxml:5.2.3'
-
-    testImplementation 'io.projectreactor:reactor-test'
 }
 
 // JaCoCo 버전 설정

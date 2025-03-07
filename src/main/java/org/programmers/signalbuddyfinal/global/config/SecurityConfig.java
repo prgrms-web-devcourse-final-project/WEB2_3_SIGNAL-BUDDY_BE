@@ -77,6 +77,7 @@ public class SecurityConfig {
                     "/actuator/health",
                     "/webjars/**").permitAll()
                 // 웹소켓
+                .requestMatchers(HttpMethod.GET, "/sse/weather/**").permitAll()
                 .requestMatchers("/ws/location").permitAll()
                 .requestMatchers("/ws/navigation").hasAnyRole(ADMIN, USER) // 회원만 길찾기 가능.
                 // 로그인, 회원가입
