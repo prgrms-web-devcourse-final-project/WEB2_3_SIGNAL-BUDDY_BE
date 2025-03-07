@@ -1,5 +1,7 @@
 package org.programmers.signalbuddyfinal.domain.unifiedSignal.controller;
 
+import java.util.ArrayList;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadResponse;
 import org.programmers.signalbuddyfinal.domain.crossroad.service.CrossroadService;
@@ -19,32 +21,46 @@ public class SignalController {
     private final CrossroadService crossroadService;
     private final TrafficService trafficService;
 
-    @PostMapping("/save")
-    public ResponseEntity<ApiResponse<Object>> saveSignalInfo(
+    @GetMapping("/search_around/crossroad")
+    public ResponseEntity<ApiResponse<List<CrossroadResponse>>> saveCrossInfo(
         @RequestParam(value="lat") Double lat,
         @RequestParam(value="lng") Double lng,
         @RequestParam(value="radius") Integer radius
     ){
-        crossroadService.searchAndSaveCrossroad(lat,lng,radius);
-        trafficService.searchAndSaveTraffic(lat,lng,radius);
+        List<CrossroadResponse> signal = new ArrayList<>();
 
-        return ResponseEntity.ok(ApiResponse.createSuccessWithNoData());
+        signal.addAll( crossroadService.searchAndSaveCrossroad(lat,lng,radius) );
+
+        return ResponseEntity.ok(ApiResponse.createSuccess(signal));
     }
 
-    @GetMapping("find-info/crossroad/{apiId}")
-    public ResponseEntity<ApiResponse<Object>> findCrossInfo(
-            @PathVariable Long apiId
+    @GetMapping("/search_around/traffic")
+    public ResponseEntity<ApiResponse<List<TrafficResponse>>> saveTrafficInfo(
+        @RequestParam(value="lat") Double lat,
+        @RequestParam(value="lng") Double lng,
+        @RequestParam(value="radius") Integer radius
     ){
-        CrossroadResponse crossroad = crossroadService.crossroadFindById(apiId);
+        List<TrafficResponse> signal = new ArrayList<>();
+
+        signal.addAll( trafficService.searchAndSaveTraffic(lat,lng,radius) );
+
+        return ResponseEntity.ok(ApiResponse.createSuccess(signal));
+    }
+
+    @GetMapping("find-info/crossroad/{id}")
+    public ResponseEntity<ApiResponse<Object>> findCrossInfo(
+            @PathVariable Long id
+    ){
+        CrossroadResponse crossroad = crossroadService.crossroadFindById(id);
 
         return ResponseEntity.ok(ApiResponse.createSuccess(crossroad));
     }
 
-    @GetMapping("find-info/traffic/{serialNumber}")
+    @GetMapping("find-info/traffic/{id}")
     public ResponseEntity<ApiResponse<Object>> findTrafficInfo(
-            @PathVariable Long serialNumber
+            @PathVariable Long id
     ){
-        TrafficResponse traffic = trafficService.trafficFindById(serialNumber);
+        TrafficResponse traffic = trafficService.trafficFindById(id);
 
         return ResponseEntity.ok(ApiResponse.createSuccess(traffic));
     }
