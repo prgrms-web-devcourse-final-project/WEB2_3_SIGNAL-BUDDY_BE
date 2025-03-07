@@ -4,9 +4,10 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.4.0'
     id 'io.spring.dependency-management' version '1.1.6'
-    id 'jacoco'
-    id 'com.epages.restdocs-api-spec' version '0.19.2'  // openAPI 플러그인 추가
-    id 'org.hidetake.swagger.generator' version '2.19.2'    // swaggerUI 플러그인 추가
+    id 'jacoco' // JaCoCo 플러그인
+    id 'com.epages.restdocs-api-spec' version '0.19.2'  // openAPI 플러그인
+    id 'org.hidetake.swagger.generator' version '2.19.2'    // swaggerUI 플러그인
+    id 'org.sonarqube' version '6.0.1.5171' // SonarQube 플러그인
 }
 
 group = 'org.programmers'
@@ -34,6 +35,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
 
     // Lombok
     annotationProcessor 'org.projectlombok:lombok'
@@ -61,6 +63,9 @@ dependencies {
     // Hibernate-spatial
     implementation 'org.hibernate:hibernate-spatial:6.6.3.Final'
 
+    // Hibernate-util
+    implementation 'io.hypersistence:hypersistence-utils-hibernate-63:3.9.2'
+
     // Mapstuct
     implementation 'org.mapstruct:mapstruct:1.6.3'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
@@ -83,14 +88,6 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
 
-    // oAuth2
-    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
-    implementation 'org.springframework.boot:spring-boot-starter-oauth2-authorization-server'
-    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
-
-    // Session
-    implementation 'org.springframework.session:spring-session-data-redis'
-
     // Monitoring
     implementation ("org.springframework.boot:spring-boot-starter-actuator")
     runtimeOnly ("io.micrometer:micrometer-registry-prometheus")
@@ -105,6 +102,20 @@ dependencies {
     testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
     testImplementation 'com.epages:restdocs-api-spec-mockmvc:0.19.4'
     swaggerUI 'org.webjars:swagger-ui:3.52.5'
+
+    // jwt
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+
+    //openCsv
+    implementation 'com.opencsv:opencsv:5.7.1' // 최신 버전 확인 후 적절한 버전 사용
+
+    // MockWebServer
+    testImplementation 'com.squareup.okhttp3:mockwebserver:4.12.0'
+
+    // FireBase Admin SDK
+    implementation 'com.google.firebase:firebase-admin:9.4.3'
 }
 
 // JaCoCo 버전 설정
@@ -135,7 +146,10 @@ def jacocoExcludePatterns = [
         "*.*Filter*",
         "*.*Handler*",
         "*.*Resolver*",
+        "*.*DataInitializer*",
+        "*.*RestDocsFormatGenerators*",
         "*.dto.*",
+        "*.config.*",
         "*.entity.*",
         "*.test.*",
         "*.resources.*"
@@ -196,12 +210,16 @@ tasks.named('test') {
     finalizedBy 'jacocoTestReport'
 }
 
-/* deploy 서브 모듈에 있는 config 파일들을 resources로 복사 */
-task copyYaml(type: Copy) {
+// 서브 모듈에 있는 config 파일들을 resources로 복사
+task copyConfig(type: Copy) {
     copy {
         from './submodule/config'
-        include '*.yml'
         into 'src/main/resources'
+    }
+    // firebase 관련 파일 복사
+    copy {
+        from './submodule/firebase'
+        into 'src/main/resources/firebase'
     }
 }
 
@@ -233,21 +251,21 @@ swaggerSources {
 openapi3 {
     servers = [
             {
-                url = "http://localhost:8080"
-                description = "Local Server"
+                url = "https://52.79.71.9.nip.io"
+                description = "Develop Server"
             },
             {
-                url = "http://52.79.71.9"
-                description = "Develop Server"
+                url = "http://localhost:8080"
+                description = "Local Server"
             }
     ]
-    title = "API 문서"
-    description = "RestDocsWithSwagger Docs"
+    title = "Signal Buddy API 문서"
+    description = "Signal Buddy API Docs"
     version = "0.0.1"
     format = "yaml"
 }
 
-// openapi3가 먼저 실행 - doFrist를 통한 Header 설정
+// openapi3가 먼저 실행 - doFirst를 통한 Header 설정
 tasks.withType(GenerateSwaggerUI) {
     dependsOn 'openapi3'
     doFirst {
@@ -275,6 +293,33 @@ tasks.register('copyDocument', Copy) {
     into file("src/main/resources/static/docs")
 }
 
+tasks.register('copyOasToDocs', Copy) {
+    dependsOn copyDocument
+
+    from file("build/api-spec")
+    into file("src/main/resources/static/docs")
+}
+
 bootJar {
-    dependsOn copyDocument   // 문서 작성 후에 .jar 생성
+    dependsOn copyOasToDocs
+    from("src/main/resources/static/docs") {
+        into "static/docs" // JAR 내부에서 접근할 경로
+    }
+}
+
+// SonarQube 설정
+sonar {
+    properties {
+        property "sonar.projectKey", "prgrms-web-devcourse-final-project_WEB2_3_SIGNAL-BUDDY_BE"
+        property "sonar.organization", "prgrms-web-devcourse-final-project"
+        property "sonar.host.url", "https://sonarcloud.io"
+        property 'sonar.sources', 'src/main/java'
+        property 'sonar.tests', 'src/test/java'
+        property 'sonar.language', 'java'
+        property 'sonar.sourceEncoding', 'UTF-8'
+        property 'sonar.test.exclusions', jacocoExcludePatterns.join(',')
+        property 'sonar.test.inclusions', '**/*Test.java'
+        property 'sonar.java.coveragePlugin', 'jacoco'
+        property 'sonar.coverage.jacoco.xmlReportPaths', jacocoDir.get().file("jacoco/index.xml").asFile
+    }
 }

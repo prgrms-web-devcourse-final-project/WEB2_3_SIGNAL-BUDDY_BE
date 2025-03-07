@@ -1,12 +1,20 @@
 package org.programmers.signalbuddyfinal.global.config;
 
+import java.util.Arrays;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.programmers.signalbuddyfinal.global.security.filter.UserAuthenticationFilter;
-import org.programmers.signalbuddyfinal.global.security.handler.CustomAuthenticationSuccessHandler;
-import org.programmers.signalbuddyfinal.global.security.oauth.CustomOAuth2UserService;
+import org.programmers.signalbuddyfinal.global.security.CustomAuthenticationProvider;
+import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetailsService;
+import org.programmers.signalbuddyfinal.global.security.exception.CustomAuthenticationEntryPoint;
+import org.programmers.signalbuddyfinal.global.security.filter.JwtAuthorizationFilter;
+import org.programmers.signalbuddyfinal.global.security.jwt.JwtUtil;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -14,11 +22,32 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @RequiredArgsConstructor
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    @Value("${url.front-url}")
+    private String frontendUrl;
+    @Value("${url.back-url}")
+    private String backendUrl;
+
+    private final JwtUtil jwtUtil;
+    private final CustomUserDetailsService customUserDetailsService;
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+    private final RedisTemplate<String, String> redisTemplate;
+
+    private static final String ADMIN = "ADMIN";
+    private static final String USER = "USER";
+
+    @Bean
+    public JwtAuthorizationFilter jwtAuthorizationFilter(JwtUtil jwtUtil, RedisTemplate<String, String> redisTemplate) {
+        return new JwtAuthorizationFilter(jwtUtil, redisTemplate);
+    }
 
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder() {
@@ -26,93 +55,99 @@ public class SecurityConfig {
     }
 
     @Bean
-    CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler() {
-        return new CustomAuthenticationSuccessHandler();
+    public CustomAuthenticationProvider customAuthenticationProvider() {
+        return new CustomAuthenticationProvider(customUserDetailsService, bCryptPasswordEncoder());
     }
 
-    private final CustomOAuth2UserService customOAuth2UserService;
+    @Bean
+    AuthenticationManager authenticationManager() {
+        return new ProviderManager(List.of(customAuthenticationProvider()));
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
-        // 인가 설정
+        http.cors(cors -> cors.configurationSource(configurationSource()));
+
         http
-            .authorizeHttpRequests((auth) -> auth
+            .authorizeHttpRequests(auth -> auth
                 // 문서화 api
                 .requestMatchers("/",
                     "/docs/**",
-                    "/ws/**",
                     "/actuator/health",
                     "/webjars/**").permitAll()
-                    // 로그인, 회원가입
-                    .requestMatchers("/members/login", "/admins/login", "/api/members/join",
-                        "/api/admins/join", "/members/signup", "/api/members/files/**").permitAll()
-                    // 북마크
-                    .requestMatchers("/api/bookmarks/**", "/bookmarks/**").hasRole("USER")
-                    // 댓글
-                    .requestMatchers(HttpMethod.GET, "/api/comments").permitAll()
-                    // 교차로
-                    .requestMatchers("/api/crossroads/save").hasRole("ADMIN")
-                    .requestMatchers(HttpMethod.GET,"/api/crossroads/**").permitAll()
-                    // 피드백
-                    .requestMatchers(HttpMethod.GET, "/api/feedbacks", "/feedbacks/**").permitAll()
-                    // 회원
-                    .requestMatchers("/api/admins/**", "/admins/members/**").hasRole("ADMIN")
-                    .requestMatchers("/api/members/**", "/members/**").hasRole("USER")
-                     // Prometheus 엔드포인트 허용
-                    .requestMatchers("/actuator/prometheus").permitAll()
-                    .anyRequest().authenticated()
+                // 웹소켓
+                .requestMatchers("/ws/location").permitAll()
+                .requestMatchers("/ws/navigation").hasAnyRole(ADMIN, USER) // 회원만 길찾기 가능.
+                // 로그인, 회원가입
+                .requestMatchers("/api/auth/login","/api/auth/social-login", "/api/auth/reissue", "/api/members/join",
+                    "/api/admins/join", "/api/members/files/**", "/api/auth/auth-code",
+                    "/api/auth/verify-code","/api/members/password-reset","/api/members/restore",
+                    "/api/auth/test/**").permitAll()
+                .requestMatchers("/api/bookmarks/**", "/bookmarks/**").hasRole("USER")
+                // 댓글
+                .requestMatchers(HttpMethod.GET, "/api/feedbacks/{feedbackId}/comments").permitAll()
+                // 교차로
+                .requestMatchers("/api/crossroads/save").hasRole(ADMIN)
+                .requestMatchers(HttpMethod.GET, "/api/crossroads/**").permitAll()
+                // 피드백
+                .requestMatchers(HttpMethod.GET, "/api/feedbacks/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/admin/feedbacks").hasRole(ADMIN)
+                // 피드백 신고
+                .requestMatchers(HttpMethod.GET, "/api/feedbacks/reports").hasRole(ADMIN)
+                .requestMatchers(
+                    HttpMethod.PATCH,
+                    "/api/feedbacks/{feedbackId}/reports/{reportId}"
+                ).hasRole(ADMIN)
+                .requestMatchers(
+                    HttpMethod.DELETE,
+                    "/api/feedbacks/{feedbackId}/reports/{reportId}"
+                ).hasRole(ADMIN)
+                // 피드백 통계
+                .requestMatchers("/api/feedback-summary/**").hasRole(ADMIN)
+                // 회원
+                .requestMatchers("/api/admins/**", "/admins/members/**").hasRole(ADMIN)
+                .requestMatchers("/api/members/**", "/members/**").hasRole(USER)
+                // Prometheus 엔드포인트 허용
+                .requestMatchers("/actuator/prometheus").permitAll()
+                .anyRequest().authenticated()
             );
 
         // 기본 로그인 관련 설정
         http
-            .formLogin((auth) -> auth
-                .loginPage("/members/login")
-                .loginProcessingUrl("/login")
-                .successHandler(customAuthenticationSuccessHandler())
-                .permitAll()
-            );
-
-        // 소셜 로그인 관련 설정
-        http
-            .oauth2Login((oauth) -> oauth
-                .loginPage("/login")
-                .userInfoEndpoint(userInfoEndpointConfig ->
-                    userInfoEndpointConfig.userService(customOAuth2UserService))
-                .successHandler(customAuthenticationSuccessHandler())
-                .permitAll());
-
-        // 로그아웃 관련 설정
-        http
-            .logout((auth) -> auth
-                .logoutUrl("/logout")
-                .logoutSuccessUrl("/members/login")
-                .deleteCookies("JSESSIONID")
-                .invalidateHttpSession(true)
-                .clearAuthentication(true));
-
-        // 세션 관리 설정
-        http
-            .sessionManagement(sessionManagement -> {
-                // 세션 생성 정책
-                sessionManagement.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED);
-
-                // 중복 로그인 처리
-                sessionManagement.maximumSessions(1)
-                    .maxSessionsPreventsLogin(true);
-
-                // 세션 고정 공격 방어
-                sessionManagement.sessionFixation().changeSessionId();
-            });
+            .formLogin(auth -> auth.disable())
+            .httpBasic(auth -> auth.disable())
+            .sessionManagement(
+                session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         // csrf 비활성화
         http.csrf(AbstractHttpConfigurer::disable);
 
-        // 커스텀 필터 추가
         http
-            .addFilterBefore(new UserAuthenticationFilter(),
+            .addFilterAfter(jwtAuthorizationFilter(jwtUtil, redisTemplate),
                 UsernamePasswordAuthenticationFilter.class);
 
+        http.exceptionHandling(
+            exception -> exception.authenticationEntryPoint(customAuthenticationEntryPoint));
+
         return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource configurationSource() {
+
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOriginPatterns(
+            Arrays.asList(frontendUrl, backendUrl, backendUrl + ".nip.io", "http://localhost:3000",
+                "http://localhost:8080"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
+        configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type"));
+        configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 }

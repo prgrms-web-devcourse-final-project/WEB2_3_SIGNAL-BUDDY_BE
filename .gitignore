@@ -43,6 +43,9 @@ out/
 ### application*.yml ###
 src/main/resources/*.yml
 
+### firebase files ###
+src/main/resources/firebase/
+
 ### generated ###
 src/main/generated/
 

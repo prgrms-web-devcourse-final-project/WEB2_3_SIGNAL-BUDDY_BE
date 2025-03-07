@@ -7,7 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.web.multipart.MultipartFile;
+import org.programmers.signalbuddyfinal.domain.social.entity.Provider;
 
 @Setter
 @Builder
@@ -16,10 +16,11 @@ import org.springframework.web.multipart.MultipartFile;
 @AllArgsConstructor
 public class MemberJoinRequest {
 
-    private MultipartFile profileImageUrl;
+    private Provider provider;
+
+    private String SocialUserId;
 
     @Email(message = "이메일 형식에 맞지 않습니다.")
-    @NotBlank(message = "이메일은 필수 입력 사항입니다.")
     private String email;
 
     @NotBlank(message = "닉네임은 필수 입력 사항입니다.")

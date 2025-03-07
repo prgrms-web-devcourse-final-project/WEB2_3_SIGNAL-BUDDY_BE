@@ -1,5 +1,8 @@
 package org.programmers.signalbuddyfinal.domain.bookmark.repository;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,8 +21,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 class BookmarkRepositoryTest extends RepositoryTest {
 
     private final GeometryFactory geometryFactory = new GeometryFactory();
@@ -33,22 +34,23 @@ class BookmarkRepositoryTest extends RepositoryTest {
     @BeforeEach
     void setUp() {
         member = Member.builder().email("test@example.com").password("password123")
-            .nickname("TestUser").profileImageUrl("http://example.com/profile.jpg").role(MemberRole.USER)
-            .memberStatus(MemberStatus.ACTIVITY).build();
+            .nickname("TestUser").profileImageUrl("http://example.com/profile.jpg")
+            .role(MemberRole.USER).memberStatus(MemberStatus.ACTIVITY).build();
+        member = memberRepository.save(member);
+
+        Point point = geometryFactory.createPoint(new Coordinate(127.12345, 37.12345));
+
+        for (int i = 1; i <= 10; i++) {
+            Bookmark bookmark = Bookmark.builder().address("Address " + i).coordinate(point)
+                .member(member).build();
+            bookmark.updateSequence(i);
+            bookmarkRepository.save(bookmark);
+        }
     }
 
     @DisplayName("즐겨찾기 목록 조회 테스트")
     @Test
     void testGetBookmarksWithPagination() {
-        Member member1 = memberRepository.save(member);
-        Point point = geometryFactory.createPoint(new Coordinate(127.12345, 37.12345));
-
-        for (int i = 1; i <= 10; i++) {
-            Bookmark bookmark = Bookmark.builder().address("Address " + i).coordinate(point)
-                .member(member1).build();
-            bookmarkRepository.save(bookmark);
-        }
-
         /* H2 데이터베이스에서 ST_X 함수 이용 X*/
         Pageable pageable = PageRequest.of(0, 5);
         Page<BookmarkResponse> bookmarksPage = bookmarkRepository.findPagedByMember(pageable, 1L);
@@ -65,4 +67,26 @@ class BookmarkRepositoryTest extends RepositoryTest {
 
     }
 
+    @DisplayName("북마크 아이디 리스트와 멤버 아이디 조건으로 조회")
+    @Test
+    void getBookmarkByIdsAndMemberId() {
+        final List<Long> ids = List.of(1L, 2L, 3L, 4L);
+        final List<Bookmark> bookmarks = bookmarkRepository.findAllByBookmarkIdInAndMemberMemberId(
+            ids, member.getMemberId());
+
+        assertThat(bookmarks).isNotEmpty().allSatisfy(bookmark -> {
+            assertThat(bookmark.getMember()).isEqualTo(member);
+        });
+    }
+
+    @DisplayName("시퀀스 목록으로 북마크 리스트 조회")
+    @Test
+    void getBookmarkBySequences() {
+        final List<Integer> sequences = List.of(1, 3, 5, 9);
+        final List<Bookmark> bookmarks = bookmarkRepository.findAllBySequenceInAndMemberMemberId(sequences, member.getMemberId());
+
+        assertThat(bookmarks).isNotEmpty().allSatisfy(bookmark -> {
+            assertThat(bookmark.getMember()).isEqualTo(member);
+        });
+    }
 }

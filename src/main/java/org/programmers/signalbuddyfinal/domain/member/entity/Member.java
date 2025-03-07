@@ -20,7 +20,6 @@ public class Member extends BaseTimeEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long memberId;
 
-    @Column(nullable = false)
     private String email;
 
     private String password;
@@ -29,6 +28,10 @@ public class Member extends BaseTimeEntity {
     private String nickname;
 
     private String profileImageUrl;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean notifyEnabled = Boolean.TRUE;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
@@ -39,16 +42,19 @@ public class Member extends BaseTimeEntity {
     private MemberStatus memberStatus;
 
     // 관리자인지 확인
-    public static boolean isAdmin(Member member) {
-        return MemberRole.ADMIN.equals(member.getRole());
+    public boolean isAdmin() {
+        return MemberRole.ADMIN.equals(this.getRole());
     }
 
     // 요청자와 작성자가 다른 경우
     public static boolean isNotSameMember(CustomUser2Member user, Member member) {
-        return !user.getMemberId().equals(member.getMemberId());
+        if (user == null || member == null) {
+            return true;
+        }
+        return !member.getMemberId().equals(user.getMemberId());
     }
 
-    public void updateMember(MemberUpdateRequest request, String encodedPassword, String profileImageUrl) {
+    public void updateMember(MemberUpdateRequest request, String encodedPassword) {
         if (request.getEmail() != null) {
             this.email = request.getEmail();
         }
@@ -58,12 +64,27 @@ public class Member extends BaseTimeEntity {
         if (request.getNickname() != null) {
             this.nickname = request.getNickname();
         }
-        if (profileImageUrl != null) {
-            this.profileImageUrl = profileImageUrl;
-        }
+    }
+
+    public void saveProfileImage(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
     }
 
     public void softDelete() {
         this.memberStatus = MemberStatus.WITHDRAWAL;
+    }
+
+    public void restore(){ this.memberStatus = MemberStatus.ACTIVITY; }
+
+    public boolean isNotificationEnabled() {
+        return Boolean.TRUE.equals(this.notifyEnabled);
+    }
+
+    public void updateNotifyEnabled(Boolean notifyEnabled) {
+        if (Boolean.FALSE.equals(notifyEnabled)) {
+            this.notifyEnabled = Boolean.FALSE;
+        } else if (Boolean.TRUE.equals(notifyEnabled)) {
+            this.notifyEnabled = Boolean.TRUE;
+        }
     }
 }

@@ -1,12 +1,24 @@
 package org.programmers.signalbuddyfinal.domain.bookmark.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import java.time.LocalDateTime;
+import java.util.Objects;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.locationtech.jts.geom.Point;
 import org.programmers.signalbuddyfinal.domain.basetime.BaseTimeEntity;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
-
-import java.time.LocalDateTime;
 
 @Entity(name = "bookmarks")
 @Getter
@@ -34,19 +46,9 @@ public class Bookmark extends BaseTimeEntity {
     @Column
     private LocalDateTime deletedAt; // 삭제일
 
-    public void delete() {
-        this.deletedAt = LocalDateTime.now();
-    }
-
-    public boolean isDeleted() {
-        return deletedAt != null;
-    }
-
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
-
 
     @Builder
     public Bookmark(Point coordinate, String address, Member member, String name) {
@@ -54,6 +56,14 @@ public class Bookmark extends BaseTimeEntity {
         this.address = address;
         this.member = member;
         this.name = name;
+    }
+
+    public void delete() {
+        this.deletedAt = LocalDateTime.now();
+    }
+
+    public boolean isDeleted() {
+        return deletedAt != null;
     }
 
     public void update(Point coordinate, String address, String name) {
@@ -66,5 +76,13 @@ public class Bookmark extends BaseTimeEntity {
         if (name != null) {
             this.name = name;
         }
+    }
+
+    public void updateSequence(int sequence) {
+        this.sequence = sequence;
+    }
+
+    public boolean isNotOwnedBy(Member member) {
+        return member == null || !Objects.equals(this.member.getMemberId(), member.getMemberId());
     }
 }

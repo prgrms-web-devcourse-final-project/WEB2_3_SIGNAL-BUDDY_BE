@@ -19,19 +19,19 @@ import java.util.List;
 public class CrossroadProvider {
 
     @Value("${t-data-api.api-key}")
-    private String API_KEY;
+    private String apiKey;
     @Value("${t-data-api.crossroad-api}")
-    private String CROSSROAD_API_URL;
+    private String crossroadApiUrl;
     @Value("${t-data-api.traffic-light-api}")
-    private String SIGNAL_STATE_URL;
+    private String signalStateUrl;
 
     private final WebClient webClient;
 
     public List<CrossroadApiResponse> requestCrossroadApi(int page, int pageSize) {
         return webClient.get()
-            .uri(CROSSROAD_API_URL,
+            .uri(crossroadApiUrl,
                 uriBuilder -> uriBuilder
-                    .queryParam("apiKey", API_KEY)
+                    .queryParam("apiKey", apiKey)
                     .queryParam("pageNo", page)
                     .queryParam("numOfRows", pageSize)
                     .build())
@@ -44,21 +44,21 @@ public class CrossroadProvider {
             .block();
     }
 
-    public List<CrossroadStateApiResponse> requestCrossroadStateApi(Long id) {
+    public List<CrossroadStateApiResponse> requestCrossroadStateApi(String crossroadApiId) {
         return webClient.get()
-            .uri(SIGNAL_STATE_URL,
+            .uri(signalStateUrl,
                 uriBuilder -> uriBuilder
-                        .queryParam("apiKey",API_KEY)
-                        .queryParam("itstId",id)
-                        .queryParam("pageNo",1)
-                        .queryParam("numOfRows",1)
-                        .build())
-                .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<List<CrossroadStateApiResponse>>() {})
-                .onErrorMap(e->{
-                    log.error("{}\n", e.getMessage(), e.getCause());
-                    throw new BusinessException(CrossroadErrorCode.CROSSROAD_API_REQUEST_FAILED);
-                })
-                .block();
+                    .queryParam("apiKey", apiKey)
+                    .queryParam("itstId", crossroadApiId)
+                    .queryParam("pageNo", 1)
+                    .queryParam("numOfRows", 1)
+                    .build())
+            .retrieve()
+            .bodyToMono(new ParameterizedTypeReference<List<CrossroadStateApiResponse>>() {})
+            .onErrorMap(e->{
+                log.error("{}\n", e.getMessage(), e.getCause());
+                throw new BusinessException(CrossroadErrorCode.CROSSROAD_API_REQUEST_FAILED);
+            })
+            .block();
     }
 }

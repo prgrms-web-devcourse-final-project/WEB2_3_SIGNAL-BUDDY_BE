@@ -1,13 +1,15 @@
 package org.programmers.signalbuddyfinal.domain.member.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.net.URL;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,21 +18,20 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberJoinRequest;
+import org.programmers.signalbuddyfinal.domain.member.dto.MemberNotiAllowRequest;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberUpdateRequest;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
+import org.programmers.signalbuddyfinal.domain.member.exception.MemberErrorCode;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
-import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.mock.web.MockHttpSession;
+import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
+import org.programmers.signalbuddyfinal.global.exception.BusinessException;
+import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
+import org.programmers.signalbuddyfinal.global.service.AwsFileService;
 import org.springframework.mock.web.MockMultipartFile;
-
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class MemberServiceTest {
@@ -50,7 +51,7 @@ class MemberServiceTest {
     @BeforeEach
     void setUp() {
         member = Member.builder().memberId(id).email("test@example.com").password("password123")
-            .nickname("TestUser").profileImageUrl("http://example.com/profile.jpg")
+            .nickname("TestUser").profileImageUrl("http://example.com/profile.jpg").notifyEnabled(null)
             .role(MemberRole.USER).memberStatus(MemberStatus.ACTIVITY).build();
     }
 
@@ -74,31 +75,20 @@ class MemberServiceTest {
     @DisplayName("계정 수정 테스트")
     void updateMember() {
         final MemberUpdateRequest updateRequest = MemberUpdateRequest.builder()
-            .email("test2@example.com").nickname("TestUser2")
-            .imageFile(mock(MockMultipartFile.class)).password("password123").build();
+            .email("test2@example.com").nickname("TestUser2").password("password123").build();
 
         final MemberResponse expectedResponse = MemberResponse.builder().memberId(id)
-            .email("test2@example.com").nickname("TestUser2")
-            .profileImageUrl("updated-image.jpg").memberStatus(MemberStatus.ACTIVITY)
+            .email("test2@example.com").nickname("TestUser2").memberStatus(MemberStatus.ACTIVITY)
             .role(MemberRole.USER).build();
 
-        // MockHttpServletRequest와 MockHttpSession 생성
-        MockHttpServletRequest mockRequest = new MockHttpServletRequest();
-        MockHttpSession mockSession = new MockHttpSession();
-
-        mockRequest.setSession(mockSession); // MockHttpSession 설정
         when(memberRepository.findById(id)).thenReturn(Optional.of(member));
-        when(awsFileService.saveProfileImage(updateRequest.getImageFile())).thenReturn("updated-image.jpg");
 
-        final MemberResponse actualResponse = memberService.updateMember(id, updateRequest,
-            mockRequest);
+        final MemberResponse actualResponse = memberService.updateMember(id, updateRequest
+        );
 
-        assertThat(actualResponse).isEqualTo(expectedResponse);
+        assertThat(actualResponse.getEmail()).isEqualTo(expectedResponse.getEmail());
+        assertThat(actualResponse.getNickname()).isEqualTo(expectedResponse.getNickname());
         verify(memberRepository, times(1)).findById(id);
-
-        // 세션에 값이 저장되었는지 확인
-        Object sessionAttribute = mockSession.getAttribute("SPRING_SECURITY_CONTEXT");
-        assertNotNull(sessionAttribute); // SecurityContext가 저장되었는지 확인
     }
 
     @Test
@@ -107,8 +97,8 @@ class MemberServiceTest {
         final MemberStatus expected = MemberStatus.WITHDRAWAL;
         when(memberRepository.findById(id)).thenReturn(Optional.of(member));
 
-        final MemberStatus actual = memberService.deleteMember(id).getMemberStatus();
-        assertThat(actual).isEqualTo(expected);
+        memberService.deleteMember(id);
+        assertThat(member.getMemberStatus()).isEqualTo(expected);
         verify(memberRepository, times(1)).findById(id);
     }
 
@@ -118,18 +108,24 @@ class MemberServiceTest {
 
         MockMultipartFile profileImage = new MockMultipartFile("profileImage", "", "image/jpeg",
             new byte[0]);
+        ReflectionTestUtils.setField(memberService, "defaultProfileImage", "test-path");
+        ReflectionTestUtils.setField(memberService, "memberDir", "test-dir");
+
+        URL mockURL = mock(URL.class);
+        when(awsFileService.uploadFileToS3(any(MockMultipartFile.class), anyString())).thenReturn(profileImage.getName());
+        when(awsFileService.getFileFromS3(anyString(), anyString())).thenReturn(mockURL);
 
         //given
         final MemberJoinRequest request = MemberJoinRequest.builder().email("test2@example.com")
-            .nickname("TestUser2").password("password123").profileImageUrl(profileImage).build();
+            .nickname("TestUser2").password("password123").build();
         final Member expectedMember = Member.builder().memberId(id).email("test2@example.com")
-            .nickname("TestUser2").profileImageUrl(null).memberStatus(MemberStatus.ACTIVITY)
+            .nickname("TestUser2").profileImageUrl(mockURL.toString()).memberStatus(MemberStatus.ACTIVITY)
             .role(MemberRole.USER).build();
 
         when(memberRepository.save(any(Member.class))).thenReturn(expectedMember);
 
         //when
-        MemberResponse actualResponse = memberService.joinMember(request);
+        MemberResponse actualResponse = memberService.joinMember(request, profileImage);
 
         //then
         assertThat(actualResponse.getEmail()).isEqualTo(expectedMember.getEmail());
@@ -142,4 +138,40 @@ class MemberServiceTest {
         verify(memberRepository, times(1)).save(any(Member.class));
     }
 
+    @Test
+    @DisplayName("사용자의 알림 허용 설정을 변경한다.")
+    void updateNotifyEnabled_Success() {
+        // Given
+        MemberNotiAllowRequest request = new MemberNotiAllowRequest(Boolean.FALSE);
+        CustomUser2Member user = new CustomUser2Member(
+            new CustomUserDetails(id, "", "",
+                "", "", MemberRole.USER, MemberStatus.ACTIVITY));
+
+        when(memberRepository.findByIdOrThrow(id)).thenReturn(member);
+
+        // When
+        memberService.updateNotifyEnabled(id, user, request);
+
+        // Then
+        assertThat(member.getNotifyEnabled()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Path Variable 값과 요청자가 다를 경우 실패한다.")
+    void updateNotifyEnabled_Failure() {
+        // Given
+        MemberNotiAllowRequest request = new MemberNotiAllowRequest(Boolean.FALSE);
+        CustomUser2Member user = new CustomUser2Member(
+            new CustomUserDetails(9999L, "", "",
+                "", "", MemberRole.USER, MemberStatus.ACTIVITY));
+
+        when(memberRepository.findByIdOrThrow(id)).thenReturn(member);
+
+        // When & Then
+        try {
+            memberService.updateNotifyEnabled(id, user, request);
+        } catch (BusinessException e) {
+            assertThat(e.getErrorCode()).isEqualTo(MemberErrorCode.REQUESTER_IS_NOT_SAME);
+        }
+    }
 }

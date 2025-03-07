@@ -1,15 +1,14 @@
 package org.programmers.signalbuddyfinal.domain.admin.dto;
 
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.programmers.signalbuddyfinal.domain.bookmark.dto.AdminBookmarkResponse;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
-
-import java.time.LocalDateTime;
-import java.util.List;
+import org.programmers.signalbuddyfinal.domain.social.entity.Provider;
+import org.springframework.format.annotation.DateTimeFormat;
 
 @Getter
 @NoArgsConstructor
@@ -23,20 +22,13 @@ public class AdminMemberResponse {
 
     private String nickname;
 
-    private String profileImageUrl;
+    private Provider oauthProvider;
 
     private MemberRole role;
 
-    private MemberStatus memberStatus;
+    private MemberStatus status;
 
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDateTime createdAt;
-
-    private LocalDateTime updatedAt;
-
-    private String userAddress;
-
-    private int bookmarkCount;
-
-    private List<AdminBookmarkResponse> bookmarkResponses;
 
 }

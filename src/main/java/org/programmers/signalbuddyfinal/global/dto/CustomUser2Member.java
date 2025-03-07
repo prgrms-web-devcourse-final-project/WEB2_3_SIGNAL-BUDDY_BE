@@ -4,7 +4,6 @@ import lombok.Getter;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
-import org.programmers.signalbuddyfinal.global.security.oauth.CustomOAuth2User;
 
 @Getter
 public class CustomUser2Member {
@@ -23,15 +22,6 @@ public class CustomUser2Member {
         this.nickname = customUserDetails.getNickname();
         this.role = customUserDetails.getRole();
         this.status = customUserDetails.getStatus();
-    }
-
-    public CustomUser2Member(CustomOAuth2User customOAuth2User) {
-        this.memberId = customOAuth2User.getMemberId();
-        this.email = customOAuth2User.getEmail();
-        this.profileImageUrl = customOAuth2User.getProfileImageUrl();
-        this.nickname = customOAuth2User.getNickname();
-        this.role = customOAuth2User.getRole();
-        this.status = customOAuth2User.getStatus();
     }
 
     public CustomUser2Member(String arg) {}

@@ -1,27 +1,32 @@
 package org.programmers.signalbuddyfinal.domain.member.service;
 
-import jakarta.servlet.http.HttpServletRequest;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.programmers.signalbuddyfinal.domain.auth.entity.Purpose;
+import org.programmers.signalbuddyfinal.domain.auth.exception.AuthErrorCode;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberJoinRequest;
+import org.programmers.signalbuddyfinal.domain.member.dto.MemberNotiAllowRequest;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
+import org.programmers.signalbuddyfinal.domain.member.dto.MemberRestoreRequest;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberUpdateRequest;
+import org.programmers.signalbuddyfinal.domain.member.dto.ResetPasswordRequest;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.programmers.signalbuddyfinal.domain.member.exception.MemberErrorCode;
 import org.programmers.signalbuddyfinal.domain.member.mapper.MemberMapper;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
+import org.programmers.signalbuddyfinal.domain.social.entity.SocialProvider;
+import org.programmers.signalbuddyfinal.domain.social.repository.SocialProviderRepository;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
-import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
+import org.programmers.signalbuddyfinal.global.exception.GlobalErrorCode;
+import org.programmers.signalbuddyfinal.global.response.ApiResponse;
+import org.programmers.signalbuddyfinal.global.service.AwsFileService;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,84 +35,227 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class MemberService {
 
+    private final RedisTemplate<String, String> redisTemplate;
     private final MemberRepository memberRepository;
     private final AwsFileService awsFileService;
+    private final SocialProviderRepository socialProviderRepository;
     private BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
 
     @Value("${default.profile.image.path}")
-    private String defaultProfileImagePath;
+    private String defaultProfileImage;
+
+    @Value("${cloud.aws.s3.folder.member}")
+    private String memberDir;
+
 
     public MemberResponse getMember(Long id) {
-        return memberRepository.findById(id)
-            .filter(m -> m.getMemberStatus() == MemberStatus.ACTIVITY)
-            .map(MemberMapper.INSTANCE::toDto)
+        final Member member = memberRepository.findById(id)
             .orElseThrow(() -> new BusinessException(MemberErrorCode.NOT_FOUND_MEMBER));
-    }
 
-    @Transactional
-    public MemberResponse updateMember(Long id, MemberUpdateRequest memberUpdateRequest,
-        HttpServletRequest request) {
-        final Member member = findMemberById(id);
-        final String encodedPassword = encodedPassword(memberUpdateRequest.getPassword());
+        if (member.getMemberStatus() == MemberStatus.WITHDRAWAL) {
+            throw new BusinessException(MemberErrorCode.WITHDRAWN_MEMBER);
+        }
 
-        final String saveProfileImage = saveProfileImageIfPresent(
-            memberUpdateRequest.getImageFile());
-
-        member.updateMember(memberUpdateRequest, encodedPassword, saveProfileImage);
-        log.info("Member updated: {}", member);
-        updateSecurityContext(member, request);
         return MemberMapper.INSTANCE.toDto(member);
     }
 
     @Transactional
-    public MemberResponse deleteMember(Long id) {
+    public MemberResponse updateMember(Long id, MemberUpdateRequest memberUpdateRequest) {
+        final Member member = findMemberById(id);
+        if (!member.getEmail().equalsIgnoreCase(memberUpdateRequest.getEmail())
+            && memberRepository.existsByEmail(memberUpdateRequest.getEmail())) {
+            throw new BusinessException(MemberErrorCode.ALREADY_EXIST_EMAIL);
+        } else if (!member.getNickname().equalsIgnoreCase(memberUpdateRequest.getNickname())
+                   && memberRepository.existsByNickname(memberUpdateRequest.getNickname())) {
+            throw new BusinessException(MemberErrorCode.ALREADY_EXIST_NICKNAME);
+        }
+
+        final String encodedPassword = encodedPassword(memberUpdateRequest.getPassword());
+
+        member.updateMember(memberUpdateRequest, encodedPassword);
+        log.info("Member updated: {}", member);
+        return MemberMapper.INSTANCE.toDto(member);
+    }
+
+    @Transactional
+    public String saveProfileImage(Long id, MultipartFile file) {
+        final Member member = findMemberById(id);
+        final String profileImage = saveProfileImageIfPresent(file);
+        final String imageUrl = awsFileService.getFileFromS3(profileImage, memberDir).toString();
+        member.saveProfileImage(imageUrl);
+        return imageUrl;
+    }
+
+    @Transactional
+    public void deleteMember(Long id) {
         final Member member = findMemberById(id);
         member.softDelete();
         log.info("Member deleted: {}", member);
-        return MemberMapper.INSTANCE.toDto(member);
     }
 
     @Transactional
-    public MemberResponse joinMember(MemberJoinRequest memberJoinRequest) {
+    public MemberResponse joinMember(MemberJoinRequest memberJoinRequest, MultipartFile image) {
 
-        // 이미 존재하는 사용자인지 확인
-        if (memberRepository.existsByEmail(memberJoinRequest.getEmail())) {
+        // 프로필 이미지 설정
+        String profileImageUrl = settingProfileImage(image);
+
+        // 소셜 회원가입
+        if(memberJoinRequest.getProvider()!=null && memberJoinRequest.getSocialUserId()!=null){
+            // 이미 소셜 회원가입을 한 경우
+            if(socialProviderRepository.existsByOauthProviderAndSocialId(memberJoinRequest.getProvider(), memberJoinRequest.getSocialUserId())){
+                throw new BusinessException(MemberErrorCode.ALREADY_EXIST_SOCIAL_ACCOUNT);
+            }
+            return MemberMapper.INSTANCE.toDto(saveMember(memberJoinRequest, profileImageUrl, "social"));
+        }
+        // 기본 회원가입
+        else{
+            if(memberJoinRequest.getEmail() == null) throw new BusinessException(MemberErrorCode.REQUIRED_EMAIL_DATA);
+            return MemberMapper.INSTANCE.toDto(saveMember(memberJoinRequest, profileImageUrl, "basic"));
+        }
+    }
+
+    @Transactional
+    public ResponseEntity<ApiResponse<Object>> resetPassword(
+        ResetPasswordRequest resetPasswordRequest) {
+
+        Member member = validateEmailAndEmailAuthentication(Purpose.NEW_PASSWORD, resetPasswordRequest.getEmail());
+
+        MemberUpdateRequest onlyUpdatePassword = MemberUpdateRequest.builder().
+            password(resetPasswordRequest.getNewPassword()).
+            build();
+
+        member.updateMember(onlyUpdatePassword,
+            encodedPassword(resetPasswordRequest.getNewPassword()));
+
+        deleteEmailAuthenticationData(Purpose.NEW_PASSWORD, resetPasswordRequest.getEmail());
+
+        return ResponseEntity.ok(ApiResponse.createSuccessWithNoData());
+    }
+
+    // 계정 복구
+    @Transactional
+    public ResponseEntity<ApiResponse<MemberResponse>> restore(
+        MemberRestoreRequest memberRestoreRequest){
+
+        Member authenticatedMember = validateEmailAndEmailAuthentication(Purpose.RESTORE, memberRestoreRequest.getEmail());
+        authenticatedMember.restore();
+        deleteEmailAuthenticationData(Purpose.RESTORE, memberRestoreRequest.getEmail());
+
+        MemberResponse memberResponse = MemberMapper.INSTANCE.toDto(authenticatedMember);
+        return ResponseEntity.ok(ApiResponse.createSuccess(memberResponse));
+    }
+
+    public boolean verifyPassword(String password, Long id) {
+        final Member member = findMemberById(id);
+
+        return bCryptPasswordEncoder.matches(password, member.getPassword());
+    }
+
+
+    // 프로필 이미지 설정
+    public String settingProfileImage(MultipartFile image){
+
+        String profilePath = saveProfileImageIfPresent(image);
+
+        if (profilePath != null) {
+            return awsFileService.getFileFromS3(profilePath, memberDir).toString();
+        } else {
+            // 프로필 이미지를 저장하지 않았을 경우 기본 이미지
+            return awsFileService.getFileFromS3(defaultProfileImage, memberDir)
+                .toString();
+        }
+    }
+
+    @Transactional
+    public void updateNotifyEnabled(
+        Long memberId, CustomUser2Member user,
+        MemberNotiAllowRequest request
+    ) {
+        Member member = memberRepository.findByIdOrThrow(memberId);
+
+        if (Member.isNotSameMember(user, member)) {
+            throw new BusinessException(MemberErrorCode.REQUESTER_IS_NOT_SAME);
+        }
+
+        member.updateNotifyEnabled(request.getNotifyEnabled());
+    }
+
+    // 사용자 정보 저장
+    private Member saveMember(MemberJoinRequest memberJoinRequest, String profileImageUrl,
+        String type) {
+
+        Optional<Member> existingMember = memberRepository.findByEmail(
+            memberJoinRequest.getEmail());
+
+        if (existingMember.isPresent()) {
+
+            Member member = existingMember.get();
+
+            if(member.getMemberStatus() == MemberStatus.WITHDRAWAL) {
+                throw new BusinessException(MemberErrorCode.WITHDRAWN_MEMBER);
+            }
+            if (type.equals("social")) {
+                return linkWithAlreadyMember(existingMember.get(), memberJoinRequest);
+            }
             throw new BusinessException(MemberErrorCode.ALREADY_EXIST_EMAIL);
         }
 
-        String profilePath = saveProfileImageIfPresent(memberJoinRequest.getProfileImageUrl());
-
-        Member joinMember = Member.builder().email(memberJoinRequest.getEmail())
-            .nickname(memberJoinRequest.getNickname())
-            .password(bCryptPasswordEncoder.encode(memberJoinRequest.getPassword()))
-            .profileImageUrl(profilePath).memberStatus(MemberStatus.ACTIVITY).role(MemberRole.USER)
-            .build();
-
-        memberRepository.save(joinMember);
-        return MemberMapper.INSTANCE.toDto(joinMember);
-    }
-
-    public Resource getProfileImage(String filename) {
-        try {
-            if (filename.isEmpty()) {
-                return new ClassPathResource(defaultProfileImagePath);
-            }
-            return awsFileService.getProfileImage(filename);
-        } catch (BusinessException e) {
-            return new ClassPathResource(defaultProfileImagePath);
+        if (memberRepository.existsByNickname(memberJoinRequest.getNickname())) {
+            throw new BusinessException(MemberErrorCode.ALREADY_EXIST_NICKNAME);
         }
+
+        Member savedMember = memberRepository.save(Member.builder()
+            .email(memberJoinRequest.getEmail())
+            .password(encodedPassword(memberJoinRequest.getPassword()))
+            .nickname(memberJoinRequest.getNickname())
+            .profileImageUrl(profileImageUrl)
+            .role(MemberRole.USER)
+            .memberStatus(MemberStatus.ACTIVITY)
+            .build());
+
+        return type.equals("social") ? linkWithAlreadyMember(savedMember, memberJoinRequest)
+            : savedMember;
     }
 
-    public String saveProfileImage(MultipartFile profileImage) {
-        return awsFileService.saveProfileImage(profileImage);
+    // 사용자 정보와 연동
+    private Member linkWithAlreadyMember(Member member, MemberJoinRequest memberJoinRequest) {
+        socialProviderRepository.save(SocialProvider.builder()
+            .member(member)
+            .oauthProvider(memberJoinRequest.getProvider())
+            .socialId(memberJoinRequest.getSocialUserId())
+            .build());
+
+        return member;
     }
 
-    public boolean verifyPassword(String password, CustomUser2Member user) {
-        final Member member = findMemberById(user.getMemberId());
+    // 서비스에 등록된 이메일인지 확인 및 이메일 인증 여부 확인
+    private Member validateEmailAndEmailAuthentication(Purpose purpose, String email) {
 
-        return bCryptPasswordEncoder.matches(password, member.getPassword());
+        // 서비스에 등록된 이메일인지 확인
+        Member member = memberRepository.findByEmail(email)
+            .orElseThrow(() -> new BusinessException(MemberErrorCode.NOT_FOUND_MEMBER));
+
+        // 이메일 본인 인증을 완료한 사용자인지 확인
+        String prefix = "auth:email:" + purpose.name().toLowerCase() + ":";
+
+        Boolean hasKeyInMemory = redisTemplate.hasKey(prefix + email);
+
+        if (Boolean.FALSE.equals(hasKeyInMemory)) {
+            throw new BusinessException(AuthErrorCode.EMAIL_VERIFICATION_REQUIRED);
+        }else if(hasKeyInMemory == null){
+            throw new BusinessException(GlobalErrorCode.SERVER_ERROR);
+        }
+
+        return member;
+    }
+
+    // 인증 데이터 사용 후, 레디스에서 삭제
+    private void deleteEmailAuthenticationData(Purpose purpose, String email){
+
+        redisTemplate.delete("auth:email:" + purpose.name().toLowerCase() + ":" + email);
     }
 
     private Member findMemberById(Long id) {
@@ -119,7 +267,7 @@ public class MemberService {
         if (imageFile == null) {
             return null;
         }
-        return saveProfileImage(imageFile);
+        return awsFileService.uploadFileToS3(imageFile, memberDir);
     }
 
     private String encodedPassword(String password) {
@@ -127,37 +275,5 @@ public class MemberService {
             return null;
         }
         return bCryptPasswordEncoder.encode(password);
-    }
-
-    private void updateSecurityContext(Member member, HttpServletRequest request) {
-        // CustomUserDetails 생성
-        final CustomUserDetails userDetails = new CustomUserDetails(
-            member.getMemberId(),
-            member.getEmail(),
-            member.getPassword(),
-            member.getProfileImageUrl(),
-            member.getNickname(),
-            member.getRole(),
-            member.getMemberStatus()
-        );
-
-        // Authentication 객체 생성
-        final Authentication authentication = new UsernamePasswordAuthenticationToken(
-            userDetails,
-            null, // 비밀번호는 이미 인증되었으므로 null
-            userDetails.getAuthorities()
-        );
-
-        // SecurityContext 생성 및 Authentication 설정
-        final SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
-        securityContext.setAuthentication(authentication);
-
-        // SecurityContextHolder에 설정
-        SecurityContextHolder.setContext(securityContext);
-
-        // HttpSession에 SecurityContext 저장
-        request.getSession().setAttribute("SPRING_SECURITY_CONTEXT", securityContext);
-        // HttpSession 갱신
-        request.getSession().setAttribute("user", userDetails);
     }
 }
