@@ -752,7 +752,7 @@ class MemberControllerTest extends ControllerTest {
                             )
                             .pathParameters(
                                 parameterWithName("memberId").type(SimpleType.NUMBER)
-                                    .description("댓글을 수정할 피드백 ID")
+                                    .description("해당 계정의 memberId(PK)")
                             )
                             .requestFields(
                                 fieldWithPath("notifyEnabled").type(JsonFieldType.BOOLEAN)
