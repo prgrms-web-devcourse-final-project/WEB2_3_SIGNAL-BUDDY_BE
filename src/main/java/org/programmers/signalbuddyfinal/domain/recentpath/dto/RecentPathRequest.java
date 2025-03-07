@@ -17,6 +17,8 @@ import lombok.ToString;
 public class RecentPathRequest {
     private String name;
 
+    private String address;
+
     @Min(value = -90, message = "위도는 -90 이상이어야 합니다.")
     @Max(value = 90, message = "위도는 90 이하여야 합니다.")
     private double lat;

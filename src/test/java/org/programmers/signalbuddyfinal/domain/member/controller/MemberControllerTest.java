@@ -134,8 +134,8 @@ class MemberControllerTest extends ControllerTest {
             .memberStatus(MemberStatus.ACTIVITY).role(MemberRole.USER).email(request.getEmail())
             .nickname(request.getNickname()).build();
 
-        given(memberService.updateMember(eq(memberId), any(MemberUpdateRequest.class)
-        )).willReturn(memberResponse);
+        given(memberService.updateMember(eq(memberId), any(MemberUpdateRequest.class))).willReturn(
+            memberResponse);
 
         // When
         ResultActions result = mockMvc.perform(patch("/api/members/{id}", memberId).contentType(
@@ -153,8 +153,8 @@ class MemberControllerTest extends ControllerTest {
                             fieldWithPath("email").type(JsonFieldType.STRING).description("이메일"),
                             fieldWithPath("nickname").type(JsonFieldType.STRING).description("닉네임"),
                             fieldWithPath("password").type(JsonFieldType.STRING).description("비밀번호"))
-                        .responseSchema(schema("MemberResponse"))
-                        .responseFields(memberFormat()).build())));
+                        .responseSchema(schema("MemberResponse")).responseFields(memberFormat())
+                        .build())));
     }
 
     @DisplayName("유저 프로필 이미지 변경")
@@ -517,10 +517,10 @@ class MemberControllerTest extends ControllerTest {
     void saveRecentPath() throws Exception {
         final Long memberId = 1L;
         final RecentPathRequest request = RecentPathRequest.builder().lat(37.501).lng(127.001)
-            .name("Recent Path").build();
+            .address("Address").name("Recent Path").build();
         final RecentPathResponse response = RecentPathResponse.builder().recentPathId(1L)
-            .lat(37.501).lng(127.001).name("Recent Path").lastAccessedAt(LocalDateTime.now())
-            .isBookmarked(false).build();
+            .lat(37.501).lng(127.001).name("Recent Path").address("Address")
+            .lastAccessedAt(LocalDateTime.now()).isBookmarked(false).build();
 
         given(recentPathService.saveRecentPath(eq(memberId),
             any(RecentPathRequest.class))).willReturn(response);
@@ -536,6 +536,7 @@ class MemberControllerTest extends ControllerTest {
                             parameterWithName("id").type(SimpleType.NUMBER).description("유저 ID"))
                         .requestSchema(schema("RecentPathRequest"))
                         .requestFields(fieldWithPath("name").description("최근 경로 이름"),
+                            fieldWithPath("address").description("최근 경로 주소"),
                             fieldWithPath("lat").description("위도"),
                             fieldWithPath("lng").description("경도"))
                         .responseSchema(schema("RecentPathResponse")).responseFields(
@@ -546,6 +547,8 @@ class MemberControllerTest extends ControllerTest {
                                 fieldWithPath("data.lng").type(JsonFieldType.NUMBER).description("경도"),
                                 fieldWithPath("data.name").type(JsonFieldType.STRING)
                                     .description("최근 경로 이름"),
+                                fieldWithPath("data.address").type(JsonFieldType.STRING)
+                                    .description("최근 경로 주소"),
                                 fieldWithPath("data.lastAccessedAt").type(JsonFieldType.STRING)
                                     .description("최근 방문 시각"),
                                 fieldWithPath("data.bookmarked").type(JsonFieldType.BOOLEAN)
@@ -559,14 +562,14 @@ class MemberControllerTest extends ControllerTest {
 
         final List<RecentPathResponse> list = List.of(
             RecentPathResponse.builder().recentPathId(1L).lat(37.501).lng(127.001)
-                .name("Recent Path").lastAccessedAt(LocalDateTime.now()).isBookmarked(false)
-                .build(),
+                .name("Recent Path").address("Address").lastAccessedAt(LocalDateTime.now())
+                .isBookmarked(false).build(),
             RecentPathResponse.builder().recentPathId(2L).lat(37.501).lng(127.001)
-                .name("Recent Path").lastAccessedAt(LocalDateTime.now()).isBookmarked(false)
-                .build(),
+                .name("Recent Path").address("Address").lastAccessedAt(LocalDateTime.now())
+                .isBookmarked(false).build(),
             RecentPathResponse.builder().recentPathId(3L).lat(37.501).lng(127.001)
-                .name("Recent Path").lastAccessedAt(LocalDateTime.now()).isBookmarked(false)
-                .build());
+                .name("Recent Path").address("Address").lastAccessedAt(LocalDateTime.now())
+                .isBookmarked(false).build());
 
         given(recentPathService.getRecentPathList(memberId)).willReturn(list);
 
@@ -589,6 +592,8 @@ class MemberControllerTest extends ControllerTest {
                                     .description("경도"),
                                 fieldWithPath("data[].name").type(JsonFieldType.STRING)
                                     .description("최근 경로 이름"),
+                                fieldWithPath("data[].address").type(JsonFieldType.STRING)
+                                    .description("최근 경로 주소"),
                                 fieldWithPath("data[].lastAccessedAt").type(JsonFieldType.STRING)
                                     .description("최근 방문 시각"),
                                 fieldWithPath("data[].bookmarked").type(JsonFieldType.BOOLEAN)
@@ -599,51 +604,29 @@ class MemberControllerTest extends ControllerTest {
     @Test
     void successJoin() throws Exception {
         // given
-        MemberJoinRequest memberJoinRequest = MemberJoinRequest.builder()
-            .email("newtest@test.com")
-            .password("1234")
-            .nickname("newnickname")
-            .build();
+        MemberJoinRequest memberJoinRequest = MemberJoinRequest.builder().email("newtest@test.com")
+            .password("1234").nickname("newnickname").build();
 
-        MockMultipartFile file = new MockMultipartFile(
-            "profileImageUrl",
-            "image.png",
-            "image/png",
-            "test".getBytes()
-        );
+        MockMultipartFile file = new MockMultipartFile("profileImageUrl", "image.png", "image/png",
+            "test".getBytes());
 
-        MockMultipartFile requestPart = new MockMultipartFile(
-            "memberJoinRequest", "",
-            MediaType.APPLICATION_JSON_VALUE,
-            objectMapper.writeValueAsBytes(memberJoinRequest)
-        );
+        MockMultipartFile requestPart = new MockMultipartFile("memberJoinRequest", "",
+            MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(memberJoinRequest));
 
         // when, then
-        mockMvc.perform(multipart("/api/members/join")
-                .file(requestPart)
-                .file(file))
-            .andExpect(status().isOk())
-            .andDo(document("기본 계정 회원가입",
-                preprocessRequest(prettyPrint()),
-                preprocessResponse(prettyPrint()),
-                resource(
-                    ResourceSnippetParameters.builder()
-                        .tag(tag)
-                        .summary("회원가입")
-                        .build()
-                ),
-                requestParts(
-                    partWithName("profileImageUrl").description("프로필 이미지 파일"),
-                    partWithName("memberJoinRequest").description("회원 가입 정보")
-                ),
-                requestPartFields("memberJoinRequest",
-                    fieldWithPath("provider").description("OAuth 제공자"),
-                    fieldWithPath("socialUserId").description("provider에서 제공하는 사용자 UUID"),
-                    fieldWithPath("email").description("이메일"),
-                    fieldWithPath("password").description("비밀번호"),
-                    fieldWithPath("nickname").description("닉네임")
-                    )
-                ));
+        mockMvc.perform(multipart("/api/members/join").file(requestPart).file(file))
+            .andExpect(status().isOk()).andDo(
+                document("기본 계정 회원가입", preprocessRequest(prettyPrint()),
+                    preprocessResponse(prettyPrint()),
+                    resource(ResourceSnippetParameters.builder().tag(tag).summary("회원가입").build()),
+                    requestParts(partWithName("profileImageUrl").description("프로필 이미지 파일"),
+                        partWithName("memberJoinRequest").description("회원 가입 정보")),
+                    requestPartFields("memberJoinRequest",
+                        fieldWithPath("provider").description("OAuth 제공자"),
+                        fieldWithPath("socialUserId").description("provider에서 제공하는 사용자 UUID"),
+                        fieldWithPath("email").description("이메일"),
+                        fieldWithPath("password").description("비밀번호"),
+                        fieldWithPath("nickname").description("닉네임"))));
     }
 
     @DisplayName("비밀번호 재설정")
@@ -657,27 +640,16 @@ class MemberControllerTest extends ControllerTest {
         when(memberService.resetPassword(any(ResetPasswordRequest.class))).thenReturn(response);
 
         // when, then
-        mockMvc.perform(post("/api/members/password-reset")
-                .contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/members/password-reset").contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(resetPasswordRequest)))
-            .andExpect(status().isOk())
-            .andDo(MockMvcRestDocumentation.document("비밀번호 재설정",
-                    preprocessRequest(prettyPrint()),
-                    preprocessResponse(prettyPrint()),
-                    resource(
-                        ResourceSnippetParameters.builder()
-                            .tag(tag)
-                            .summary("비밀번호 재설정")
-                            .requestFields(
-                                fieldWithPath("email").type(JsonFieldType.STRING)
-                                    .description("비밀번호를 변경하고자 하는 이메일"),
-                                fieldWithPath("newPassword").type(JsonFieldType.STRING)
-                                    .description("새로운 비밀번호")
-                            )
-                            .build()
-                    )
-                )
-            );
+            .andExpect(status().isOk()).andDo(
+                MockMvcRestDocumentation.document("비밀번호 재설정", preprocessRequest(prettyPrint()),
+                    preprocessResponse(prettyPrint()), resource(
+                        ResourceSnippetParameters.builder().tag(tag).summary("비밀번호 재설정").requestFields(
+                            fieldWithPath("email").type(JsonFieldType.STRING)
+                                .description("비밀번호를 변경하고자 하는 이메일"),
+                            fieldWithPath("newPassword").type(JsonFieldType.STRING)
+                                .description("새로운 비밀번호")).build())));
     }
 
     @DisplayName("계정 복구")
@@ -687,35 +659,25 @@ class MemberControllerTest extends ControllerTest {
         MemberRestoreRequest memberRestoreRequest = new MemberRestoreRequest("test@test.com");
 
         final MemberResponse memberResponse = MemberResponse.builder().memberId(1l)
-            .memberStatus(MemberStatus.ACTIVITY)
-            .role(MemberRole.USER)
-            .email(memberRestoreRequest.getEmail())
-            .nickname("temp_nickname")
-            .profileImageUrl("profile_image.jpeg")
-            .build();
+            .memberStatus(MemberStatus.ACTIVITY).role(MemberRole.USER)
+            .email(memberRestoreRequest.getEmail()).nickname("temp_nickname")
+            .profileImageUrl("profile_image.jpeg").build();
 
         ApiResponse<MemberResponse> apiResponse = ApiResponse.createSuccess(memberResponse);
-        when(memberService.restore(any(MemberRestoreRequest.class))).thenReturn(ResponseEntity.ok(apiResponse));
+        when(memberService.restore(any(MemberRestoreRequest.class))).thenReturn(
+            ResponseEntity.ok(apiResponse));
 
         // when, then
-        mockMvc.perform(post("/api/members/restore")
-                .contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/members/restore").contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(memberRestoreRequest)))
-            .andExpect(status().isOk())
-            .andDo(print())
-            .andDo(MockMvcRestDocumentation.document("계정 복구",
-                    preprocessRequest(prettyPrint()),
-                    preprocessResponse(prettyPrint()),
-                    resource(
-                        ResourceSnippetParameters.builder()
-                            .tag(tag)
-                            .summary("계정 복구")
-                            .requestFields(
+            .andExpect(status().isOk()).andDo(print()).andDo(
+                MockMvcRestDocumentation.document("계정 복구", preprocessRequest(prettyPrint()),
+                    preprocessResponse(prettyPrint()), resource(
+                        ResourceSnippetParameters.builder().tag(tag).summary("계정 복구").requestFields(
                                 fieldWithPath("email").type(JsonFieldType.STRING)
-                                    .description("계정을 복구하고자 하는 이메일")
-                            )
-                            .responseSchema(schema("MemberResponse"))
-                            .responseFields(memberFormat()).build())));
+                                    .description("계정을 복구하고자 하는 이메일"))
+                            .responseSchema(schema("MemberResponse")).responseFields(memberFormat())
+                            .build())));
 
     }
 
@@ -725,46 +687,27 @@ class MemberControllerTest extends ControllerTest {
     void updateNotifyEnabled() throws Exception {
         // Given
         MemberNotiAllowRequest request = new MemberNotiAllowRequest(Boolean.FALSE);
-        doNothing().when(memberService)
-            .updateNotifyEnabled(anyLong(), any(CustomUser2Member.class), any(MemberNotiAllowRequest.class));
+        doNothing().when(memberService).updateNotifyEnabled(anyLong(), any(CustomUser2Member.class),
+            any(MemberNotiAllowRequest.class));
 
         // When
         ResultActions result = mockMvc.perform(
-            patch("/api/members/{memberId}/notify-enabled", 1L)
-                .header(HttpHeaders.AUTHORIZATION, getTokenExample())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request))
-        );
+            patch("/api/members/{memberId}/notify-enabled", 1L).header(HttpHeaders.AUTHORIZATION,
+                    getTokenExample()).contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)));
 
         // Then
-        result.andExpect(status().isOk()).andDo(print())
-            .andDo(
-                document(
-                    "알림 설정 수정",
-                    preprocessRequest(prettyPrint()),
-                    preprocessResponse(prettyPrint()),
-                    resource(
-                        ResourceSnippetParameters.builder()
-                            .tag(tag)
-                            .summary("알림 설정 수정")
-                            .requestHeaders(
-                                jwtFormat()
-                            )
-                            .pathParameters(
-                                parameterWithName("memberId").type(SimpleType.NUMBER)
-                                    .description("해당 계정의 memberId(PK)")
-                            )
-                            .requestFields(
-                                fieldWithPath("notifyEnabled").type(JsonFieldType.BOOLEAN)
-                                    .description("""
-                                        알림 설정
-                                        - `true` : 알림 허용
-                                        - `false` : 알림 거부
-                                        """)
-                            )
-                            .build()
-                    )
-                )
-            );
+        result.andExpect(status().isOk()).andDo(print()).andDo(
+            document("알림 설정 수정", preprocessRequest(prettyPrint()),
+                preprocessResponse(prettyPrint()), resource(
+                    ResourceSnippetParameters.builder().tag(tag).summary("알림 설정 수정")
+                        .requestHeaders(jwtFormat()).pathParameters(
+                            parameterWithName("memberId").type(SimpleType.NUMBER)
+                                .description("해당 계정의 memberId(PK)")).requestFields(
+                            fieldWithPath("notifyEnabled").type(JsonFieldType.BOOLEAN).description("""
+                                알림 설정
+                                - `true` : 알림 허용
+                                - `false` : 알림 거부
+                                """)).build())));
     }
 }
