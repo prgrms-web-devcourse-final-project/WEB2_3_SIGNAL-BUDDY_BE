@@ -18,6 +18,7 @@ import org.programmers.signalbuddyfinal.domain.crossroad.mapper.CrossroadMapper;
 import org.programmers.signalbuddyfinal.domain.crossroad.repository.CrossroadRedisRepository;
 import org.programmers.signalbuddyfinal.domain.crossroad.repository.CrossroadRepository;
 import org.programmers.signalbuddyfinal.domain.crossroad.repository.CustomCrossroadRepositoryImpl;
+import org.programmers.signalbuddyfinal.domain.trafficSignal.dto.TrafficResponse;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.monitoring.HttpRequestManager;
 import org.programmers.signalbuddyfinal.global.util.PointUtil;
@@ -61,42 +62,63 @@ public class CrossroadService {
         }
     }
 
-    public void searchAndSaveCrossroad(Double lat, Double lng, int radius){
-        List<CrossroadResponse> aroundCrossroads = new ArrayList<>();
+    public List<CrossroadResponse> searchAndSaveCrossroad(Double lat, Double lng, int radius){
+
+        List<CrossroadResponse> responseDB = new ArrayList<>();
+        List<CrossroadResponse> responseRedis = new ArrayList<>();
+        boolean flag = false;
 
         try{
-            aroundCrossroads.addAll(customCrossroadRepository.findNearestCrossroads(lat, lng, radius));
+            responseDB.addAll(customCrossroadRepository.findNearestCrossroads(lat, lng, radius));
 
-            for(CrossroadResponse response : aroundCrossroads){
-                if (response.getCrossroadId() != null
-                    && crossroadRedisRepository.findById(Long.valueOf(response.getCrossroadApiId() ) ) != null ) {
-                    crossroadRedisRepository.save(response);
-                }
+            if(crossroadRedisRepository.findById(responseDB.get(0).getCrossroadId())==null){
+                flag = true;
             }
+
+            for(CrossroadResponse response : responseDB){
+                responseRedis.add(crossroadRedisRepository.findById(response.getCrossroadId()));
+
+                if (crossroadRedisRepository.findById(response.getCrossroadId())!=null) {
+                    crossroadRedisRepository.save(response);
+                };
+            }
+
+            if(flag){
+                return responseDB;
+            } else {
+                return responseRedis;
+            }
+
         } catch (NullPointerException e) {
             log.error("❌ crossroad Not Found : {}", e.getMessage(), e);
             throw new BusinessException(CrossroadErrorCode.NOT_FOUND_CROSSROAD);
         }
     }
 
-    public CrossroadResponse crossroadFindById(Long apiId) {
+    public CrossroadResponse crossroadFindById(Long id) {
 
-        CrossroadResponse responseRedis = crossroadRedisRepository.findById(apiId);
+        CrossroadResponse responseRedis = crossroadRedisRepository.findById( id );
+        CrossroadResponse responseDB = new CrossroadResponse(crossroadRepository.findByCrossroadId(id));
+        boolean flag = false;
 
-        try {
+        try{
             if (responseRedis == null) {
-                CrossroadResponse responseDB = new CrossroadResponse(
-                    crossroadRepository.findByCrossroadApiId( String.valueOf(apiId) ) );
-
+                flag = true;
                 crossroadRedisRepository.save(responseDB);
-                responseRedis = crossroadRedisRepository.findById(apiId);
+                responseRedis = crossroadRedisRepository.findById((id));
+
             }
+
+            if(flag){
+                return responseDB;
+            } else {
+                return responseRedis;
+            }
+
         } catch (NullPointerException e) {
             log.error("❌ crossroad Not Found : {}", e.getMessage(), e);
             throw new BusinessException(CrossroadErrorCode.NOT_FOUND_CROSSROAD);
         }
-
-        return responseRedis;
 
     }
 
