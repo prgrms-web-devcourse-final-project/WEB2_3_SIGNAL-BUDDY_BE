@@ -18,15 +18,18 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberJoinRequest;
+import org.programmers.signalbuddyfinal.domain.member.dto.MemberNotiAllowRequest;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberUpdateRequest;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
+import org.programmers.signalbuddyfinal.domain.member.exception.MemberErrorCode;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
+import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
+import org.programmers.signalbuddyfinal.global.exception.BusinessException;
+import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
 import org.programmers.signalbuddyfinal.global.service.AwsFileService;
-import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.mock.web.MockHttpSession;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -48,7 +51,7 @@ class MemberServiceTest {
     @BeforeEach
     void setUp() {
         member = Member.builder().memberId(id).email("test@example.com").password("password123")
-            .nickname("TestUser").profileImageUrl("http://example.com/profile.jpg")
+            .nickname("TestUser").profileImageUrl("http://example.com/profile.jpg").notifyEnabled(null)
             .role(MemberRole.USER).memberStatus(MemberStatus.ACTIVITY).build();
     }
 
@@ -135,4 +138,40 @@ class MemberServiceTest {
         verify(memberRepository, times(1)).save(any(Member.class));
     }
 
+    @Test
+    @DisplayName("사용자의 알림 허용 설정을 변경한다.")
+    void updateNotifyEnabled_Success() {
+        // Given
+        MemberNotiAllowRequest request = new MemberNotiAllowRequest(Boolean.FALSE);
+        CustomUser2Member user = new CustomUser2Member(
+            new CustomUserDetails(id, "", "",
+                "", "", MemberRole.USER, MemberStatus.ACTIVITY));
+
+        when(memberRepository.findByIdOrThrow(id)).thenReturn(member);
+
+        // When
+        memberService.updateNotifyEnabled(id, user, request);
+
+        // Then
+        assertThat(member.getNotifyEnabled()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Path Variable 값과 요청자가 다를 경우 실패한다.")
+    void updateNotifyEnabled_Failure() {
+        // Given
+        MemberNotiAllowRequest request = new MemberNotiAllowRequest(Boolean.FALSE);
+        CustomUser2Member user = new CustomUser2Member(
+            new CustomUserDetails(9999L, "", "",
+                "", "", MemberRole.USER, MemberStatus.ACTIVITY));
+
+        when(memberRepository.findByIdOrThrow(id)).thenReturn(member);
+
+        // When & Then
+        try {
+            memberService.updateNotifyEnabled(id, user, request);
+        } catch (BusinessException e) {
+            assertThat(e.getErrorCode()).isEqualTo(MemberErrorCode.REQUESTER_IS_NOT_SAME);
+        }
+    }
 }
