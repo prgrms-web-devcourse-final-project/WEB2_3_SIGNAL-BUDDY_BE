@@ -7,6 +7,7 @@ import org.programmers.signalbuddyfinal.domain.trafficSignal.dto.TrafficResponse
 import org.programmers.signalbuddyfinal.domain.trafficSignal.exception.TrafficErrorCode;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.repository.CustomTrafficRepositoryImpl;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.repository.TrafficRedisRepository;
+import org.programmers.signalbuddyfinal.domain.trafficSignal.repository.TrafficRepository;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,36 +21,68 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class TrafficService {
 
-    private static final String KEY_PREFIX = "traffic:";
-
     private final CustomTrafficRepositoryImpl customTrafficRepository;
     private final TrafficRedisRepository trafficRedisRepository;
+    private final TrafficRepository trafficRepository;
 
-    public void saveAroundTraffic(Double lat, Double lng){
-        List<TrafficResponse> aroundTraffics = new ArrayList<>();
+    public List<TrafficResponse> searchAndSaveTraffic(Double lat, Double lng, Integer radius) {
 
-        aroundTraffics.addAll(customTrafficRepository.findAroundTraffics(lat, lng));
+        List<TrafficResponse> responseDB = new ArrayList<>();
+        List<TrafficResponse> responseRedis = new ArrayList<>();
+        boolean flag = false;
 
-        for(TrafficResponse response : aroundTraffics){
-            if (response.getSerialNumber() != null) {
-                trafficRedisRepository.save(response);
+        try{
+            responseDB.addAll(customTrafficRepository.findNearestTraffics(lat, lng, radius));
+
+            if(trafficRedisRepository.findById(responseDB.get(0).getTrafficId())==null){
+                flag = true;
             }
-        }
-    }
 
-    public TrafficResponse trafficFindById(String id) {
+            for(TrafficResponse response : responseDB){
+                responseRedis.add(trafficRedisRepository.findById(response.getTrafficId()));
 
-        if( !id.startsWith(KEY_PREFIX)){
-            id = KEY_PREFIX+id;
-        }
+                if (trafficRedisRepository.findById(response.getTrafficId())!=null) {
+                    trafficRedisRepository.save(response);
+                };
+            }
 
-        TrafficResponse response = trafficRedisRepository.findById(id);
+            if(flag){
+                return responseDB;
+            } else {
+                return responseRedis;
+            }
 
-        if(response.getSerialNumber() == null){
+        } catch (NullPointerException e) {
+            log.error("❌ traffic Not Found : {}", e.getMessage(), e);
             throw new BusinessException(TrafficErrorCode.NOT_FOUND_TRAFFIC);
         }
 
-        return response;
 
+    }
+
+    public TrafficResponse trafficFindById(Long id) {
+
+        TrafficResponse responseRedis = trafficRedisRepository.findById( id );
+        TrafficResponse responseDB = new TrafficResponse(trafficRepository.findByTrafficSignalId(id));
+        boolean flag = false;
+
+        try{
+            if (responseRedis == null) {
+                flag = true;
+                trafficRedisRepository.save(responseDB);
+                responseRedis = trafficRedisRepository.findById((id));
+
+            }
+
+            if(flag){
+                return responseDB;
+            } else {
+                return responseRedis;
+            }
+
+        } catch (NullPointerException e) {
+            log.error("❌ traffic Not Found : {}", e.getMessage(), e);
+            throw new BusinessException(TrafficErrorCode.NOT_FOUND_TRAFFIC);
+        }
     }
 }

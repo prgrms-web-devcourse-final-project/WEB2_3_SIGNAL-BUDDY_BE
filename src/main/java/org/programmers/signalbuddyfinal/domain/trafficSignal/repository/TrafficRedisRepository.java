@@ -30,8 +30,8 @@ public class TrafficRedisRepository {
         );
     }
 
-    public TrafficResponse findById(String id) {
-        return (TrafficResponse) operations.get(id);
+    public TrafficResponse findById(Long id) {
+        return (TrafficResponse) operations.get(KEY_PREFIX + id);
     }
 
 }
