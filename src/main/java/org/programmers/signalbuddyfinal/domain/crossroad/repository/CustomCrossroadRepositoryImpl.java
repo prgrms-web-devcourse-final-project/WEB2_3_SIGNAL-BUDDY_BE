@@ -5,13 +5,10 @@ import com.querydsl.core.types.QBean;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Point;
-import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadApiResponse;
 import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadResponse;
-import org.programmers.signalbuddyfinal.domain.crossroad.entity.Crossroad;
 import static org.programmers.signalbuddyfinal.domain.crossroad.entity.QCrossroad.crossroad;
 import org.springframework.stereotype.Repository;
 
