@@ -84,6 +84,7 @@ public class SecurityConfig {
                     "/api/admins/join", "/api/members/files/**", "/api/auth/auth-code",
                     "/api/auth/verify-code","/api/members/password-reset","/api/members/restore",
                     "/api/auth/test/**").permitAll()
+                .requestMatchers("/api/admin/terms").hasRole(ADMIN)
                 .requestMatchers("/api/bookmarks/**", "/bookmarks/**").hasRole("USER")
                 // 댓글
                 .requestMatchers(HttpMethod.GET, "/api/feedbacks/{feedbackId}/comments").permitAll()

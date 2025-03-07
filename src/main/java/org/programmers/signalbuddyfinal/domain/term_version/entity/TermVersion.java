@@ -8,7 +8,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -35,7 +35,10 @@ public class TermVersion extends BaseTimeEntity {
     private String termContent;
 
     @Column(nullable = false)
-    private LocalDateTime effectiveDate;
+    private LocalDate effectiveStartDate;
+
+    @Column(nullable = false)
+    private LocalDate effectiveEndDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "term_id")
