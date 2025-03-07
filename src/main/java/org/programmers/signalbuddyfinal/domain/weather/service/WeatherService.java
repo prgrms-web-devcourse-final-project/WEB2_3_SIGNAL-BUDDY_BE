@@ -1,6 +1,5 @@
 package org.programmers.signalbuddyfinal.domain.weather.service;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -22,6 +21,7 @@ import org.programmers.signalbuddyfinal.domain.weather.entity.GridCoordinate;
 import org.programmers.signalbuddyfinal.domain.weather.exception.WeatherErrorCode;
 import org.programmers.signalbuddyfinal.domain.weather.repository.GridCoordinateRepository;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,11 +39,13 @@ public class WeatherService {
     private final WeatherProvider weatherProvider;
     private final Map<String, SseEmitter> emitters = new ConcurrentHashMap<>();
 
+
     @Transactional
-    public void saveExcel(String filePath) throws IOException {
+    public void saveExcel() throws IOException {
         ZipSecureFile.setMinInflateRatio(0.0001);
-        try (final InputStream inputStream = new FileInputStream(
-            filePath); final Workbook workbook = new XSSFWorkbook(inputStream)) {
+        try (final InputStream inputStream = new ClassPathResource(
+            "/static/file/grid_coordinates.xlsx").getInputStream(); final Workbook workbook = new XSSFWorkbook(
+            inputStream)) {
 
             final Sheet sheet = workbook.getSheetAt(0);
             final List<GridCoordinate> gridCoordinates = new ArrayList<>();
@@ -81,7 +83,7 @@ public class WeatherService {
         final List<Weather> weathers = weatherProvider.requestWeatherApi((int) nx, (int) ny);
         try {
             double temperature = 0;
-            String precipitationType = "";
+            int precipitationTypeNumber = 0;
             double humidity = 0;
             double precipitation = 0;
             int windDirection = 0;
@@ -90,7 +92,8 @@ public class WeatherService {
             for (Weather weather : weathers) {
                 switch (weather.getCategory()) {
                     case Weather.T1H -> temperature = Double.parseDouble(weather.getObsrValue());
-                    case Weather.PTY -> precipitationType = weather.getObsrValue();
+                    case Weather.PTY ->
+                        precipitationTypeNumber = Integer.parseInt(weather.getObsrValue());
                     case Weather.REH -> humidity = Double.parseDouble(weather.getObsrValue());
                     case Weather.RN1 -> precipitation = Double.parseDouble(weather.getObsrValue());
                     case Weather.VEC -> windDirection = (int) Math.floor(
@@ -99,6 +102,9 @@ public class WeatherService {
                     default -> log.debug("Unknown weather category: {}", weather.getCategory());
                 }
             }
+
+            final String precipitationType = getPrecipitationType(precipitationTypeNumber);
+
             return WeatherResponse.builder().temperature(temperature)
                 .precipitationType(precipitationType).humidity(humidity)
                 .precipitation(precipitation).windDirection(windDirection).windSpeed(windSpeed)
@@ -167,5 +173,32 @@ public class WeatherService {
             case NUMERIC -> cell.getNumericCellValue();
             default -> 0.0;
         };
+    }
+
+    private String getPrecipitationType(int precipitationTypeNumber) {
+        switch (precipitationTypeNumber) {
+            case 0 -> {
+                return "없음";
+            }
+            case 1 -> {
+                return "비";
+            }
+            case 2 -> {
+                return "비/눈";
+            }
+            case 3 -> {
+                return "눈";
+            }
+            case 5 -> {
+                return "빗방울";
+            }
+            case 6 -> {
+                return "빗방울눈날림";
+            }
+            case 7 -> {
+                return "눈날림";
+            }
+            default -> throw new BusinessException(WeatherErrorCode.WEATHER_API_RESPONSE_ERROR);
+        }
     }
 }

@@ -20,9 +20,9 @@ public class WeatherController {
     private final WeatherService weatherService;
 
     @PostMapping("/api/weather")
-    public ResponseEntity<ApiResponse<String>> saveExcel(@RequestBody String filePath)
+    public ResponseEntity<ApiResponse<String>> saveExcel()
         throws IOException {
-        weatherService.saveExcel(filePath);
+        weatherService.saveExcel();
         return ResponseEntity.ok(ApiResponse.createSuccess("success"));
     }
 
