@@ -1,9 +1,13 @@
 package org.programmers.signalbuddyfinal.domain.trafficSignal.repository;
 
+import org.locationtech.jts.geom.Point;
+import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadResponse;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.dto.TrafficResponse;
 
 import java.util.List;
 
 public interface CustomTrafficRepository {
-    List<TrafficResponse> findAroundTraffics(double latitude, double longitude);
+
+    List<TrafficResponse> findNearestTraffics(double lat, double lng, int radius);
+
 }
