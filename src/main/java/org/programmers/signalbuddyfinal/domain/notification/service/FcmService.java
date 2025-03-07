@@ -1,10 +1,11 @@
 package org.programmers.signalbuddyfinal.domain.notification.service;
 
+import com.google.api.core.ApiFuture;
+import com.google.firebase.messaging.BatchResponse;
 import com.google.firebase.messaging.FirebaseMessaging;
-import com.google.firebase.messaging.FirebaseMessagingException;
-import com.google.firebase.messaging.Message;
+import com.google.firebase.messaging.MulticastMessage;
 import com.google.firebase.messaging.Notification;
-import java.util.Optional;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
@@ -31,9 +32,10 @@ public class FcmService {
 
     @Async("customTaskExecutor")
     public void sendMessage(FcmMessage request, Long receiverId) {
-        Optional<FcmToken> fcmToken = fcmTokenRepository.findByMemberId(receiverId);
+        List<FcmToken> fcmTokens = fcmTokenRepository.findAllByMemberId(receiverId);
+        log.info("fcmToken size : {}", fcmTokens.size());
 
-        if (fcmToken.isEmpty()) {
+        if (fcmTokens.isEmpty()) {
             return;
         }
 
@@ -42,27 +44,22 @@ public class FcmService {
             .setBody(request.getBody())
             .build();
 
-        Message message = Message.builder()
-            .setToken(fcmToken.get().getDeviceToken())
+        List<String> deviceTokens = fcmTokens.stream()
+            .map(FcmToken::getDeviceToken).toList();
+
+        MulticastMessage message = MulticastMessage.builder()
+            .addAllTokens(deviceTokens)
             .setNotification(notification)
             .build();
 
-        try {
-            String notiId = firebaseMessaging.send(message);
-            log.info("notification ID : {}", notiId);
-        } catch (FirebaseMessagingException e) {
+        ApiFuture<BatchResponse> apiFuture = firebaseMessaging.sendEachForMulticastAsync(message);
+        if (apiFuture.isCancelled()) {
             throw new BusinessException(FcmErrorCode.FCM_SEND_ERROR);
         }
     }
 
     @Transactional
     public void registerToken(String deviceToken, CustomUser2Member user) {
-        Optional<FcmToken> entity = fcmTokenRepository.findByMemberId(user.getMemberId());
-
-        if (entity.isPresent()) {
-            throw new BusinessException(FcmErrorCode.ALREADY_EXISTED_TOKEN);
-        }
-
         Member member = memberRepository.findByIdOrThrow(user.getMemberId());
 
         FcmToken fcmToken = FcmToken.create()
@@ -70,17 +67,5 @@ public class FcmService {
             .build();
 
         fcmTokenRepository.save(fcmToken);
-    }
-
-    @Transactional
-    public void updateToken(String deviceToken, CustomUser2Member user) {
-        FcmToken fcmToken = fcmTokenRepository.findByMemberIdOrThrow(user.getMemberId());
-        fcmToken.updateDeviceToken(deviceToken);
-    }
-
-    @Transactional
-    public void deleteToken(CustomUser2Member user) {
-        FcmToken fcmToken = fcmTokenRepository.findByMemberIdOrThrow(user.getMemberId());
-        fcmTokenRepository.delete(fcmToken);
     }
 }
