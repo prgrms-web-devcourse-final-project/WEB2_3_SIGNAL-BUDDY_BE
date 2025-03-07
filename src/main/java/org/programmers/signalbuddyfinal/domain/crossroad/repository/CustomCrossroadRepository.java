@@ -8,8 +8,6 @@ import org.locationtech.jts.geom.Point;
 
 public interface CustomCrossroadRepository {
 
-    List<CrossroadApiResponse> findNearByCrossroads(double latitude, double longitude);
-
     List<CrossroadResponse> findNearestCrossroads(double lat, double lng, int radius);
 
     List<Long> findByCoordinateInWithRadius(List<Point> points, int radius);
