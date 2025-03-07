@@ -140,9 +140,41 @@ class CommentServiceTest extends ServiceTest {
             .sendMessage(any(FcmMessage.class), anyLong());
     }
 
-    @DisplayName("관리자가 댓글(답변)을 작성한다.")
+    @DisplayName("피드백 작성자가 알림 설정을 허용하지 않아, 알림이 전송되지 않는다.")
     @Test
     @Order(3)
+    void writeComment_NotiDisabled() {
+        // given
+        Long feedbackId = feedback.getFeedbackId();
+        Member otherMember = saveMember("other@test.com", "other tester");
+        String content = "test comment content";
+        CommentRequest request = new CommentRequest(content);
+        CustomUser2Member user = getCurrentMember(otherMember.getMemberId(), MemberRole.USER);
+        member.updateNotifyEnabled(Boolean.FALSE);
+
+        doNothing().when(fcmService).sendMessage(any(FcmMessage.class), anyLong());
+
+        // when
+        commentService.writeComment(feedbackId, request, user);
+
+        // then
+        Optional<Comment> actual = commentRepository.findById(2L);
+        SoftAssertions.assertSoftly(softAssertions -> {
+            softAssertions.assertThat(actual).get().isNotNull();
+            softAssertions.assertThat(actual.get().getCommentId()).isNotNull();
+            softAssertions.assertThat(actual.get().getContent()).isEqualTo(content);
+            softAssertions.assertThat(actual.get().getMember().getMemberId())
+                .isEqualTo(user.getMemberId());
+            softAssertions.assertThat(actual.get().getFeedback().getFeedbackId())
+                .isEqualTo(feedbackId);
+        });
+        verify(fcmService, times(0))
+            .sendMessage(any(FcmMessage.class), anyLong());
+    }
+
+    @DisplayName("관리자가 댓글(답변)을 작성한다.")
+    @Test
+    @Order(4)
     void writeCommentByAdmin() {
         // given
         Long feedbackId = feedback.getFeedbackId();
@@ -174,7 +206,7 @@ class CommentServiceTest extends ServiceTest {
 
     @DisplayName("본인의 댓글을 수정한다.")
     @Test
-    @Order(4)
+    @Order(5)
     void updateComment() {
         // given
         String updatedContent = "update comment content";
@@ -196,7 +228,7 @@ class CommentServiceTest extends ServiceTest {
 
     @DisplayName("댓글 작성자와 다른 사람이 수정 시, 실패한다.")
     @Test
-    @Order(5)
+    @Order(6)
     void updateCommentFailure() {
         // given
         String updatedContent = "update comment content";
@@ -214,7 +246,7 @@ class CommentServiceTest extends ServiceTest {
 
     @DisplayName("일반 사용자가 본인 댓글을 삭제한다.")
     @Test
-    @Order(6)
+    @Order(7)
     void deleteComment() {
         // given
         CustomUser2Member user = getCurrentMember(member.getMemberId(), MemberRole.USER);
@@ -228,7 +260,7 @@ class CommentServiceTest extends ServiceTest {
 
     @DisplayName("관리자가 일반 사용자의 댓글을 삭제한다.")
     @Test
-    @Order(7)
+    @Order(8)
     void deleteCommentByAdmin() {
         // given
         CustomUser2Member user = getCurrentMember(admin.getMemberId(), MemberRole.ADMIN);
@@ -242,7 +274,7 @@ class CommentServiceTest extends ServiceTest {
 
     @DisplayName("댓글 작성자와 다른 사람이 삭제 시, 실패한다.")
     @Test
-    @Order(8)
+    @Order(9)
     void deleteCommentFailure() {
         // given
         CustomUser2Member user = getCurrentMember(999999L, MemberRole.USER);
@@ -258,7 +290,7 @@ class CommentServiceTest extends ServiceTest {
 
     @DisplayName("관리자 본인의 댓글(답변)을 삭제한다.")
     @Test
-    @Order(9)
+    @Order(10)
     void deleteAdminComment() {
         // given
         Long feedbackId = feedback.getFeedbackId();
