@@ -28,7 +28,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
     private final RedisTemplate<String, String> redisTemplate;
     private final Set<String> excludeGetPaths = Set.of(
         "/api/feedbacks/{feedbackId}/comments", "/api/crossroads/**", "/api/feedbacks",
-        "/api/crossroads/{crossroadId}/state"
+        "/api/crossroads/{crossroadId}/state", "/api/feedbacks/{feedbackId}"
     );
     private final Set<String> excludeAllPaths = Set.of(
         "/", "/docs/**", "/ws/**", "/actuator/health", "/webjars/**", "/api/auth/login",
@@ -78,7 +78,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
             request.setAttribute(EXCEPTION_ATTRIBUTE, "INVALID_TOKEN");
             throw new BusinessException(TokenErrorCode.INVALID_TOKEN);
-        };
+        }
 
         Authentication authentication = jwtUtil.getAuthentication(accessToken);
         SecurityContextHolder.getContext().setAuthentication(authentication);

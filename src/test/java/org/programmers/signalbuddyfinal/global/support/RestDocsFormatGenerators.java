@@ -66,7 +66,7 @@ public final class RestDocsFormatGenerators {
     public static FieldDescriptor[] pageResponseWithMemberFormat() {
         FieldDescriptor[] pageDocs = pageResponseFormat();
 
-        FieldDescriptor[] memberDocs = new FieldDescriptor[7];
+        FieldDescriptor[] memberDocs = new FieldDescriptor[8];
         memberDocs[0] = fieldWithPath("data.searchResults[].member")
             .type(JsonFieldType.OBJECT)
             .description("작성자 정보");
@@ -82,14 +82,21 @@ public final class RestDocsFormatGenerators {
         memberDocs[4] = fieldWithPath("data.searchResults[].member.profileImageUrl")
             .type(JsonFieldType.STRING)
             .description("작성자의 프로필 이미지 URL");
-        memberDocs[5] = fieldWithPath("data.searchResults[].member.role")
+        memberDocs[5] = fieldWithPath("data.searchResults[].member.notifyEnabled")
+            .type(JsonFieldType.BOOLEAN)
+            .description("""
+                알림 설정
+                - `true` : 알림 허용
+                - `false` : 알림 거부
+                """).optional();
+        memberDocs[6] = fieldWithPath("data.searchResults[].member.role")
             .type(JsonFieldType.STRING)
             .description("""
                 작성자의 권한
                 - USER : 일반 사용자
                 - ADMIN : 관리자
                 """);
-        memberDocs[6] = fieldWithPath("data.searchResults[].member.memberStatus")
+        memberDocs[7] = fieldWithPath("data.searchResults[].member.memberStatus")
             .type(JsonFieldType.STRING)
             .description("""
                 작성자의 탈퇴 여부
@@ -104,8 +111,7 @@ public final class RestDocsFormatGenerators {
     public static FieldDescriptor[] commonResponseWithMemberFormat() {
         FieldDescriptor[] commonDocs = commonResponseFormat();
 
-        FieldDescriptor[] memberDocs = new FieldDescriptor[7];
-
+        FieldDescriptor[] memberDocs = new FieldDescriptor[8];
         memberDocs[0] = fieldWithPath("data.member")
             .type(JsonFieldType.OBJECT)
             .description("작성자 정보");
@@ -121,14 +127,63 @@ public final class RestDocsFormatGenerators {
         memberDocs[4] = fieldWithPath("data.member.profileImageUrl")
             .type(JsonFieldType.STRING)
             .description("작성자의 프로필 이미지 URL");
-        memberDocs[5] = fieldWithPath("data.member.role")
+        memberDocs[5] = fieldWithPath("data.member.notifyEnabled")
+            .type(JsonFieldType.BOOLEAN)
+            .description("""
+                알림 설정
+                - `true` : 알림 허용
+                - `false` : 알림 거부
+                """).optional();
+        memberDocs[6] = fieldWithPath("data.member.role")
             .type(JsonFieldType.STRING)
             .description("""
                 작성자의 권한
                 - `USER` : 일반 사용자
                 - `ADMIN` : 관리자
                 """);
-        memberDocs[6] = fieldWithPath("data.member.memberStatus")
+        memberDocs[7] = fieldWithPath("data.member.memberStatus")
+            .type(JsonFieldType.STRING)
+            .description("""
+                작성자의 탈퇴 여부
+                - `ACTIVITY` : 활동 상태
+                - `WITHDRAWAL` : 탈퇴 상태
+                """);
+
+        return Stream.concat(Arrays.stream(commonDocs), Arrays.stream(memberDocs))
+            .toArray(FieldDescriptor[]::new);
+    }
+
+    public static FieldDescriptor[] memberFormat() {
+        FieldDescriptor[] commonDocs = commonResponseFormat();
+
+        FieldDescriptor[] memberDocs = new FieldDescriptor[7];
+        memberDocs[0] = fieldWithPath("data.memberId")
+            .type(JsonFieldType.NUMBER)
+            .description("작성자 ID(PK)");
+        memberDocs[1] = fieldWithPath("data.email")
+            .type(JsonFieldType.STRING)
+            .description("작성자의 이메일");
+        memberDocs[2] = fieldWithPath("data.nickname")
+            .type(JsonFieldType.STRING)
+            .description("작성자의 닉네임");
+        memberDocs[3] = fieldWithPath("data.profileImageUrl")
+            .type(JsonFieldType.STRING)
+            .description("작성자의 프로필 이미지 URL").optional();
+        memberDocs[4] = fieldWithPath("data.notifyEnabled")
+            .type(JsonFieldType.BOOLEAN)
+            .description("""
+                알림 설정
+                - `true` : 알림 허용
+                - `false` : 알림 거부
+                """).optional();
+        memberDocs[5] = fieldWithPath("data.role")
+            .type(JsonFieldType.STRING)
+            .description("""
+                작성자의 권한
+                - `USER` : 일반 사용자
+                - `ADMIN` : 관리자
+                """);
+        memberDocs[6] = fieldWithPath("data.memberStatus")
             .type(JsonFieldType.STRING)
             .description("""
                 작성자의 탈퇴 여부
