@@ -29,6 +29,10 @@ public class Member extends BaseTimeEntity {
 
     private String profileImageUrl;
 
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean notifyEnabled = Boolean.TRUE;
+
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private MemberRole role;
@@ -71,4 +75,16 @@ public class Member extends BaseTimeEntity {
     }
 
     public void restore(){ this.memberStatus = MemberStatus.ACTIVITY; }
+
+    public boolean isNotificationEnabled() {
+        return Boolean.TRUE.equals(this.notifyEnabled);
+    }
+
+    public void updateNotifyEnabled(Boolean notifyEnabled) {
+        if (Boolean.FALSE.equals(notifyEnabled)) {
+            this.notifyEnabled = Boolean.FALSE;
+        } else if (Boolean.TRUE.equals(notifyEnabled)) {
+            this.notifyEnabled = Boolean.TRUE;
+        }
+    }
 }
