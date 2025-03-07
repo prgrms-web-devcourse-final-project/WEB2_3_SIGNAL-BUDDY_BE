@@ -4,6 +4,8 @@ import static com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper.docume
 import static com.epages.restdocs.apispec.ResourceDocumentation.parameterWithName;
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
 import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
@@ -42,19 +44,19 @@ public class SignalControllerTest extends ControllerTest {
 
     private final String tag = "SignalUnified API";
 
-    private String crossId = "";
-    private String trafficId = "";
+    private Long crossId = 0L;
+    private Long trafficId = 0L;
     private CrossroadResponse responseCrossroad;
     private TrafficResponse responseTraffic;
 
     @BeforeEach
     void setUp() throws NullPointerException {
-        crossId = "Crossroad_10";
-        trafficId = "Traffic_10";
+        crossId = 10L;
+        trafficId = 10L;
 
         responseCrossroad = CrossroadResponse.builder()
-                .crossroadId(Long.valueOf( crossId.replaceAll("\\D+", "")))
-                .crossroadApiId("10")
+                .crossroadId(crossId)
+                .crossroadApiId(String.valueOf(crossId))
                 .name("올림픽대로")
                 .lat(35.241443)
                 .lng(127.5346)
@@ -62,7 +64,7 @@ public class SignalControllerTest extends ControllerTest {
                 .build();
 
         responseTraffic = TrafficResponse.builder()
-                .serialNumber(Long.valueOf(trafficId.replaceAll("\\D+", "")))
+                .serialNumber(trafficId)
                 .district("강남구")
                 .signalType("보행등")
                 .address("강남구 대치동 973-14 대")
@@ -75,13 +77,14 @@ public class SignalControllerTest extends ControllerTest {
     @Test
     void saveSignalInfoToRedis() throws Exception {
 
-        doNothing().when(crossroadService).saveAroundCrossroad(anyDouble(),anyDouble());
+        doNothing().when(crossroadService).searchAndSaveCrossroad(anyDouble(),anyDouble(),anyInt());
 
         //When
         ResultActions result = mockMvc.perform(
-                post("/api/unifiedSignal/save")
-                        .queryParam("lat", "35.241443")
-                        .queryParam("lng", "127.5346")
+            post("/api/unifiedSignal/save")
+                .queryParam("lat", "35.241443")
+                .queryParam("lng", "127.5346")
+                .queryParam("radius", "1000")
         );
 
         //Then
@@ -98,7 +101,8 @@ public class SignalControllerTest extends ControllerTest {
                             .summary("신호등 정보 캐싱")
                             .queryParameters(
                                 parameterWithName("lat").type(SimpleType.STRING).description("위도"),
-                                parameterWithName("lng").type(SimpleType.STRING).description("경도")
+                                parameterWithName("lng").type(SimpleType.STRING).description("경도"),
+                                parameterWithName("radius").type(SimpleType.STRING).description("사용자 주변 radius 미터")
                             )
                             .responseFields(
                                 fieldWithPath("status").description("성공 여부"),
@@ -115,11 +119,11 @@ public class SignalControllerTest extends ControllerTest {
     void findCrossroadByApiId() throws Exception {
 
         //Given
-        given(crossroadService.crossraodFindById(anyString())).willReturn(responseCrossroad);
+        given(crossroadService.crossroadFindById(anyLong())).willReturn(responseCrossroad);
 
         //When
         ResultActions resultCross = mockMvc.perform(
-                get("/api/unifiedSignal/find-info/crossroad/{id}", crossId)
+                get("/api/unifiedSignal/find-info/crossroad/{apiId}", crossId)
         );
 
         //Then
@@ -136,7 +140,7 @@ public class SignalControllerTest extends ControllerTest {
                                 .tag(tag)
                                 .summary("신호등 정보 호출")
                                 .pathParameters(
-                                        parameterWithName("id").description("Redis Id -> Crossroad_api_id")
+                                        parameterWithName("apiId").description("api_id")
                                 )
                                 .responseFields(
                                         fieldWithPath("data.crossroadId").description("id 값"),
@@ -160,42 +164,42 @@ public class SignalControllerTest extends ControllerTest {
     void findCrossroadBySerialNumber() throws Exception {
 
         //Given
-        given(trafficService.trafficFindById(anyString())).willReturn(responseTraffic);
+        given(trafficService.trafficFindById(anyLong())).willReturn(responseTraffic);
 
         //When
         ResultActions resultTraffic = mockMvc.perform(
-                get("/api/unifiedSignal/find-info/traffic/{id}", trafficId)
+                get("/api/unifiedSignal/find-info/traffic/{serialNumber}", trafficId)
         );
 
         //Then
         resultTraffic.andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.serialNumber").value(responseTraffic.getSerialNumber()))
-                .andDo(print())
-                .andDo(
-                        document(
-                                "캐싱된 보행등 정보 호출",
-                                preprocessRequest(prettyPrint()),
-                                preprocessResponse(prettyPrint()),
-                                resource(
-                                        ResourceSnippetParameters.builder()
-                                                .tag(tag)
-                                                .summary("보행등 정보 호출")
-                                                .pathParameters(
-                                                        parameterWithName("id").description("Redis Id -> Traffic_serialNumber")
-                                                )
-                                                .responseFields(
-                                                        fieldWithPath("data.serialNumber").description("serialNumber 값"),
-                                                        fieldWithPath("data.district").description("자치구"),
-                                                        fieldWithPath("data.address").description("주소"),
-                                                        fieldWithPath("data.signalType").description("신호등 타입"),
-                                                        fieldWithPath("data.lat").description("위도 값"),
-                                                        fieldWithPath("data.lng").description("경도 값"),
-                                                        fieldWithPath("status").description("성공 여부"),
-                                                        fieldWithPath("message").description("메시지 (null 일 수 있음)")
-                                                ).build()
-                                )
-                        )
-                );
+            .andExpect(jsonPath("$.data.serialNumber").value(responseTraffic.getSerialNumber()))
+            .andDo(print())
+            .andDo(
+                document(
+                    "캐싱된 보행등 정보 호출",
+                    preprocessRequest(prettyPrint()),
+                    preprocessResponse(prettyPrint()),
+                    resource(
+                        ResourceSnippetParameters.builder()
+                                    .tag(tag)
+                                    .summary("보행등 정보 호출")
+                                    .pathParameters(
+                                            parameterWithName("serialNumber").description("연번")
+                                    )
+                                .responseFields(
+                                    fieldWithPath("data.serialNumber").description("연번"),
+                                    fieldWithPath("data.district").description("자치구"),
+                                    fieldWithPath("data.address").description("주소"),
+                                    fieldWithPath("data.signalType").description("신호등 타입"),
+                                    fieldWithPath("data.lat").description("위도 값"),
+                                    fieldWithPath("data.lng").description("경도 값"),
+                                    fieldWithPath("status").description("성공 여부"),
+                                    fieldWithPath("message").description("메시지 (null 일 수 있음)")
+                                ).build()
+                    )
+                )
+            );
     }
 
 }
