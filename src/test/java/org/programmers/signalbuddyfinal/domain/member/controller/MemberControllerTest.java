@@ -14,6 +14,7 @@ import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGene
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.commonResponseFormat;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.getTokenExample;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.jwtFormat;
+import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.memberFormat;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.pageResponseFormat;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessRequest;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessResponse;
@@ -117,19 +118,7 @@ class MemberControllerTest extends ControllerTest {
                     ResourceSnippetParameters.builder().tag(tag).summary("유저 정보 조회").pathParameters(
                             parameterWithName("id").type(SimpleType.NUMBER).description("유저 ID"))
                         .responseSchema(schema("MemberResponse")) // Schema 이름
-                        .responseFields(ArrayUtils.addAll(commonResponseFormat(),  // 공통 응답 필드 추가
-                            fieldWithPath("data.memberId").type(JsonFieldType.NUMBER)
-                                .description("유저 ID"),
-                            fieldWithPath("data.email").type(JsonFieldType.STRING)
-                                .description("유저 이메일"),
-                            fieldWithPath("data.nickname").type(JsonFieldType.STRING)
-                                .description("유저 닉네임"),
-                            fieldWithPath("data.profileImageUrl").type(JsonFieldType.STRING)
-                                .optional().description("프로필 이미지 URL"),
-                            fieldWithPath("data.role").type(JsonFieldType.STRING)
-                                .description("유저 역할"),
-                            fieldWithPath("data.memberStatus").type(JsonFieldType.STRING)
-                                .description("유저 상태"))).build())));
+                        .responseFields(memberFormat()).build())));
     }
 
     @DisplayName("유저 정보 수정")
@@ -164,20 +153,8 @@ class MemberControllerTest extends ControllerTest {
                             fieldWithPath("email").type(JsonFieldType.STRING).description("이메일"),
                             fieldWithPath("nickname").type(JsonFieldType.STRING).description("닉네임"),
                             fieldWithPath("password").type(JsonFieldType.STRING).description("비밀번호"))
-                        .responseSchema(schema("MemberResponse")).responseFields(
-                            ArrayUtils.addAll(commonResponseFormat(),
-                                fieldWithPath("data.memberId").type(JsonFieldType.NUMBER)
-                                    .description("유저 ID"),
-                                fieldWithPath("data.email").type(JsonFieldType.STRING)
-                                    .description("유저 이메일"),
-                                fieldWithPath("data.nickname").type(JsonFieldType.STRING)
-                                    .description("유저 닉네임"),
-                                fieldWithPath("data.profileImageUrl").type(JsonFieldType.STRING)
-                                    .optional().description("프로필 이미지 URL"),
-                                fieldWithPath("data.role").type(JsonFieldType.STRING)
-                                    .description("유저 역할"),
-                                fieldWithPath("data.memberStatus").type(JsonFieldType.STRING)
-                                    .description("유저 상태"))).build())));
+                        .responseSchema(schema("MemberResponse"))
+                        .responseFields(memberFormat()).build())));
     }
 
     @DisplayName("유저 프로필 이미지 변경")
@@ -737,20 +714,8 @@ class MemberControllerTest extends ControllerTest {
                                 fieldWithPath("email").type(JsonFieldType.STRING)
                                     .description("계정을 복구하고자 하는 이메일")
                             )
-                            .responseSchema(schema("MemberResponse")).responseFields(
-                                ArrayUtils.addAll(commonResponseFormat(),
-                                    fieldWithPath("data.memberId").type(JsonFieldType.NUMBER)
-                                        .description("유저 ID"),
-                                    fieldWithPath("data.email").type(JsonFieldType.STRING)
-                                        .description("유저 이메일"),
-                                    fieldWithPath("data.nickname").type(JsonFieldType.STRING)
-                                        .description("유저 닉네임"),
-                                    fieldWithPath("data.profileImageUrl").type(JsonFieldType.STRING)
-                                        .optional().description("프로필 이미지 URL"),
-                                    fieldWithPath("data.role").type(JsonFieldType.STRING)
-                                        .description("유저 역할"),
-                                    fieldWithPath("data.memberStatus").type(JsonFieldType.STRING)
-                                        .description("유저 상태"))).build())));
+                            .responseSchema(schema("MemberResponse"))
+                            .responseFields(memberFormat()).build())));
 
     }
 
