@@ -37,30 +37,22 @@ public class WeatherProvider {
         final String currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         // 정시에 맞춰서 요청하면 아직 데이터가 존재하지 않아서 6분전 데이터 요청
         // 15:05 인데 15:00 데이터 존재하지 않음.
-        final String currentTime = LocalTime.now().minusMinutes(6).format(DateTimeFormatter.ofPattern("HHmm"));
-        final String responseJson = webClient.get()
-            .uri(ultraSrtNcst,
-                uriBuilder -> uriBuilder
-                    .queryParam("serviceKey", apiKey)
-                    .queryParam("pageNo", 1)
-                    .queryParam("numOfRows", 1000)
-                    .queryParam("dataType", "JSON")
-                    .queryParam("base_date", currentDate)
-                    .queryParam("base_time", currentTime)
-                    .queryParam("nx", nx)
-                    .queryParam("ny", ny)
-                    .build()
-            ).retrieve()
-            .bodyToMono(String.class)
-            .onErrorMap(e -> {
+        final String currentTime = LocalTime.now().minusMinutes(6)
+            .format(DateTimeFormatter.ofPattern("HHmm"));
+        final String responseJson = webClient.get().uri(ultraSrtNcst,
+                uriBuilder -> uriBuilder.queryParam("serviceKey", apiKey).queryParam("pageNo", 1)
+                    .queryParam("numOfRows", 1000).queryParam("dataType", "JSON")
+                    .queryParam("base_date", currentDate).queryParam("base_time", currentTime)
+                    .queryParam("nx", nx).queryParam("ny", ny).build()).retrieve()
+            .bodyToMono(String.class).onErrorMap(e -> {
                 log.error("{}\n", e.getMessage(), e.getCause());
                 throw new BusinessException(WeatherErrorCode.WEATHER_API_REQUEST_FAILED);
-            })
-            .block();
+            }).block();
 
         log.info("RESPONSE: {}", responseJson);
 
-        if (responseJson != null && (responseJson.startsWith("<") || responseJson.contains(NO_DATA))) { // XML 형태의 응답이면 예외 발생
+        if (responseJson != null && (responseJson.startsWith("<") || responseJson.contains(
+            NO_DATA))) { // XML 형태의 응답이면 예외 발생
             log.error("Weather API service error: {}", responseJson);
             throw new BusinessException(WeatherErrorCode.WEATHER_API_SERVICE_ERROR);
         }

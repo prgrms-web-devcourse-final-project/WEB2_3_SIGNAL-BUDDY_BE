@@ -42,8 +42,8 @@ public class WeatherService {
     @Transactional
     public void saveExcel(String filePath) throws IOException {
         ZipSecureFile.setMinInflateRatio(0.0001);
-        try (final InputStream inputStream = new FileInputStream(filePath);
-            final Workbook workbook = new XSSFWorkbook(inputStream)) {
+        try (final InputStream inputStream = new FileInputStream(
+            filePath); final Workbook workbook = new XSSFWorkbook(inputStream)) {
 
             final Sheet sheet = workbook.getSheetAt(0);
             final List<GridCoordinate> gridCoordinates = new ArrayList<>();

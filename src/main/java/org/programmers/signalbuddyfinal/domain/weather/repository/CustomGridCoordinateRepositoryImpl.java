@@ -21,6 +21,7 @@ public class CustomGridCoordinateRepositoryImpl implements CustomGridCoordinateR
 
     /**
      * 중심 좌표로부터 가장 가까운 순서로 결과 정렬
+     *
      * @param lat 위도
      * @param lng 경도
      */
