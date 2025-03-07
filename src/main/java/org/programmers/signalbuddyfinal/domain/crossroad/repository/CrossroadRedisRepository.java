@@ -30,8 +30,8 @@ public class CrossroadRedisRepository {
         );
     }
 
-    public CrossroadResponse findById(String id) {
-        return (CrossroadResponse) operations.get(id);
+    public CrossroadResponse findById(Long id) {
+        return (CrossroadResponse) operations.get(KEY_PREFIX + id);
     }
 
 }
