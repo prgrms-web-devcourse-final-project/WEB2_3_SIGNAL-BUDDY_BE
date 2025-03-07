@@ -5,12 +5,15 @@ import static com.epages.restdocs.apispec.ResourceDocumentation.parameterWithNam
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
 import static com.epages.restdocs.apispec.Schema.schema;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.commonResponse;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.commonResponseFormat;
+import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.getTokenExample;
+import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.jwtFormat;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.pageResponseFormat;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessRequest;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessResponse;
@@ -42,6 +45,7 @@ import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackResponse;
 import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.AnswerStatus;
 import org.programmers.signalbuddyfinal.domain.feedback.service.FeedbackService;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberJoinRequest;
+import org.programmers.signalbuddyfinal.domain.member.dto.MemberNotiAllowRequest;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberRestoreRequest;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberUpdateRequest;
@@ -54,6 +58,7 @@ import org.programmers.signalbuddyfinal.domain.recentpath.dto.RecentPathResponse
 import org.programmers.signalbuddyfinal.domain.recentpath.service.RecentPathService;
 import org.programmers.signalbuddyfinal.global.anotation.WithMockCustomUser;
 import org.programmers.signalbuddyfinal.global.config.WebConfig;
+import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
 import org.programmers.signalbuddyfinal.global.support.ControllerTest;
@@ -63,6 +68,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -746,5 +752,54 @@ class MemberControllerTest extends ControllerTest {
                                     fieldWithPath("data.memberStatus").type(JsonFieldType.STRING)
                                         .description("유저 상태"))).build())));
 
+    }
+
+    @DisplayName("알림 허용 설정을 변경한다.")
+    @Test
+    @WithMockCustomUser
+    void updateNotifyEnabled() throws Exception {
+        // Given
+        MemberNotiAllowRequest request = new MemberNotiAllowRequest(Boolean.FALSE);
+        doNothing().when(memberService)
+            .updateNotifyEnabled(anyLong(), any(CustomUser2Member.class), any(MemberNotiAllowRequest.class));
+
+        // When
+        ResultActions result = mockMvc.perform(
+            patch("/api/members/{memberId}/notify-enabled", 1L)
+                .header(HttpHeaders.AUTHORIZATION, getTokenExample())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request))
+        );
+
+        // Then
+        result.andExpect(status().isOk()).andDo(print())
+            .andDo(
+                document(
+                    "알림 설정 수정",
+                    preprocessRequest(prettyPrint()),
+                    preprocessResponse(prettyPrint()),
+                    resource(
+                        ResourceSnippetParameters.builder()
+                            .tag(tag)
+                            .summary("알림 설정 수정")
+                            .requestHeaders(
+                                jwtFormat()
+                            )
+                            .pathParameters(
+                                parameterWithName("memberId").type(SimpleType.NUMBER)
+                                    .description("댓글을 수정할 피드백 ID")
+                            )
+                            .requestFields(
+                                fieldWithPath("notifyEnabled").type(JsonFieldType.BOOLEAN)
+                                    .description("""
+                                        알림 설정
+                                        - `true` : 알림 허용
+                                        - `false` : 알림 거부
+                                        """)
+                            )
+                            .build()
+                    )
+                )
+            );
     }
 }
