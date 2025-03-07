@@ -4,11 +4,9 @@ import static org.programmers.signalbuddyfinal.domain.trafficSignal.entity.QTraf
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.QBean;
-import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
-import org.locationtech.jts.geom.Point;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.dto.TrafficResponse;
 import org.springframework.stereotype.Repository;
 
