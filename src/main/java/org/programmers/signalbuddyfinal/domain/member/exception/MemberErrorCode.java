@@ -15,7 +15,8 @@ public enum MemberErrorCode implements ErrorCode {
     WITHDRAWN_MEMBER(HttpStatus.FORBIDDEN, "06002", "탈퇴한 회원입니다."),
     ALREADY_EXIST_NICKNAME(HttpStatus.CONFLICT, "06003", "이미 존재하는 닉네임 입니다."),
     ALREADY_EXIST_SOCIAL_ACCOUNT(HttpStatus.CONFLICT, "06004", "해당 소셜 계정은 이미 가입 되어있는 계정입니다."),
-    REQUIRED_EMAIL_DATA(HttpStatus.BAD_REQUEST, "06005", "해당 요청은 이메일이 필요합니다.");
+    REQUIRED_EMAIL_DATA(HttpStatus.BAD_REQUEST, "06005", "해당 요청은 이메일이 필요합니다."),
+    REQUESTER_IS_NOT_SAME(HttpStatus.FORBIDDEN, "06006", "요청자가 일치하지 않습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
