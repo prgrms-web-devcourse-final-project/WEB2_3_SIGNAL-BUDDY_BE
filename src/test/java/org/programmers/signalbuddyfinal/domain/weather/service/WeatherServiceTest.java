@@ -74,7 +74,7 @@ class WeatherServiceMockitoTest {
         // then: 반환된 WeatherResponse의 값 확인
         assertNotNull(response);
         assertEquals(25.0, response.getTemperature());
-        assertEquals("0", response.getPrecipitationType());
+        assertEquals("없음", response.getPrecipitationType());
         assertEquals(80.0, response.getHumidity());
         assertEquals(0.0, response.getPrecipitation());
         // windDirection 계산: floor((45.0 + (22.5 * 0.5)) / 22.5) = floor(56.25 / 22.5) = 2
