@@ -21,6 +21,8 @@ public class RecentPathResponse {
 
     private String name;
 
+    private String address;
+
     private double lng;
 
     private double lat;

@@ -49,7 +49,7 @@ class RecentPathServiceTest extends ServiceTest {
 
         for (int i = 1; i <= 10; i++) {
             RecentPathRequest request = RecentPathRequest.builder().lat(37.12345).lng(127.12345)
-                .name("Name " + i).build();
+                .address("Address #" + i).name("Name " + i).build();
             recentPathService.saveRecentPath(member.getMemberId(), request);
         }
     }
@@ -58,7 +58,7 @@ class RecentPathServiceTest extends ServiceTest {
     @Test
     void saveRecentPath() {
         final RecentPathRequest request = RecentPathRequest.builder().lat(37.12345).lng(127.12345)
-            .name("오징어집").build();
+            .address("Address").name("오징어집").build();
 
         final RecentPathResponse response = recentPathService.saveRecentPath(member.getMemberId(),
             request);

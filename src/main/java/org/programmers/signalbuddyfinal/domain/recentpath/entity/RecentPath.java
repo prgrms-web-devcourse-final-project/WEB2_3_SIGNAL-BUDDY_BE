@@ -38,6 +38,9 @@ public class RecentPath extends BaseTimeEntity {
     @Column(nullable = false)
     private String name;
 
+    @Column
+    private String address;
+
     @Column(nullable = false)
     private Point endPoint;
 
