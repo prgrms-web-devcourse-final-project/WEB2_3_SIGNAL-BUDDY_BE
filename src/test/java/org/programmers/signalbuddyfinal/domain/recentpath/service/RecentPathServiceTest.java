@@ -65,6 +65,7 @@ class RecentPathServiceTest extends ServiceTest {
 
         assertThat(response).isNotNull();
         assertThat(response.getLastAccessedAt()).isNotNull();
+        assertThat(response.getAddress()).isEqualTo(request.getAddress());
     }
 
     @DisplayName("최근 경로 목록 조회")
