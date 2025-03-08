@@ -84,27 +84,9 @@ public class TrafficRedisRepository {
 
             for (GeoResult<GeoLocation<Object>> result : geoResults) {
                 String trafficId = result.getContent().getName().toString(); // GEO에서 가져온 ID
-                Point point = result.getDistance().getValue() > 0 ? result.getContent().getPoint() : null;
 
-                if (point == null) {
-                    continue; // 좌표가 없으면 건너뜀
-                }
+                TrafficResponse response = findById(Long.valueOf(trafficId));
 
-                // HASH에서 데이터 조회
-                Map<String, String> data = hashOperations.get(KEY_HASH, trafficId);
-                if (data == null) {
-                    continue; // HASH 데이터 없으면 건너뜀
-                }
-
-                TrafficResponse response = new TrafficResponse(
-                    Long.parseLong(trafficId),
-                    Long.parseLong(data.get("serialNumber")),
-                    data.get("district"),
-                    data.get("signalType"),
-                    data.get("address"),
-                    point.getY(),  // 위도
-                    point.getX()   // 경도
-                );
                 trafficResponses.add(response);
             }
 

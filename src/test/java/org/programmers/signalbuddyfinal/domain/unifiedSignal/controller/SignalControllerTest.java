@@ -154,7 +154,7 @@ public class SignalControllerTest extends ControllerTest {
                             )
                             .responseFields(
                                 subsectionWithPath("data").description("보행등 정보 리스트").optional(),
-                                fieldWithPath("data[].trafficId").description("보행등 id (PK)"),
+                                fieldWithPath("data[].trafficSignalId").description("보행등 id (PK)"),
                                 fieldWithPath("data[].serialNumber").description("연번"),
                                 fieldWithPath("data[].district").description("자치구"),
                                 fieldWithPath("data[].address").description("주소"),
@@ -244,7 +244,7 @@ public class SignalControllerTest extends ControllerTest {
                                             parameterWithName("id").description("연번")
                                     )
                                 .responseFields(
-                                    fieldWithPath("data.trafficId").description("id값 (PK)"),
+                                    fieldWithPath("data.trafficSignalId").description("id값 (PK)"),
                                     fieldWithPath("data.serialNumber").description("연번"),
                                     fieldWithPath("data.district").description("자치구"),
                                     fieldWithPath("data.address").description("주소"),

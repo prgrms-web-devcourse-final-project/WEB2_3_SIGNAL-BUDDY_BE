@@ -1,7 +1,19 @@
 package org.programmers.signalbuddyfinal.domain.crossroad.repository;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadResponse;
+import org.springframework.data.geo.Circle;
+import org.springframework.data.geo.Distance;
+import org.springframework.data.geo.GeoResult;
+import org.springframework.data.geo.Metrics;
+import org.springframework.data.geo.Point;
+import org.springframework.data.redis.core.GeoOperations;
+import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
+import org. springframework.data.redis.connection.RedisGeoCommands.GeoLocation;
 import org.springframework.stereotype.Repository;
 
 import java.time.Duration;
@@ -80,26 +92,9 @@ public class CrossroadRedisRepository {
             List<CrossroadResponse> crossroadResponses = new ArrayList<>();
             for (GeoResult<GeoLocation<Object>> result : results) {
                 String idStr = result.getContent().getName().toString();
-                Point point = result.getContent().getPoint();
-                if (point == null) {
-                    System.out.println("No point data for crossroadId=" + idStr);
-                    continue;
-                }
 
-                Map<String, String> data = hashOperations.get(KEY_HASH, idStr);
-                if (data == null) {
-                    System.out.println("No HASH data for crossroadId=" + idStr);
-                    continue;
-                }
+                CrossroadResponse response = findById(Long.valueOf(idStr));
 
-                CrossroadResponse response = new CrossroadResponse(
-                    Long.parseLong(idStr),
-                    data.get("crossroadApiId"),
-                    data.get("name"),
-                    point.getY(),  // 위도
-                    point.getX(),  // 경도
-                    data.get("status")
-                );
                 crossroadResponses.add(response);
             }
             return crossroadResponses;
