@@ -141,6 +141,7 @@ public class MemberController {
     @PostMapping("{id}/recent-path")
     public ResponseEntity<ApiResponse<RecentPathResponse>> saveRecentPath(@PathVariable Long id,
         @RequestBody RecentPathRequest request) {
+        System.out.println("RQUSERT : " + request);
         final RecentPathResponse response = recentPathService.saveRecentPath(id, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.createSuccess(response));
     }
@@ -161,23 +162,21 @@ public class MemberController {
     }
 
     @PostMapping("/password-reset")
-    public ResponseEntity<ApiResponse<Object>> resetPassword(@Valid @RequestBody
-        ResetPasswordRequest resetPasswordRequest) {
+    public ResponseEntity<ApiResponse<Object>> resetPassword(
+        @Valid @RequestBody ResetPasswordRequest resetPasswordRequest) {
         return memberService.resetPassword(resetPasswordRequest);
     }
 
     @PostMapping("/restore")
-    public ResponseEntity<ApiResponse<MemberResponse>> restoreMember(@RequestBody
-    MemberRestoreRequest memberRestoreRequest) {
+    public ResponseEntity<ApiResponse<MemberResponse>> restoreMember(
+        @RequestBody MemberRestoreRequest memberRestoreRequest) {
         return memberService.restore(memberRestoreRequest);
     }
 
     @PatchMapping("/{memberId}/notify-enabled")
     public ResponseEntity<ApiResponse<Object>> updateNotifyEnabled(
-        @PathVariable("memberId") long memberId,
-        @CurrentUser CustomUser2Member user,
-        @Valid @RequestBody MemberNotiAllowRequest request
-    ) {
+        @PathVariable("memberId") long memberId, @CurrentUser CustomUser2Member user,
+        @Valid @RequestBody MemberNotiAllowRequest request) {
         memberService.updateNotifyEnabled(memberId, user, request);
         return ResponseEntity.ok(ApiResponse.createSuccessWithNoData());
     }

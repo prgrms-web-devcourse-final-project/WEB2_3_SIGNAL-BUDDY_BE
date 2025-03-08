@@ -57,10 +57,11 @@ public class RecentPath extends BaseTimeEntity {
     private Bookmark bookmark;
 
     @Builder
-    public RecentPath(String name, Point endPoint, Member member) {
+    public RecentPath(String name, Point endPoint, Member member, String address) {
         this.name = name;
         this.endPoint = endPoint;
         this.member = member;
+        this.address = address;
     }
 
     @PrePersist
