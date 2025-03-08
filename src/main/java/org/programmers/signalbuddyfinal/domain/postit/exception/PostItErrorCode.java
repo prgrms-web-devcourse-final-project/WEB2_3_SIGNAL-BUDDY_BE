@@ -3,7 +3,6 @@ package org.programmers.signalbuddyfinal.domain.postit.exception;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.programmers.signalbuddyfinal.domain.feedback.exception.FeedbackErrorCode;
 import org.programmers.signalbuddyfinal.global.exception.ErrorCode;
 import org.springframework.http.HttpStatus;
 

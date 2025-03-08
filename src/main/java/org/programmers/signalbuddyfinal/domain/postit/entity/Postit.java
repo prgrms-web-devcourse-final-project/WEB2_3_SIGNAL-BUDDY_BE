@@ -1,6 +1,16 @@
 package org.programmers.signalbuddyfinal.domain.postit.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import java.time.LocalDateTime;
 import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -9,10 +19,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.locationtech.jts.geom.Point;
 import org.programmers.signalbuddyfinal.domain.basetime.BaseTimeEntity;
-import org.programmers.signalbuddyfinal.global.util.PointUtil;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
-import java.time.LocalDateTime;
 import org.programmers.signalbuddyfinal.domain.postit.dto.PostItRequest;
+import org.programmers.signalbuddyfinal.global.util.PointUtil;
 
 @Entity(name = "postits")
 @Getter
@@ -40,6 +49,10 @@ public class Postit extends BaseTimeEntity {
 
     @Column(nullable = false)
     private String imageUrl;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Long reportCount = 0L;
 
     @Column(nullable = false)
     private LocalDateTime expiryDate;
@@ -101,6 +114,9 @@ public class Postit extends BaseTimeEntity {
         if (expiryDate != null) {
             this.expiryDate = expiryDate;
         }
+    }
 
+    public void updateReportCount(Long reportCount) {
+        this.reportCount = reportCount;
     }
 }
