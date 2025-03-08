@@ -30,4 +30,13 @@ public class PostItReport {
     @JoinColumn(name = "postIt_id")
     private Postit postit;
 
+    public PostItReport(Member member, Postit postit) {
+        this.member = member;
+        this.postit = postit;
+    }
+
+
+    public static PostItReport create (Member member, Postit postit){
+        return new PostItReport(member, postit);
+    }
 }

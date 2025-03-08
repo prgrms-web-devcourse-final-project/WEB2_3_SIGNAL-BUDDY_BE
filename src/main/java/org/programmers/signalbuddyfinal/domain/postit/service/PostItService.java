@@ -2,7 +2,7 @@ package org.programmers.signalbuddyfinal.domain.postit.service;
 
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
-import org.programmers.signalbuddyfinal.global.util.PointUtil;
+import org.locationtech.jts.geom.Point;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
 import org.programmers.signalbuddyfinal.domain.postit.dto.PostItCreateRequest;
@@ -12,16 +12,17 @@ import org.programmers.signalbuddyfinal.domain.postit.entity.Postit;
 import org.programmers.signalbuddyfinal.domain.postit.exception.PostItErrorCode;
 import org.programmers.signalbuddyfinal.domain.postit.mapper.PostItMapper;
 import org.programmers.signalbuddyfinal.domain.postit.repository.PostItRepository;
+import org.programmers.signalbuddyfinal.domain.postit_report.repository.PostItReportRepository;
 import org.programmers.signalbuddyfinal.domain.postitsolve.entity.PostitSolve;
 import org.programmers.signalbuddyfinal.domain.postitsolve.repository.PostitSolveRepository;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.service.AwsFileService;
+import org.programmers.signalbuddyfinal.global.util.PointUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import org.locationtech.jts.geom.Point;
 
 @RequiredArgsConstructor
 @Service
@@ -32,17 +33,20 @@ public class PostItService {
     private final MemberRepository memberRepository;
     private final AwsFileService awsFileService;
     private final PostitSolveRepository postitSolveRepository;
+    private final PostItReportRepository postItReportRepository;
 
     @Value("${cloud.aws.s3.folder.post-it}")
     private String postItDir;
 
     @Transactional
-    public PostItResponse createPostIt(PostItCreateRequest postItCreateRequest, MultipartFile image, CustomUser2Member user) {
+    public PostItResponse createPostIt(PostItCreateRequest postItCreateRequest, MultipartFile image,
+        CustomUser2Member user) {
 
         Member member = memberRepository.findByIdOrThrow(user.getMemberId());
 
         String imageUrl = convertImageFile(image);
-        Point coordinate = PointUtil.toPoint(postItCreateRequest.getLat(), postItCreateRequest.getLng());
+        Point coordinate = PointUtil.toPoint(postItCreateRequest.getLat(),
+            postItCreateRequest.getLng());
 
         Postit postit = Postit.creator()
             .danger(postItCreateRequest.getDanger())
@@ -72,20 +76,23 @@ public class PostItService {
     }
 
     @Transactional
-    public void deletePostIt(Long postitId, CustomUser2Member user){
+    public void deletePostIt(Long postitId, CustomUser2Member user) {
 
         Postit postit = postItRepository.findByIdOrThrow(postitId);
 
-        if(Member.isNotSameMember(user, postit.getMember())){
+        if (Member.isNotSameMember(user, postit.getMember())) {
             throw new BusinessException(PostItErrorCode.POSTIT_MODIFIER_NOT_AUTHORIZED);
         }
+        postitSolveRepository.deleteByPostItId(postitId);
+        postItReportRepository.deleteByPostItId(postitId);
         postit.delete();
     }
 
     @Transactional
     public PostItResponse completePostIt(Long postitId) {
 
-        return PostItMapper.INSTANCE.toResponse(completePostIt(postItRepository.findByIdOrThrow(postitId)));
+        return PostItMapper.INSTANCE.toResponse(
+            completePostIt(postItRepository.findByIdOrThrow(postitId)));
     }
 
     private String convertImageFile(MultipartFile image) {
@@ -100,7 +107,7 @@ public class PostItService {
     private Postit completePostIt(Postit postit) {
         LocalDateTime deletedAt = LocalDateTime.now();
 
-        if(postit.getDeletedAt()!=null){
+        if (postit.getDeletedAt() != null) {
             throw new BusinessException(PostItErrorCode.AREADY_COMPLETED_POSTIT);
         }
 
