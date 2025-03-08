@@ -37,7 +37,7 @@ public class TrafficRedisRepository {
     }
 
     public void save(TrafficResponse trafficResponse) {
-        try {
+
             Long trafficId = trafficResponse.getTrafficSignalId();
 
             // GEO 데이터 저장
@@ -59,22 +59,21 @@ public class TrafficRedisRepository {
             // GEO와 HASH 모두에 TTL 설정
             redisTemplate.expire(KEY_GEO, TTL);
             redisTemplate.expire(KEY_HASH, TTL);
-        } catch (Exception e) {
-            System.err.println("Error saving to Redis: " + e.getMessage());
-            e.printStackTrace(); // 스택 트레이스 추가로 상세 원인 확인
-            throw new RuntimeException("Failed to save traffic data", e);
-        }
+
     }
 
     public List<TrafficResponse> findNearbyTraffics(double lat, double lng, double radius) {
-        try {
-            System.out.println("findNearbyTraffics");
 
+            List<GeoResult<GeoLocation<Object>>> geoResults;
             // 반경 내 GEO 데이터 조회
-            List<GeoResult<GeoLocation<Object>>> geoResults = geoOperations.radius(
-                KEY_GEO,
-                new Circle(new Point(lng, lat), new Distance(radius, Metrics.KILOMETERS))
-            ).getContent();
+            if (geoOperations!=null){
+                geoResults = geoOperations.radius(
+                    KEY_GEO,
+                    new Circle(new Point(lng, lat), new Distance(radius, Metrics.KILOMETERS))
+                ).getContent();
+            } else {
+                return List.of();
+            }
 
             if (geoResults.isEmpty()) {
                 return Collections.emptyList();
@@ -91,10 +90,6 @@ public class TrafficRedisRepository {
             }
 
             return trafficResponses;
-        } catch (Exception e) {
-            System.err.println("Error finding nearby traffics: " + e.getMessage());
-            throw new RuntimeException("Failed to find nearby traffics", e);
-        }
     }
 
 
