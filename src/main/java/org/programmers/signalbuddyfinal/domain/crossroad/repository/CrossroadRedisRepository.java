@@ -8,6 +8,7 @@ import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadResponse;
 import org.springframework.data.geo.Circle;
 import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.GeoResult;
+import org.springframework.data.geo.GeoResults;
 import org.springframework.data.geo.Metrics;
 import org.springframework.data.geo.Point;
 import org.springframework.data.redis.core.GeoOperations;
@@ -67,12 +68,12 @@ public class CrossroadRedisRepository {
 
             List<GeoResult<GeoLocation<Object>>> results;
             // 반경 내 GEO 데이터 조회
-            if (geoOperations!=null){
-                // 반경 내 GEO 데이터 조회: 경도(lng), 위도(lat) 순서
-                 results = geoOperations.radius(
+            if (geoOperations != null) {
+                GeoResults<GeoLocation<Object>> geoResult = geoOperations.radius(
                     KEY_GEO,
                     new Circle(new Point(lng, lat), new Distance(radius, Metrics.KILOMETERS))
-                ).getContent();
+                );
+                results = (geoResult != null) ? geoResult.getContent() : List.of();
             } else {
                 return List.of();
             }
