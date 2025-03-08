@@ -58,7 +58,7 @@ public class CrossroadController {
         );
     }
 
-    @GetMapping("/around") // 좌표 값을 기반으로 50m이내 신호등 반환
+    @GetMapping("/around") // 좌표 값을 기반으로 80m이내 신호등 반환
     public ResponseEntity<List<CrossroadResponse>> aroundCrossroad(
             @RequestParam double lat,
             @RequestParam double lng

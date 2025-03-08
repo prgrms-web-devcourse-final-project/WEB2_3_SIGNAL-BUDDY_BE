@@ -7,11 +7,11 @@ import org.programmers.signalbuddyfinal.global.util.PointUtil;
 
 @Getter
 @Builder
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@AllArgsConstructor
 @NoArgsConstructor
 public class TrafficResponse {
 
-    private Long trafficId;
+    private Long trafficSignalId;
 
     private Long serialNumber;
 
@@ -28,7 +28,7 @@ public class TrafficResponse {
     public Point toPoint() { return PointUtil.toPoint(this.lat, this.lng); }
 
     public TrafficResponse(TrafficSignal trafficSignal) {
-        this.trafficId = trafficSignal.getTrafficSignalId();
+        this.trafficSignalId = trafficSignal.getTrafficSignalId();
         this.serialNumber = trafficSignal.getSerialNumber();
         this.district = trafficSignal.getDistrict();
         this.signalType = trafficSignal.getSignalType();

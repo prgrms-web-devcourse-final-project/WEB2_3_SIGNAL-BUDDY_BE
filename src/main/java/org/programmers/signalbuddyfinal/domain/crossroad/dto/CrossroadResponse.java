@@ -15,7 +15,7 @@ import lombok.ToString;
 @Getter
 @Builder
 @NoArgsConstructor
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@AllArgsConstructor
 @ToString
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)

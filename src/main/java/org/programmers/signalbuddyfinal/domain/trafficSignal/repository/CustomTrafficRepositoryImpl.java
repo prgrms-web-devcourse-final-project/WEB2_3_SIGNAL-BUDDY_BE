@@ -18,7 +18,7 @@ public class CustomTrafficRepositoryImpl implements CustomTrafficRepository {
 
     private static final QBean<TrafficResponse> trafficRes = Projections.fields(
         TrafficResponse.class,
-        trafficSignal.serialNumber, trafficSignal.district, trafficSignal.signalType, trafficSignal.address,
+        trafficSignal.trafficSignalId,trafficSignal.serialNumber, trafficSignal.district, trafficSignal.signalType, trafficSignal.address,
         Expressions.numberTemplate(Double.class, "ST_Y({0})", trafficSignal.coordinate).as("lat"),
         Expressions.numberTemplate(Double.class, "ST_X({0})", trafficSignal.coordinate).as("lng")
     );

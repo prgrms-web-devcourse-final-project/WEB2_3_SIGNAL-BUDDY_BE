@@ -63,7 +63,7 @@ public class SignalControllerTest extends ControllerTest {
                 .build();
 
         responseTraffic = TrafficResponse.builder()
-                .trafficId(trafficId)
+                .trafficSignalId(trafficId)
                 .serialNumber(10L)
                 .district("강남구")
                 .signalType("보행등")
