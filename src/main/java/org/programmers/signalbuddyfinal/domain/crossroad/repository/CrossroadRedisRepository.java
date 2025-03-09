@@ -37,65 +37,58 @@ public class CrossroadRedisRepository {
     }
 
     public void save(CrossroadResponse crossroadResponse) {
+        Long crossroadId = crossroadResponse.getCrossroadId();
+        String idStr = crossroadId.toString();
 
-            Long crossroadId = crossroadResponse.getCrossroadId();
-            String idStr = crossroadId.toString();
-
-            // GEO 저장: 경도(lng), 위도(lat) 순서로
-            redisTemplate.opsForGeo().add(
-                KEY_GEO,
-                new Point(crossroadResponse.getLng(), crossroadResponse.getLat()),
-                idStr
-            );
+        // GEO 저장: 경도(lng), 위도(lat) 순서로
+        redisTemplate.opsForGeo().add(
+            KEY_GEO,
+            new Point(crossroadResponse.getLng(), crossroadResponse.getLat()),
+            idStr
+        );
 
             // HASH 저장
             Map<String, String> crossroadData = new HashMap<>();
             crossroadData.put("crossroadApiId", crossroadResponse.getCrossroadApiId());
             crossroadData.put("name", crossroadResponse.getName());
-            crossroadData.put("status", crossroadResponse.getStatus());
-            System.out.println("HASH data prepared: " + crossroadData);
+            crossroadData.put("status", crossroadResponse.getStatus().toString());
 
-            hashOperations.put(KEY_HASH, idStr, crossroadData);
+        hashOperations.put(KEY_HASH, idStr, crossroadData);
 
-            // GEO와 HASH 모두에 TTL 설정
-            redisTemplate.expire(KEY_GEO, TTL);
-            redisTemplate.expire(KEY_HASH, TTL);
-            System.out.println("TTL set for both GEO and HASH");
-
+        // GEO와 HASH 모두에 TTL 설정
+        redisTemplate.expire(KEY_GEO, TTL);
+        redisTemplate.expire(KEY_HASH, TTL);
     }
 
     public List<CrossroadResponse> findNearbyCrossroads(double lat, double lng, double radius) {
+        List<GeoResult<GeoLocation<Object>>> results;
+        // 반경 내 GEO 데이터 조회
+        if (geoOperations != null) {
+            GeoResults<GeoLocation<Object>> geoResult = geoOperations.radius(
+                KEY_GEO,
+                new Circle(new Point(lng, lat), new Distance(radius, Metrics.KILOMETERS))
+            );
+            results = (geoResult != null) ? geoResult.getContent() : List.of();
+        } else {
+            return List.of();
+        }
 
-            List<GeoResult<GeoLocation<Object>>> results;
-            // 반경 내 GEO 데이터 조회
-            if (geoOperations != null) {
-                GeoResults<GeoLocation<Object>> geoResult = geoOperations.radius(
-                    KEY_GEO,
-                    new Circle(new Point(lng, lat), new Distance(radius, Metrics.KILOMETERS))
-                );
-                results = (geoResult != null) ? geoResult.getContent() : List.of();
-            } else {
-                return List.of();
-            }
+        if (results.isEmpty()) {
+            return List.of();
+        }
 
-            if (results.isEmpty()) {
-                return List.of();
-            }
+        List<CrossroadResponse> crossroadResponses = new ArrayList<>();
+        for (GeoResult<GeoLocation<Object>> result : results) {
+            String idStr = result.getContent().getName().toString();
 
-            List<CrossroadResponse> crossroadResponses = new ArrayList<>();
-            for (GeoResult<GeoLocation<Object>> result : results) {
-                String idStr = result.getContent().getName().toString();
+            CrossroadResponse response = findById(Long.valueOf(idStr));
 
-                CrossroadResponse response = findById(Long.valueOf(idStr));
-
-                crossroadResponses.add(response);
-            }
-            return crossroadResponses;
-
+            crossroadResponses.add(response);
+        }
+        return crossroadResponses;
     }
 
     public CrossroadResponse findById(Long id) {
-
         String idStr = id.toString();
         Map<String, String> data = hashOperations.get(KEY_HASH, idStr);
         if (data == null) {
@@ -115,7 +108,7 @@ public class CrossroadRedisRepository {
             .crossroadId(id)
             .crossroadApiId(data.get("crossroadApiId"))
             .name(data.get("name"))
-            .status(data.get("status"))
+            .status(Boolean.valueOf(data.get("status")))
             .lat(savedLat)
             .lng(savedLng)
             .build();

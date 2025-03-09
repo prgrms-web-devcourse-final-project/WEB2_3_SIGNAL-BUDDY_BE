@@ -1,16 +1,15 @@
 package org.programmers.signalbuddyfinal.domain.crossroad.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.locationtech.jts.geom.Point;
 import org.programmers.signalbuddyfinal.domain.crossroad.entity.Crossroad;
 import org.programmers.signalbuddyfinal.global.util.PointUtil;
-import lombok.ToString;
 
 @Getter
 @Builder
@@ -31,7 +30,7 @@ public class CrossroadResponse {
 
     private Double lng;
 
-    private String status;
+    private Boolean status;
 
     public Point toPoint() {
         return PointUtil.toPoint(this.lat, this.lng);

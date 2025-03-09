@@ -474,7 +474,7 @@ class FeedbackControllerTest extends ControllerTest {
     private CrossroadResponse makeCrossroadResponse() {
         return CrossroadResponse.builder()
             .crossroadId(1L).lat(37.1212).lng(127.11212)
-            .name("00사거리").status("TRUE")
+            .name("00사거리").status(Boolean.TRUE)
             .build();
     }
 
@@ -538,7 +538,7 @@ class FeedbackControllerTest extends ControllerTest {
             .type(JsonFieldType.STRING)
             .description("교차로 이름");
         feedbackDetailDocs[15] = fieldWithPath("data.crossroad.status")
-            .type(JsonFieldType.STRING)
+            .type(JsonFieldType.BOOLEAN)
             .description("잔여 시간 API 제공 여부");
 
         return Stream.concat(Arrays.stream(commonDocs), Arrays.stream(feedbackDetailDocs))

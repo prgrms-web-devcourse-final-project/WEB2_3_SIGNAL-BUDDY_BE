@@ -1,24 +1,25 @@
 package org.programmers.signalbuddyfinal.domain.crossroad.handler;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import static org.assertj.core.api.Assertions.assertThat;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyInt;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadResponse;
 import org.programmers.signalbuddyfinal.domain.crossroad.dto.LocationRequest;
@@ -55,7 +56,7 @@ class MapWebSocketHandlerTest {
 
         mockResponse = List.of(
             CrossroadResponse.builder().crossroadId(1L).crossroadApiId("API-123").name("테스트 교차로")
-                .lat(37.5665).lng(126.9780).status("ACTIVE").build());
+                .lat(37.5665).lng(126.9780).status(Boolean.TRUE).build());
 
         // ObjectMapper의 writeValueAsString을 Mocking
         lenient().when(objectMapper.writeValueAsString(any())).thenAnswer(
