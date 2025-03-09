@@ -93,6 +93,14 @@ public class MemberController {
         return ResponseEntity.ok(ApiResponse.createSuccess(feedbacks));
     }
 
+    @GetMapping("{id}/feedbacks/liked")
+    public ResponseEntity<ApiResponse<PageResponse<FeedbackResponse>>> getFeedbacksLike(
+        @PathVariable Long id, @PageableDefault(page = 0, size = 10) Pageable pageable) {
+        final PageResponse<FeedbackResponse> feedbacks = feedbackService.findPagedLikedFeedbacks(
+            id, pageable);
+        return ResponseEntity.ok(ApiResponse.createSuccess(feedbacks));
+    }
+
     @GetMapping("{id}/bookmarks")
     public ResponseEntity<ApiResponse<PageResponse<BookmarkResponse>>> getBookmarks(
         @PathVariable Long id, @PageableDefault(page = 0, size = 10) Pageable pageable) {

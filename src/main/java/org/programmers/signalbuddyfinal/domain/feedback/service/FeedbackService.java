@@ -1,5 +1,6 @@
 package org.programmers.signalbuddyfinal.domain.feedback.service;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.comment.repository.CommentRepository;
 import org.programmers.signalbuddyfinal.domain.crossroad.entity.Crossroad;
@@ -12,6 +13,8 @@ import org.programmers.signalbuddyfinal.domain.feedback.exception.FeedbackErrorC
 import org.programmers.signalbuddyfinal.domain.feedback.mapper.FeedbackMapper;
 import org.programmers.signalbuddyfinal.domain.feedback.repository.FeedbackRepository;
 import org.programmers.signalbuddyfinal.domain.feedback_report.repository.FeedbackReportRepository;
+import org.programmers.signalbuddyfinal.domain.like.entity.Like;
+import org.programmers.signalbuddyfinal.domain.like.exception.LikeErrorCode;
 import org.programmers.signalbuddyfinal.domain.like.repository.LikeRepository;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
@@ -22,6 +25,7 @@ import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.service.AwsFileService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -150,5 +154,11 @@ public class FeedbackService {
         likeRepository.deleteAllByFeedbackId(feedbackId);
         reportRepository.deleteAllByFeedbackId(feedbackId);
         feedbackRepository.deleteById(feedbackId);
+    }
+
+    public PageResponse<FeedbackResponse> findPagedLikedFeedbacks(Long memberId, Pageable pageable) {
+        final Page<FeedbackResponse> pagedLikedFeedbacks = likeRepository.findPagedLikedFeedbacks(
+            memberId, pageable);
+        return new PageResponse<>(pagedLikedFeedbacks);
     }
 }
