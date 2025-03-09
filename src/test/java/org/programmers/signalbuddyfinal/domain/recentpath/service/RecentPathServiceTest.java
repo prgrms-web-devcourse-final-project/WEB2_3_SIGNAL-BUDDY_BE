@@ -5,6 +5,7 @@ import static org.mockito.Mockito.mock;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,10 +13,12 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.programmers.signalbuddyfinal.domain.bookmark.entity.Bookmark;
+import org.programmers.signalbuddyfinal.domain.bookmark.repository.BookmarkRepository;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
+import org.programmers.signalbuddyfinal.domain.recentpath.dto.RecentPathLinkRequest;
 import org.programmers.signalbuddyfinal.domain.recentpath.dto.RecentPathRequest;
 import org.programmers.signalbuddyfinal.domain.recentpath.dto.RecentPathResponse;
 import org.programmers.signalbuddyfinal.domain.recentpath.entity.RecentPath;
@@ -37,6 +40,9 @@ class RecentPathServiceTest extends ServiceTest {
 
     @Autowired
     private RecentPathRepository recentPathRepository;
+
+    @Autowired
+    private BookmarkRepository bookmarkRepository;
 
     private Member member;
 
@@ -109,5 +115,19 @@ class RecentPathServiceTest extends ServiceTest {
             .orElseThrow(() -> new RuntimeException("최근 경로가 존재하지 않음"));
 
         assertThat(updatedRecentPath.getBookmark()).isNull();
+    }
+
+    @DisplayName("최근 경로와 북마크 연관관계 생성")
+    @Test
+    void linkBookmark() {
+        final RecentPathResponse response = recentPathService.linkBookmark(1L,
+            new RecentPathLinkRequest(member.getMemberId()));
+
+        recentPathRepository.findById(response.getRecentPathId()).ifPresent(recentPath -> {
+            final Optional<Bookmark> optionalBookmark = bookmarkRepository.findById(
+                recentPath.getBookmark().getBookmarkId());
+            assertThat(optionalBookmark).isPresent().get().extracting(Bookmark::getCoordinate)
+                .isEqualTo(recentPath.getEndPoint());
+        });
     }
 }

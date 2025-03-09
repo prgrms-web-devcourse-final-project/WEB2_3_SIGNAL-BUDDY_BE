@@ -119,8 +119,8 @@ class RecentPathControllerTest extends ControllerTest {
                         .pathParameters(
                             parameterWithName("id").type(SimpleType.NUMBER).description("최근 경로 ID"))
                         .requestSchema(schema("RecentPathLinkRequest")).requestFields(
-                            fieldWithPath("bookmarkId").type(JsonFieldType.NUMBER)
-                                .description("북마크 ID")).responseSchema(schema("RecentPathResponse"))
+                            fieldWithPath("memberId").type(JsonFieldType.NUMBER)
+                                .description("멤버 ID")).responseSchema(schema("RecentPathResponse"))
                         .responseFields(ArrayUtils.addAll(commonResponseFormat(),
                             fieldWithPath("data.recentPathId").type(JsonFieldType.NUMBER)
                                 .description("최근 경로 ID"),
