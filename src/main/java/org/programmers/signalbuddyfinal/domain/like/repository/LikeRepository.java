@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface LikeRepository extends JpaRepository<Like, Long> {
+public interface LikeRepository extends JpaRepository<Like, Long>, CustomLikeRepository {
 
     @Query("SELECT CASE  WHEN count(*) > 0 THEN true ELSE false END "
         + "FROM likes l "
