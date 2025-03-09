@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Min;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadApiResponse;
+import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadResponse;
 import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadStateResponse;
 import org.programmers.signalbuddyfinal.domain.crossroad.repository.CrossroadRepository;
 import org.programmers.signalbuddyfinal.domain.crossroad.service.CrossroadService;
@@ -57,13 +58,13 @@ public class CrossroadController {
         );
     }
 
-    @GetMapping("/around") // 좌표 값을 기반으로 50m이내 신호등 반환
-    public ResponseEntity<List<CrossroadApiResponse>> aroundCrossroad(
+    @GetMapping("/around")
+    public ResponseEntity<List<CrossroadResponse>> aroundCrossroad(
             @RequestParam double lat,
             @RequestParam double lng
     ) {
 
-        List<CrossroadApiResponse> aroundSign = crossroadRepository.findNearByCrossroads(lat, lng);
+        List<CrossroadResponse> aroundSign = crossroadRepository.findNearestCrossroads(lat, lng, 80);
 
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_JSON)
