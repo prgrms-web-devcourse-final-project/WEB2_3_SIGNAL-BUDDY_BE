@@ -5,8 +5,9 @@ import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
+import org.programmers.signalbuddyfinal.domain.bookmark.dto.BookmarkRequest;
 import org.programmers.signalbuddyfinal.domain.bookmark.entity.Bookmark;
-import org.programmers.signalbuddyfinal.domain.bookmark.exception.BookmarkErrorCode;
+import org.programmers.signalbuddyfinal.domain.bookmark.mapper.BookmarkMapper;
 import org.programmers.signalbuddyfinal.domain.bookmark.repository.BookmarkRepository;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.exception.MemberErrorCode;
@@ -82,9 +83,22 @@ public class RecentPathService {
         final RecentPath recentPath = recentPathRepository.findById(id)
             .orElseThrow(() -> new BusinessException(RecentPathErrorCode.NOT_FOUND_RECENT_PATH));
 
-        final Long bookmarkId = recentPathLinkRequest.bookmarkId();
-        final Bookmark bookmark = bookmarkRepository.findById(bookmarkId)
-            .orElseThrow(() -> new BusinessException(BookmarkErrorCode.NOT_FOUND_BOOKMARK));
+        final Long memberId = recentPathLinkRequest.memberId();
+
+        final Member member = memberRepository.findById(memberId)
+            .orElseThrow(() -> new BusinessException(MemberErrorCode.NOT_FOUND_MEMBER));
+
+        final int nextSequence =
+            bookmarkRepository.findTopByMemberOrderBySequenceDesc(member).map(Bookmark::getSequence)
+                .orElse(0) + 1;
+
+        final BookmarkRequest bookmarkRequest = BookmarkRequest.builder()
+            .address(recentPath.getAddress()).name(recentPath.getName()).build();
+
+        final Bookmark bookmark = BookmarkMapper.INSTANCE.toEntity(bookmarkRequest,
+            recentPath.getEndPoint(), member);
+        bookmark.updateSequence(nextSequence);
+        bookmarkRepository.save(bookmark);
 
         recentPath.linkBookmark(bookmark);
         return RecentPathMapper.INSTANCE.toDto(recentPath);
