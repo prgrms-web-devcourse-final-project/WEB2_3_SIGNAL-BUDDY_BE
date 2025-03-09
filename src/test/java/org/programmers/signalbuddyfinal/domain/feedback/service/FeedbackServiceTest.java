@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.getMockImageFile;
 
 import java.net.URL;
+import java.util.List;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -21,6 +22,8 @@ import org.programmers.signalbuddyfinal.domain.feedback.entity.Feedback;
 import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.FeedbackCategory;
 import org.programmers.signalbuddyfinal.domain.feedback.exception.FeedbackErrorCode;
 import org.programmers.signalbuddyfinal.domain.feedback.repository.FeedbackRepository;
+import org.programmers.signalbuddyfinal.domain.like.entity.Like;
+import org.programmers.signalbuddyfinal.domain.like.repository.LikeRepository;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
@@ -49,6 +52,9 @@ class FeedbackServiceTest extends ServiceTest {
 
     @Autowired
     private MemberRepository memberRepository;
+
+    @Autowired
+    private LikeRepository likeRepository;
 
     @MockitoBean
     private AwsFileService awsFileService;
@@ -307,6 +313,29 @@ class FeedbackServiceTest extends ServiceTest {
 
         // Then
         assertThat(feedbackRepository.findById(feedbackId).get().isDeleted()).isTrue();
+    }
+
+    @DisplayName("사용자가 좋아요한 피드백 목록 조회")
+    @Test
+    void findPagedLikedFeedbacks() {
+        final List<Feedback> feedbacks = feedbackRepository.findAll().stream()
+            .filter(feedback -> !feedback.isDeleted())
+            .toList();
+        final Member likedUser = saveMember("test2@test.com", "tester2");
+
+        final List<Like> likes = List.of(
+            Like.create(likedUser, feedbacks.get(0)),
+            Like.create(likedUser, feedbacks.get(1)));
+        likeRepository.saveAll(likes);
+
+        final PageResponse<FeedbackResponse> likedFeedbacks = feedbackService.findPagedLikedFeedbacks(
+            likedUser.getMemberId(), Pageable.ofSize(10));
+
+        assertThat(feedbacks).hasSize(3);
+        assertThat(likedFeedbacks.getTotalElements()).isEqualTo(2);
+        assertThat(likedFeedbacks.getSearchResults()).allSatisfy(feedback -> {
+            assertThat(feedback.getMember().getMemberId()).isEqualTo(member.getMemberId());
+        });
     }
 
     private Member saveMember(String email, String nickname) {

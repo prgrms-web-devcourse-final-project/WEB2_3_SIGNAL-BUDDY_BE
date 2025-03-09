@@ -277,6 +277,72 @@ class MemberControllerTest extends ControllerTest {
                                     JsonFieldType.STRING).description("피드백 수정 날짜"))).build())));
     }
 
+    @DisplayName("본인이 좋아요한 피드백 목록 조회")
+    @Test
+    void getLikedFeedbacks() throws Exception {
+        final Long memberId = 1L;
+        final List<FeedbackResponse> likedFeedbackList = List.of(
+            FeedbackResponse.builder().feedbackId(1L).subject("좋은 피드백").content("이 기능이 매우 유용했습니다!")
+                .likeCount(2L).secret(Boolean.TRUE).answerStatus(AnswerStatus.BEFORE)
+                .createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now()).member(
+                    MemberResponse.builder().memberId(10L).nickname("작성자1").email("writer1@example.com")
+                        .profileImageUrl("https://example.com/profile1.jpg").build()).build(),
+            FeedbackResponse.builder().feedbackId(2L).subject("개선 요청").content("이 부분을 좀 더 개선해 주세요.")
+                .likeCount(2L).secret(Boolean.FALSE).answerStatus(AnswerStatus.COMPLETION)
+                .createdAt(LocalDateTime.now().minusDays(1))
+                .updatedAt(LocalDateTime.now().minusDays(1)).member(
+                    MemberResponse.builder().memberId(11L).nickname("작성자2").email("writer2@example.com")
+                        .profileImageUrl("https://example.com/profile2.jpg").build()).build());
+
+        final Page<FeedbackResponse> likedFeedbackPage = new PageImpl<>(likedFeedbackList,
+            PageRequest.of(0, 10), likedFeedbackList.size());
+
+        given(
+            feedbackService.findPagedLikedFeedbacks(eq(memberId), any(Pageable.class))).willReturn(
+            new PageResponse<>(likedFeedbackPage));
+
+        final ResultActions result = mockMvc.perform(
+            get("/api/members/{id}/feedbacks/liked", memberId).param("page", "0")
+                .param("size", "10"));
+
+        result.andExpect(status().isOk()).andDo(
+            document("유저가 좋아요한 피드백 목록 조회", preprocessRequest(prettyPrint()),
+                preprocessResponse(prettyPrint()), resource(
+                    ResourceSnippetParameters.builder().tag(tag).summary("유저가 좋아요한 피드백 목록 조회")
+                        .pathParameters(parameterWithName("id").description("유저 ID"))
+                        .queryParameters(parameterWithName("page").optional()
+                                .description("조회할 페이지 번호 (기본 값: 0)"),
+                            parameterWithName("size").optional()
+                                .description("한 페이지당 항목 수 (기본 값: 10)"))
+                        .responseSchema(schema("PagedLikedFeedbackResponse")).responseFields(
+                            ArrayUtils.addAll(pageResponseFormat(),
+                                fieldWithPath("data.searchResults[].feedbackId").type(
+                                    JsonFieldType.NUMBER).description("피드백 ID"),
+                                fieldWithPath("data.searchResults[].subject").type(JsonFieldType.STRING)
+                                    .description("피드백 제목"),
+                                fieldWithPath("data.searchResults[].content").type(JsonFieldType.STRING)
+                                    .description("피드백 내용"),
+                                fieldWithPath("data.searchResults[].likeCount").type(
+                                    JsonFieldType.NUMBER).description("피드백 좋아요 수"),
+                                fieldWithPath("data.searchResults[].secret").type(JsonFieldType.BOOLEAN)
+                                    .description("피드백 비밀글 여부"),
+                                fieldWithPath("data.searchResults[].answerStatus").type(
+                                    JsonFieldType.STRING).description("피드백 상태 (BEFORE, COMPLETION)"),
+                                fieldWithPath("data.searchResults[].createdAt").type(
+                                    JsonFieldType.STRING).description("피드백 작성 날짜"),
+                                fieldWithPath("data.searchResults[].updatedAt").type(
+                                    JsonFieldType.STRING).description("피드백 수정 날짜"),
+
+                                fieldWithPath("data.searchResults[].member.memberId").type(
+                                    JsonFieldType.NUMBER).description("작성자 ID"),
+                                fieldWithPath("data.searchResults[].member.nickname").type(
+                                    JsonFieldType.STRING).description("작성자 닉네임"),
+                                fieldWithPath("data.searchResults[].member.email").type(
+                                    JsonFieldType.STRING).description("작성자 이메일"),
+                                fieldWithPath("data.searchResults[].member.profileImageUrl").type(
+                                    JsonFieldType.STRING).description("작성자 프로필 이미지 URL"))).build())));
+    }
+
     @DisplayName("나의 장소 목록 조회")
     @Test
     void getBookmarks() throws Exception {
