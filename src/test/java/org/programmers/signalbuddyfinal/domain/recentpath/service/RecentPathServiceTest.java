@@ -54,7 +54,7 @@ class RecentPathServiceTest extends ServiceTest {
         member = memberRepository.save(member);
 
         for (int i = 1; i <= 10; i++) {
-            RecentPathRequest request = RecentPathRequest.builder().lat(37.12345).lng(127.12345)
+            RecentPathRequest request = RecentPathRequest.builder().lat(37.12345 + (i * 0.001)).lng(127.12345)
                 .address("Address #" + i).name("Name " + i).build();
             recentPathService.saveRecentPath(member.getMemberId(), request);
         }
@@ -63,7 +63,7 @@ class RecentPathServiceTest extends ServiceTest {
     @DisplayName("최근 경로 저장")
     @Test
     void saveRecentPath() {
-        final RecentPathRequest request = RecentPathRequest.builder().lat(37.12345).lng(127.12345)
+        final RecentPathRequest request = RecentPathRequest.builder().lat(37.12345 + 0.001).lng(127.12345)
             .address("Address").name("오징어집").build();
 
         final RecentPathResponse response = recentPathService.saveRecentPath(member.getMemberId(),
@@ -71,7 +71,8 @@ class RecentPathServiceTest extends ServiceTest {
 
         assertThat(response).isNotNull();
         assertThat(response.getLastAccessedAt()).isNotNull();
-        assertThat(response.getAddress()).isEqualTo(request.getAddress());
+        assertThat(response.getAddress()).isNotEqualTo(request.getAddress());
+        assertThat(response.getName()).isEqualTo("Name 1");
     }
 
     @DisplayName("최근 경로 목록 조회")
@@ -80,7 +81,7 @@ class RecentPathServiceTest extends ServiceTest {
         final List<RecentPathResponse> recentPathList = recentPathService.getRecentPathList(
             member.getMemberId());
 
-        assertThat(recentPathList).isNotEmpty().allSatisfy(recentPathResponse -> {
+        assertThat(recentPathList).isNotEmpty().hasSize(10).allSatisfy(recentPathResponse -> {
             assertThat(recentPathResponse.getLastAccessedAt()).isNotNull();
         });
     }
