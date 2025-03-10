@@ -53,6 +53,6 @@ public class CustomTermVersionRepositoryImpl implements CustomTermVersionReposit
     }
 
     private BooleanExpression betweenExpirationDate(LocalDate now) {
-        return (termVersion.effectiveStartDate.goe(now).and(termVersion.effectiveEndDate.loe(now)));
+        return (termVersion.effectiveStartDate.loe(now).and(termVersion.effectiveEndDate.goe(now)));
     }
 }

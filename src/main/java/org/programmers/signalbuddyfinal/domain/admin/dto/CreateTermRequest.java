@@ -10,6 +10,7 @@ import org.programmers.signalbuddyfinal.domain.term.entity.enums.TermCategory;
 public class CreateTermRequest {
 
     private TermCategory category;
+    private String title;
     private String content;
     private String version;
     private LocalDate effectiveStartDate;

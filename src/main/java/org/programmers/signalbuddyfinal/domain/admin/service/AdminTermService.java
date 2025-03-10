@@ -29,26 +29,36 @@ public class AdminTermService {
 
         TermCategory category = createTermRequest.getCategory();
         String version = createTermRequest.getVersion();
-        String title = category.getName() + "_v" + version;
 
-        if (termRepository.existsByTermTitle(title)) {
-            throw new BusinessException(TermErrorCode.ALREADY_EXIST_TERM);
-        }
-
-        if(createTermRequest.getEffectiveStartDate().isAfter(createTermRequest.getEffectiveEndDate())){
+        // 시작일이 종료일보다 늦게 설정된 경우
+        if (createTermRequest.getEffectiveStartDate()
+            .isAfter(createTermRequest.getEffectiveEndDate())) {
             throw new BusinessException(TermErrorCode.START_DATE_AFTER_END_DATE);
         }
 
+        // 설정 기간에 이미 시행 중 혹은 시행 예정인 약관이 존재하는 경우
         if (termRepository.existsByEffectiveDate(category,
-            createTermRequest.getEffectiveStartDate())>0) {
+            createTermRequest.getEffectiveStartDate()) > 0) {
             throw new BusinessException(TermErrorCode.EFFECTIVE_DATE_CHANGE_REQUIRED);
         }
 
-        Term savedTerm = termRepository.save(Term.builder()
-            .termCategory(category)
-            .termTitle(title)
-            .agreementType(createTermRequest.getAgreementType())
-            .build());
+        Term savedTerm = termRepository.findByTermTitleAndTermCategory(
+            createTermRequest.getTitle(), category);
+
+        if (savedTerm != null) {
+            // 이미 해당 버전의 약관이 존재하는 경우
+            if (termVersionRepository.existsByTermAndVersion(savedTerm,
+                createTermRequest.getVersion())) {
+                throw new BusinessException(TermErrorCode.ALREADY_EXIST_TERM);
+            }
+        }else{
+
+            savedTerm = termRepository.save(Term.builder()
+                .termCategory(category)
+                .termTitle(createTermRequest.getTitle())
+                .agreementType(createTermRequest.getAgreementType())
+                .build());
+        }
 
         termVersionRepository.save(TermVersion.builder()
             .version(version)
@@ -62,11 +72,16 @@ public class AdminTermService {
     }
 
     @Transactional
-    public ResponseEntity<ApiResponse<AdminTermResponse>> getDetailTerm(Long termId, Long termVersionId) {
+    public ResponseEntity<ApiResponse<AdminTermResponse>> getDetailTerm(Long termId,
+        Long termVersionId) {
 
-        AdminTermResponse adminTermResponse = customTermVersionRepository.findByTermId(termId, termVersionId);
-        if (adminTermResponse == null) { throw new BusinessException(TermErrorCode.NO_EXIST_TERM);}
+        AdminTermResponse adminTermResponse = customTermVersionRepository.findByTermId(termId,
+            termVersionId);
+        if (adminTermResponse == null) {
+            throw new BusinessException(TermErrorCode.NO_EXIST_TERM);
+        }
 
         return ResponseEntity.ok(ApiResponse.createSuccess(adminTermResponse));
     }
+
 }

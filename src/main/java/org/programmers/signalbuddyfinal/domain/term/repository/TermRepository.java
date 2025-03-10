@@ -10,11 +10,12 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface TermRepository extends JpaRepository<Term, Long> {
 
-    Boolean existsByTermTitle(String termTitle);
+    Term findByTermTitleAndTermCategory(String termTitle, TermCategory termCategory);
+    Boolean existsByTermTitleAndTermCategory(String termTitle, TermCategory termCategory);
 
     @Query("select count(*) from Term t "
         + "inner join TermVersion tv on t.termId = tv.term.termId "
-        + "where tv.effectiveEndDate <= :effectiveStartDate")
+        + "where tv.effectiveEndDate >= :effectiveStartDate")
     int existsByEffectiveDate(TermCategory category, LocalDate effectiveStartDate);
 
 
