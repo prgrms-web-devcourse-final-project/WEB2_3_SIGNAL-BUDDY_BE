@@ -59,6 +59,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         if (accessToken == null || accessToken.isEmpty()) {
             if(antPathMatcher.match("/ws/**", request.getRequestURI())){
                 doFilter(request, response, filterChain);
+                return;
             }
             request.setAttribute(EXCEPTION_ATTRIBUTE, "ACCESS_TOKEN_NOT_EXIST");
             throw new BusinessException(TokenErrorCode.ACCESS_TOKEN_NOT_EXIST);
