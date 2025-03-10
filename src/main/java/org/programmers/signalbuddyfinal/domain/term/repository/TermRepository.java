@@ -16,4 +16,6 @@ public interface TermRepository extends JpaRepository<Term, Long> {
         + "inner join TermVersion tv on t.termId = tv.term.termId "
         + "where tv.effectiveEndDate <= :effectiveStartDate")
     int existsByEffectiveDate(TermCategory category, LocalDate effectiveStartDate);
+
+
 }

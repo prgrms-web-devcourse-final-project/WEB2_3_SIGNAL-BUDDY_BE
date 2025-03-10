@@ -1,12 +1,14 @@
 package org.programmers.signalbuddyfinal.domain.admin.service;
 
 import lombok.RequiredArgsConstructor;
+import org.programmers.signalbuddyfinal.domain.admin.dto.AdminTermResponse;
 import org.programmers.signalbuddyfinal.domain.admin.dto.CreateTermRequest;
 import org.programmers.signalbuddyfinal.domain.term.entity.Term;
 import org.programmers.signalbuddyfinal.domain.term.entity.enums.TermCategory;
 import org.programmers.signalbuddyfinal.domain.term.exception.TermErrorCode;
 import org.programmers.signalbuddyfinal.domain.term.repository.TermRepository;
 import org.programmers.signalbuddyfinal.domain.term_version.entity.TermVersion;
+import org.programmers.signalbuddyfinal.domain.term_version.repository.CustomTermVersionRepositoryImpl;
 import org.programmers.signalbuddyfinal.domain.term_version.repository.TermVersionRepository;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
@@ -20,6 +22,7 @@ public class AdminTermService {
 
     private final TermRepository termRepository;
     private final TermVersionRepository termVersionRepository;
+    private final CustomTermVersionRepositoryImpl customTermVersionRepository;
 
     @Transactional
     public ResponseEntity<ApiResponse<Object>> registerTerm(CreateTermRequest createTermRequest) {
@@ -56,5 +59,14 @@ public class AdminTermService {
             .build());
 
         return ResponseEntity.ok().body(ApiResponse.createSuccessWithNoData());
+    }
+
+    @Transactional
+    public ResponseEntity<ApiResponse<AdminTermResponse>> getDetailTerm(Long termId, Long termVersionId) {
+
+        AdminTermResponse adminTermResponse = customTermVersionRepository.findByTermId(termId, termVersionId);
+        if (adminTermResponse == null) { throw new BusinessException(TermErrorCode.NO_EXIST_TERM);}
+
+        return ResponseEntity.ok(ApiResponse.createSuccess(adminTermResponse));
     }
 }
