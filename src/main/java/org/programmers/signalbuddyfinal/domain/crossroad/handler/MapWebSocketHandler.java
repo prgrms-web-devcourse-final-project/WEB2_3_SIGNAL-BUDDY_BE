@@ -3,13 +3,20 @@ package org.programmers.signalbuddyfinal.domain.crossroad.handler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadResponse;
 import org.programmers.signalbuddyfinal.domain.crossroad.dto.LocationRequest;
 import org.programmers.signalbuddyfinal.domain.crossroad.service.CrossroadService;
+import org.programmers.signalbuddyfinal.domain.notification.dto.FcmMessage;
+import org.programmers.signalbuddyfinal.domain.notification.dto.FcmMessage.Notification;
+import org.programmers.signalbuddyfinal.domain.notification.service.FcmService;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
+import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
 import org.springframework.lang.NonNull;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -26,6 +33,7 @@ public class MapWebSocketHandler extends TextWebSocketHandler {
     private static final String NO_REASON = "No reason provided";
 
     private final CrossroadService crossroadService;
+    private final FcmService fcmService;
 
     private final ObjectMapper objectMapper;
 
@@ -48,6 +56,17 @@ public class MapWebSocketHandler extends TextWebSocketHandler {
 
             final List<CrossroadResponse> nearestCrossroads = crossroadService.findNearestCrossroad(
                 locationRequest.getLat(), locationRequest.getLng(), locationRequest.getRadius());
+
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null) {
+                CustomUserDetails receiver = (CustomUserDetails) authentication.getPrincipal();
+                for (CrossroadResponse crossroad : nearestCrossroads) {
+                    FcmMessage fcmMessage = makeCrossroadNotiMessage(
+                        crossroad.getName(), crossroad.getCrossroadId()
+                    );
+                    fcmService.sendMessage(fcmMessage, receiver.getMemberId());
+                }
+            }
 
             session.sendMessage(new TextMessage(
                 objectMapper.writeValueAsString(ApiResponse.createSuccess(nearestCrossroads))));
@@ -90,5 +109,19 @@ public class MapWebSocketHandler extends TextWebSocketHandler {
         return request.getLat() != null && request.getLng() != null && request.getRadius() != null
                && request.getLat() >= -90 && request.getLat() <= 90 && request.getLng() >= -180
                && request.getLng() <= 180;
+    }
+
+    private FcmMessage makeCrossroadNotiMessage(
+        String crossroadName, Long crossroadId
+    ) {
+        return FcmMessage.builder()
+            .notification(
+                Notification.builder()
+                    .title("\uD83D\uDEA6 근처에 [" + crossroadName + "] 교차로가 있어요!")
+                    .body("[" + crossroadName + "] 교차로의 \uD83D\uDEA6 신호등 상태를 확인해 보시겠어요?")
+                    .build()
+            )
+            .data(Map.of("crossroadId", crossroadId.toString()))
+            .build();
     }
 }

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -24,6 +25,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadResponse;
 import org.programmers.signalbuddyfinal.domain.crossroad.dto.LocationRequest;
 import org.programmers.signalbuddyfinal.domain.crossroad.service.CrossroadService;
+import org.programmers.signalbuddyfinal.domain.notification.dto.FcmMessage;
+import org.programmers.signalbuddyfinal.domain.notification.service.FcmService;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -42,6 +45,9 @@ class MapWebSocketHandlerTest {
 
     @Mock
     private WebSocketSession session;
+
+    @Mock
+    private FcmService fcmService;
 
     @InjectMocks
     private MapWebSocketHandler webSocketHandler;
@@ -72,6 +78,7 @@ class MapWebSocketHandlerTest {
         when(objectMapper.readValue(payload, LocationRequest.class)).thenReturn(locationRequest);
         when(crossroadService.findNearestCrossroad(37.5665, 126.9780, 500)).thenReturn(
             mockResponse);
+        lenient().doNothing().when(fcmService).sendMessage(any(FcmMessage.class), anyLong());
 
         final CompletableFuture<String> futureResponse = new CompletableFuture<>();
         doAnswer(invocation -> {
@@ -98,6 +105,7 @@ class MapWebSocketHandlerTest {
 
         when(objectMapper.readValue(invalidPayload, LocationRequest.class)).thenReturn(
             new LocationRequest(200.0, 500.0, 500));
+        lenient().doNothing().when(fcmService).sendMessage(any(FcmMessage.class), anyLong());
 
         doAnswer(invocation -> {
             TextMessage sentMessage = invocation.getArgument(0, TextMessage.class);
@@ -126,6 +134,7 @@ class MapWebSocketHandlerTest {
 
         when(objectMapper.readValue(payload, LocationRequest.class)).thenThrow(
             new RuntimeException("Parsing Error"));
+        lenient().doNothing().when(fcmService).sendMessage(any(FcmMessage.class), anyLong());
 
         doAnswer(invocation -> {
             TextMessage sentMessage = invocation.getArgument(0, TextMessage.class);

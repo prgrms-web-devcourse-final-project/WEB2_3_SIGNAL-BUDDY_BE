@@ -25,6 +25,7 @@ import org.programmers.signalbuddyfinal.domain.crossroad.repository.CrossroadRep
 import org.programmers.signalbuddyfinal.domain.crossroad.service.CrossroadService;
 import org.programmers.signalbuddyfinal.global.support.ControllerTest;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.ResultActions;
 
@@ -46,6 +47,8 @@ class CrossroadControllerTest extends ControllerTest {
         Long crossroadId = 1L;
         CrossroadStateResponse response = CrossroadStateResponse.builder()
             .transTimestamp(1741054218628L)
+            .crossroadId(1L).crossroadApiId("1010").name("00 사거리")
+            .lat(37.1212).lng(127.1212)
             .northTimeLeft(349).northState(SignalState.RED)
             .eastTimeLeft(9).eastState(SignalState.YELLOW)
             .southTimeLeft(349).eastState(SignalState.RED)
@@ -77,12 +80,24 @@ class CrossroadControllerTest extends ControllerTest {
                             .responseFields(
                                 ArrayUtils.addAll(
                                     commonResponseFormat(),
+                                    fieldWithPath("data.transTimestamp")
+                                        .type(JsonFieldType.NUMBER)
+                                        .description("전송 시간 (UTC 기준, timestamp 형식)"),
                                     fieldWithPath("data.crossroadId")
+                                        .type(JsonFieldType.NUMBER)
                                         .description("해당 교차로 ID(PK)"),
                                     fieldWithPath("data.crossroadApiId")
-                                        .description("교차로 API ID(itstId)"),
-                                    fieldWithPath("data.transTimestamp")
-                                        .description("전송 시간 (UTC 기준, timestamp 형식)"),
+                                        .type(JsonFieldType.STRING)
+                                        .description("교차로 API ID (itstId)"),
+                                    fieldWithPath("data.name")
+                                        .type(JsonFieldType.STRING)
+                                        .description("교차로 이름"),
+                                    fieldWithPath("data.lat")
+                                        .type(JsonFieldType.NUMBER)
+                                        .description("교차로 위도 좌표"),
+                                    fieldWithPath("data.lng")
+                                        .type(JsonFieldType.NUMBER)
+                                        .description("교차로 경도 좌표"),
                                     fieldWithPath("data.northTimeLeft")
                                         .description("북쪽 보행 신호 잔여 시간 (1/10초)"),
                                     fieldWithPath("data.eastTimeLeft")
@@ -125,9 +140,9 @@ class CrossroadControllerTest extends ControllerTest {
 
     private String signalStateFormat() {
         return """
-            - RED : 빨간불
-            - YELLOW : 깜빡이는 초록불 (건널 때 주의)
-            - GREEN : 초록불
+            - `RED` : 빨간불
+            - `YELLOW` : 깜빡이는 초록불 (건널 때 주의)
+            - `GREEN` : 초록불
             """;
     }
 }
