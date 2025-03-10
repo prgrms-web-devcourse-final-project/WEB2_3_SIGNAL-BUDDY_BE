@@ -149,7 +149,6 @@ public class MemberController {
     @PostMapping("{id}/recent-path")
     public ResponseEntity<ApiResponse<RecentPathResponse>> saveRecentPath(@PathVariable Long id,
         @RequestBody RecentPathRequest request) {
-        System.out.println("RQUSERT : " + request);
         final RecentPathResponse response = recentPathService.saveRecentPath(id, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.createSuccess(response));
     }
