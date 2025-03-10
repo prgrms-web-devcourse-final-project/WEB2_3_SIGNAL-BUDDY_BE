@@ -50,6 +50,11 @@ public class BookmarkService {
         final Member member = getMember(memberId);
 
         final Point point = toPoint(request.getLng(), request.getLat());
+
+        bookmarkRepository.findByCoordinateAndMemberIdNotDeleted(point, memberId).ifPresent(bookmark -> {
+            throw new BusinessException(BookmarkErrorCode.ALREADY_EXIST_BOOKMARK);
+        });
+
         final int nextSequence =
             bookmarkRepository.findTopByMemberOrderBySequenceDesc(member).map(Bookmark::getSequence)
                 .orElse(0) + 1;
