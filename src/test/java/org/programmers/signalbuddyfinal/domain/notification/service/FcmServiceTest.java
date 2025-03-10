@@ -23,6 +23,7 @@ import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
 import org.programmers.signalbuddyfinal.domain.notification.dto.FcmMessage;
+import org.programmers.signalbuddyfinal.domain.notification.dto.FcmMessage.Notification;
 import org.programmers.signalbuddyfinal.domain.notification.entity.FcmToken;
 import org.programmers.signalbuddyfinal.domain.notification.exception.FcmErrorCode;
 import org.programmers.signalbuddyfinal.domain.notification.repository.FcmTokenRepository;
@@ -62,9 +63,7 @@ class FcmServiceTest extends ServiceTest {
     @Test
     void sendMessage_Success() {
         // Given
-        FcmMessage request = FcmMessage.builder()
-            .title("test title").body("test body")
-            .build();
+        FcmMessage request = getFcmMessage("test title", "test body");
         CustomUser2Member user = getCurrentMember(member.getMemberId());
 
         when(firebaseMessaging.sendEachForMulticastAsync(any(MulticastMessage.class)))
@@ -86,9 +85,7 @@ class FcmServiceTest extends ServiceTest {
     @Test
     void sendMessageNotDeviceToken_Success() {
         // Given
-        FcmMessage request = FcmMessage.builder()
-            .title("test title").body("test body")
-            .build();
+        FcmMessage request = getFcmMessage("test title", "test body");
         Member otherMember = saveMember("test1 email", "other tester");
         CustomUser2Member user = getCurrentMember(otherMember.getMemberId());
 
@@ -111,9 +108,7 @@ class FcmServiceTest extends ServiceTest {
     @Test
     void sendMessage_Failure() {
         // Given
-        FcmMessage request = FcmMessage.builder()
-            .title("test title").body("test body")
-            .build();
+        FcmMessage request = getFcmMessage("test title", "test body");
         CustomUser2Member user = getCurrentMember(member.getMemberId());
 
         when(firebaseMessaging.sendEachForMulticastAsync(any(MulticastMessage.class)))
@@ -162,5 +157,15 @@ class FcmServiceTest extends ServiceTest {
         return new CustomUser2Member(
             new CustomUserDetails(id, "", "",
                 "", "", MemberRole.USER, MemberStatus.ACTIVITY));
+    }
+
+    private FcmMessage getFcmMessage(String title, String body) {
+        return FcmMessage.builder()
+            .notification(
+                Notification.builder()
+                    .title(title).body(body)
+                    .build()
+            )
+            .build();
     }
 }
