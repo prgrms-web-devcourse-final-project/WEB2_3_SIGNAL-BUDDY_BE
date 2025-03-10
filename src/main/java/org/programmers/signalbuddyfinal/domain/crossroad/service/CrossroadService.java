@@ -3,7 +3,6 @@ package org.programmers.signalbuddyfinal.domain.crossroad.service;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -63,7 +62,6 @@ public class CrossroadService {
     }
 
     public List<CrossroadResponse> searchAndSaveCrossroad(Double lat, Double lng, int radius){
-
         List<CrossroadResponse> responseDB;
 
         boolean exists = Boolean.TRUE.equals(redisTemplate.hasKey("crossroad:info"));
@@ -88,7 +86,6 @@ public class CrossroadService {
     }
 
     public CrossroadResponse crossroadFindById(Long id) {
-
         CrossroadResponse responseRedis = crossroadRedisRepository.findById( id );
 
         if(responseRedis != null) {
@@ -96,7 +93,6 @@ public class CrossroadService {
         }
 
         try{
-
             CrossroadResponse responseDB = new CrossroadResponse(crossroadRepository.findByCrossroadId(id));
             crossroadRedisRepository.save(responseDB);
 
@@ -106,7 +102,6 @@ public class CrossroadService {
             log.error("❌ crossroad Not Found : {}", e.getMessage(), e);
             throw new BusinessException(CrossroadErrorCode.NOT_FOUND_CROSSROAD);
         }
-
     }
 
     public CrossroadStateResponse checkSignalState(Long crossroadId) {
@@ -117,7 +112,7 @@ public class CrossroadService {
             return cache;
         }
 
-        Crossroad crossroad = crossroadRepository.findByIdOrThrow(crossroadId);
+        CrossroadResponse crossroad = crossroadFindById(crossroadId);
         String crossroadApiId = crossroad.getCrossroadApiId();
 
         List<CrossroadStateApiResponse> apiResponses = crossroadProvider.requestCrossroadStateApi(
@@ -127,8 +122,8 @@ public class CrossroadService {
             throw new BusinessException(CrossroadErrorCode.CROSSROAD_API_REQUEST_FAILED);
         }
 
-        CrossroadStateResponse response = CrossroadMapper.INSTANCE.toResponse(apiResponses.get(0),
-            crossroadId);
+        CrossroadStateResponse response =
+            CrossroadMapper.INSTANCE.toResponse(apiResponses.get(0), crossroadId);
         putStateCache(crossroadId, response);
         return response;
     }

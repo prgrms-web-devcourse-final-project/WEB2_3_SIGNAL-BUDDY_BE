@@ -33,7 +33,7 @@ import org.springframework.test.web.servlet.ResultActions;
 
 
 @WebMvcTest(SignalController.class)
-public class SignalControllerTest extends ControllerTest {
+class SignalControllerTest extends ControllerTest {
 
     @MockitoBean
     private CrossroadService crossroadService;
@@ -59,7 +59,7 @@ public class SignalControllerTest extends ControllerTest {
                 .name("올림픽대로")
                 .lat(35.241443)
                 .lng(127.5346)
-                .status("FALSE")
+                .status(Boolean.TRUE)
                 .build();
 
         responseTraffic = TrafficResponse.builder()

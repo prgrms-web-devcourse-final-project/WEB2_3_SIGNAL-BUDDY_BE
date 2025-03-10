@@ -13,7 +13,7 @@ import org.programmers.signalbuddyfinal.domain.crossroad.repository.CrossroadRed
 import org.programmers.signalbuddyfinal.global.support.ServiceTest;
 import org.springframework.data.redis.core.RedisTemplate;
 
-public class CrossroadServiceLocationTest extends ServiceTest {
+class CrossroadServiceLocationTest extends ServiceTest {
 
     @InjectMocks
     private CrossroadService crossroadService;
@@ -33,7 +33,7 @@ public class CrossroadServiceLocationTest extends ServiceTest {
                 .crossroadId(1L)
                 .crossroadApiId("10")
                 .name("강남 사거리")
-                .status("true")
+                .status(Boolean.TRUE)
                 .lat(37.4777135)
                 .lng(126.9153603)
                 .build()
@@ -42,7 +42,6 @@ public class CrossroadServiceLocationTest extends ServiceTest {
 
     @Test
     void testSearchAndSaveCrossroadRedisExists() {
-
         Double lat = expected.get(0).getLat();
         Double lng = expected.get(0).getLng();
 

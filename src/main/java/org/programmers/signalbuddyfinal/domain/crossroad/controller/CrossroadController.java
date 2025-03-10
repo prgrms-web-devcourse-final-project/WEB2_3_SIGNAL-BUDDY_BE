@@ -63,14 +63,10 @@ public class CrossroadController {
             @RequestParam double lat,
             @RequestParam double lng
     ) {
-
         List<CrossroadResponse> aroundSign = crossroadRepository.findNearestCrossroads(lat, lng, 80);
 
         return ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(aroundSign);
-
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(aroundSign);
     }
-
-
 }
