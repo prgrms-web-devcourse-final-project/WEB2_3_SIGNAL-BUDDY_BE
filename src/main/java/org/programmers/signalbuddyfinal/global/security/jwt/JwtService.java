@@ -112,7 +112,7 @@ public class JwtService {
     private void addBlackListExistingAccessToken(String accessToken, Date expirationDate) {
 
         redisTemplate.opsForValue()
-                .set("pending-blacklist:access-token:"+accessToken, "pending",7, TimeUnit.MINUTES);
+                .set("pending-blacklist:access-token:"+accessToken, "pending",10, TimeUnit.MINUTES);
 
         redisTemplate.opsForValue()
             .set("blacklist:access-token:" + accessToken, expirationDate.toString(),
