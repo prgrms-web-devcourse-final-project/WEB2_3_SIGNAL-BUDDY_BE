@@ -40,8 +40,8 @@ public class FcmService {
         }
 
         Notification notification = Notification.builder()
-            .setTitle(request.getTitle())
-            .setBody(request.getBody())
+            .setTitle(request.getNotification().getTitle())
+            .setBody(request.getNotification().getBody())
             .build();
 
         List<String> deviceTokens = fcmTokens.stream()
@@ -50,6 +50,7 @@ public class FcmService {
         MulticastMessage message = MulticastMessage.builder()
             .addAllTokens(deviceTokens)
             .setNotification(notification)
+            .putAllData(request.getData())
             .build();
 
         ApiFuture<BatchResponse> apiFuture = firebaseMessaging.sendEachForMulticastAsync(message);
