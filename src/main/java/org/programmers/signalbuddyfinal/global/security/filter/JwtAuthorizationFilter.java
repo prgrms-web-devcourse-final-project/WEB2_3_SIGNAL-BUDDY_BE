@@ -53,20 +53,21 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
             return;
         }
 
-        // 액세스 토큰 검증
-        String accessToken = jwtUtil.extractAccessToken(request.getHeader("Authorization"));
-        log.debug("Access token: {}", accessToken);
-        if (accessToken == null || accessToken.isEmpty()) {
-            if(antPathMatcher.match("/ws/**", request.getRequestURI())){
-                doFilter(request, response, filterChain);
-                return;
-            }
-            request.setAttribute(EXCEPTION_ATTRIBUTE, "ACCESS_TOKEN_NOT_EXIST");
-            throw new BusinessException(TokenErrorCode.ACCESS_TOKEN_NOT_EXIST);
-        }
+        String accessToken = null;
 
         try {
+            accessToken = jwtUtil.extractAccessToken(request.getHeader("Authorization"));
+            log.debug("Access token: {}", accessToken);
             jwtUtil.parseToken(accessToken);
+        } catch (BusinessException e) {
+            if (e.getErrorCode() == TokenErrorCode.ACCESS_TOKEN_NOT_EXIST) {
+                if (antPathMatcher.match("/ws/**", request.getRequestURI())) {
+                    doFilter(request, response, filterChain);
+                    return;
+                }
+                request.setAttribute(EXCEPTION_ATTRIBUTE, "ACCESS_TOKEN_NOT_EXIST");
+                throw new BusinessException(TokenErrorCode.ACCESS_TOKEN_NOT_EXIST);
+            }
         } catch (MalformedJwtException | UnsupportedJwtException | IllegalArgumentException e) {
             log.info(e.getMessage());
             request.setAttribute(EXCEPTION_ATTRIBUTE, "INVALID_TOKEN");
@@ -78,7 +79,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         }
 
         // 블랙리스트에 있는지 확인
-        if(checkBlacklist(accessToken)){
+        if (checkBlacklist(accessToken)) {
 
             request.setAttribute(EXCEPTION_ATTRIBUTE, "INVALID_TOKEN");
             throw new BusinessException(TokenErrorCode.INVALID_TOKEN);
