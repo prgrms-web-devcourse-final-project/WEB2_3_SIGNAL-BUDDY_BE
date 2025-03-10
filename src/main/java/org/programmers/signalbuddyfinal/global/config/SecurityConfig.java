@@ -45,8 +45,8 @@ public class SecurityConfig {
     private static final String USER = "USER";
 
     @Bean
-    public JwtAuthorizationFilter jwtAuthorizationFilter(JwtUtil jwtUtil, RedisTemplate<String, String> redisTemplate) {
-        return new JwtAuthorizationFilter(jwtUtil, redisTemplate);
+    public JwtAuthorizationFilter jwtAuthorizationFilter(JwtUtil jwtUtil) {
+        return new JwtAuthorizationFilter(jwtUtil);
     }
 
     @Bean
@@ -128,7 +128,7 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable);
 
         http
-            .addFilterAfter(jwtAuthorizationFilter(jwtUtil, redisTemplate),
+            .addFilterAfter(jwtAuthorizationFilter(jwtUtil),
                 UsernamePasswordAuthenticationFilter.class);
 
         http.exceptionHandling(

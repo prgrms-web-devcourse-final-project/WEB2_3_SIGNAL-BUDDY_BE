@@ -13,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.security.jwt.JwtUtil;
 import org.programmers.signalbuddyfinal.global.security.jwt.TokenErrorCode;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.AntPathMatcher;
@@ -25,7 +24,6 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
     private static final String EXCEPTION_ATTRIBUTE = "exception";
     private final AntPathMatcher antPathMatcher = new AntPathMatcher();
     private final JwtUtil jwtUtil;
-    private final RedisTemplate<String, String> redisTemplate;
     private final Set<String> excludeGetPaths = Set.of(
         "/api/feedbacks/{feedbackId}/comments", "/api/crossroads/**", "/api/feedbacks",
         "/api/crossroads/{crossroadId}/state", "/api/feedbacks/{feedbackId}", "/sse/weather"
@@ -39,9 +37,8 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         "/api/auth/test/blacklist-expire", "/api/auth/test/time-expire/**"
     );
 
-    public JwtAuthorizationFilter(JwtUtil jwtUtil, RedisTemplate<String, String> redisTemplate) {
+    public JwtAuthorizationFilter(JwtUtil jwtUtil) {
         this.jwtUtil = jwtUtil;
-        this.redisTemplate = redisTemplate;
     }
 
     @Override
@@ -79,7 +76,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         }
 
         // 블랙리스트에 있는지 확인
-        if (checkBlacklist(accessToken)) {
+        if (jwtUtil.checkBlacklist(accessToken)) {
 
             request.setAttribute(EXCEPTION_ATTRIBUTE, "INVALID_TOKEN");
             throw new BusinessException(TokenErrorCode.INVALID_TOKEN);
@@ -101,10 +98,5 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
             .anyMatch(pattern -> antPathMatcher.match(pattern, path));
 
         return (isExcluded || isExcludedOnlyGetMethod);
-    }
-
-    private boolean checkBlacklist(String accessToken) {
-        Boolean isInBlackList = redisTemplate.hasKey("blacklist:access-token:" + accessToken);
-        return Boolean.TRUE.equals(isInBlackList);
     }
 }
