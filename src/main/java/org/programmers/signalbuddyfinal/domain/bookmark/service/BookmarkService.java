@@ -56,6 +56,11 @@ public class BookmarkService {
 
         final Bookmark bookmark = BookmarkMapper.INSTANCE.toEntity(request, point, member);
         bookmark.updateSequence(nextSequence);
+
+        // 북마크 저장하는 좌표가 최근경로에 있다면 연관관계 생성
+        recentPathRepository.findByEndPoint(point)
+            .ifPresent(recentPath -> recentPath.linkBookmark(bookmark));
+
         final Bookmark save = bookmarkRepository.save(bookmark);
         return BookmarkMapper.INSTANCE.toDto(save);
     }
@@ -64,9 +69,6 @@ public class BookmarkService {
     public BookmarkResponse updateBookmark(BookmarkRequest request, Long id, Long memberId) {
         final Member member = getMember(memberId);
 
-        // TODO : 성능 개선
-//        final Bookmark bookmark = bookmarkRepository.findByBookmarkIdAndMemberMemberId(id, memberId)
-//            .orElseThrow(() -> new BusinessException(BookmarkErrorCode.NOT_FOUND_BOOKMARK));
         final Bookmark bookmark = bookmarkRepository.findById(id)
             .orElseThrow(() -> new BusinessException(BookmarkErrorCode.NOT_FOUND_BOOKMARK));
 
