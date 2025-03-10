@@ -123,7 +123,7 @@ public class CrossroadService {
         }
 
         CrossroadStateResponse response =
-            CrossroadMapper.INSTANCE.toResponse(apiResponses.get(0), crossroadId);
+            CrossroadMapper.INSTANCE.toResponse(apiResponses.get(0), crossroad);
         putStateCache(crossroadId, response);
         return response;
     }
