@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <!-- 기본 설정 -->
+  <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+  <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+  <!-- 경로 및 파일명 설정 -->
+  <property name="LOG_PATH" value="logs"/>
+  <property name="LOG_FILE_NAME" value="signal-buddy"/>
+
+  <!-- 콘솔 출력 설정 (컬러 포함) -->
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>
+        %d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %clr(%-5level){ERROR=red bold, WARN=yellow bold, INFO=green bold, DEBUG=blue bold, TRACE=cyan} %cyan(%logger{36}) [%X{requestId}][%X{ipAddress}] [%X{method}:%X{uri}] - %msg%n
+      </pattern>
+    </encoder>
+  </appender>
+
+  <!-- JSON 파일 로그 (Loki 수집용) -->
+  <appender name="JSON_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${LOG_PATH}/${LOG_FILE_NAME}.json</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>${LOG_PATH}/${LOG_FILE_NAME}-%d{yyyy-MM-dd}.json.gz</fileNamePattern>
+      <maxHistory>30</maxHistory>
+    </rollingPolicy>
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+      <customFields>{"app":"signal-buddy"}</customFields>
+    </encoder>
+  </appender>
+
+  <!-- 기본 로그 파일 -->
+  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${LOG_PATH}/${LOG_FILE_NAME}.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>${LOG_PATH}/${LOG_FILE_NAME}-%d{yyyy-MM-dd}.log.gz</fileNamePattern>
+      <maxHistory>30</maxHistory>
+    </rollingPolicy>
+    <encoder>
+      <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%logger{36}] [%X{requestId}] [%X{ipAddress}] [%X{method}:%X{uri}] - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <!-- 최상위 루트 로거 설정 -->
+  <root level="INFO">
+    <appender-ref ref="STDOUT"/>
+    <appender-ref ref="JSON_FILE"/>
+    <appender-ref ref="FILE"/>
+  </root>
+</configuration>
