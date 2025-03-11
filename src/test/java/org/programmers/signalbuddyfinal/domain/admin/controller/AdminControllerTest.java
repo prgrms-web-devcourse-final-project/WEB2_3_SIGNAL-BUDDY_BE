@@ -54,7 +54,7 @@ class AdminControllerTest extends ControllerTest {
         );
 
         // when, then
-        mockMvc.perform(multipart("/api/admins/join")
+        mockMvc.perform(multipart("/api/admin/join")
                 .file(requestPart)
                 .file(file))
             .andExpect(status().isOk())

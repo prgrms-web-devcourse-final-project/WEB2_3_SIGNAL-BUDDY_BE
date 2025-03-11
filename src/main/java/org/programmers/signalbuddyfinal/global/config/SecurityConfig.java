@@ -82,9 +82,10 @@ public class SecurityConfig {
                 .requestMatchers("/ws/navigation").hasAnyRole(ADMIN, USER) // 회원만 길찾기 가능.
                 // 로그인, 회원가입
                 .requestMatchers("/api/auth/login","/api/auth/social-login", "/api/auth/reissue", "/api/members/join",
-                    "/api/admins/join", "/api/members/files/**", "/api/auth/auth-code",
+                    "/api/admin/join", "/api/members/files/**", "/api/auth/auth-code",
                     "/api/auth/verify-code","/api/members/password-reset","/api/members/restore",
-                    "/api/auth/test/**").permitAll()
+                    "/api/auth/test/**", "/api/terms").permitAll()
+                .requestMatchers("/api/admin/terms").hasRole(ADMIN)
                 .requestMatchers("/api/bookmarks/**", "/bookmarks/**").hasRole("USER")
                 // 댓글
                 .requestMatchers(HttpMethod.GET, "/api/feedbacks/{feedbackId}/comments").permitAll()
@@ -107,8 +108,8 @@ public class SecurityConfig {
                 // 피드백 통계
                 .requestMatchers("/api/feedback-summary/**").hasRole(ADMIN)
                 // 회원
-                .requestMatchers("/api/admins/**", "/admins/members/**").hasRole(ADMIN)
-                .requestMatchers("/api/members/**", "/members/**").hasRole(USER)
+                .requestMatchers("/api/admin/**").hasRole(ADMIN)
+                .requestMatchers("/api/members/**").hasRole(USER)
                 // Prometheus 엔드포인트 허용
                 .requestMatchers("/actuator/prometheus").permitAll()
                 // 날씨
