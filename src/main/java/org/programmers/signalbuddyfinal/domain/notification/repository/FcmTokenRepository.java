@@ -10,12 +10,12 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface FcmTokenRepository extends JpaRepository<FcmToken, Long> {
+public interface FcmTokenRepository extends JpaRepository<FcmToken, String> {
 
-    @Query("SELECT ft FROM fcm_tokens ft WHERE ft.member.memberId = :memberId")
+    @Query("SELECT ft FROM fcm_tokens ft WHERE ft.member.memberId = :memberId AND ft.logoutTime IS NULL")
     List<FcmToken> findAllByMemberId(@Param("memberId") Long memberId);
 
-    default FcmToken findByIdOrThrow(Long id) {
+    default FcmToken findByIdOrThrow(String id) {
         return findById(id)
             .orElseThrow(() -> new BusinessException(FcmErrorCode.FCM_TOKEN_NOT_FOUND));
     }
