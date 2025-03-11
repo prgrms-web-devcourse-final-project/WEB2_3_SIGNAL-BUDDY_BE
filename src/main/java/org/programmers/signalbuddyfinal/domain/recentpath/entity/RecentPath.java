@@ -80,4 +80,9 @@ public class RecentPath extends BaseTimeEntity {
     public void linkBookmark(Bookmark bookmark) {
         this.bookmark = bookmark;
     }
+
+    public void updateNameAndAddress(String newName, String newAddress) {
+        this.name = newName;
+        this.address = newAddress;
+    }
 }

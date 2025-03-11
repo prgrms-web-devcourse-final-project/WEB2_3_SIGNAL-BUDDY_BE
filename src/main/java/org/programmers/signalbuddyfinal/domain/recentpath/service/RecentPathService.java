@@ -121,7 +121,7 @@ public class RecentPathService {
 
     private RecentPath findOrCreateRecentPath(Point point, RecentPathRequest request,
         Member member) {
-        return recentPathRepository.findByEndPoint(point).map(existingPath -> {
+        return recentPathRepository.findByEndPointAndMemberMemberId(point, member.getMemberId()).map(existingPath -> {
             existingPath.updateLastAccessedTime();
             return existingPath;
         }).orElseGet(() -> RecentPathMapper.INSTANCE.toEntity(request, point, member));
