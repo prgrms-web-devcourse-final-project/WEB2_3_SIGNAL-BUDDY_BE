@@ -8,7 +8,6 @@ import org.programmers.signalbuddyfinal.domain.auth.dto.SocialLoginRequest;
 import org.programmers.signalbuddyfinal.domain.auth.dto.VerifyCodeRequest;
 import org.programmers.signalbuddyfinal.domain.auth.service.AuthService;
 import org.programmers.signalbuddyfinal.domain.auth.service.EmailService;
-import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -27,8 +26,11 @@ public class AuthController {
     private final EmailService emailService;
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<?>> login(@RequestBody LoginRequest loginRequest){
-        return authService.login(loginRequest);
+    public ResponseEntity<ApiResponse<Object>> login(
+        @CookieValue(name = "device-token", required = false) String deviceTokenCookie,
+        @RequestBody LoginRequest loginRequest
+    ){
+        return authService.login(deviceTokenCookie, loginRequest);
     }
 
     @PostMapping("/reissue")
@@ -50,14 +52,19 @@ public class AuthController {
     }
 
     @PostMapping("/social-login")
-    public ResponseEntity<ApiResponse<?>> socialLogin(@RequestBody SocialLoginRequest socialLoginRequest){
-        return authService.socialLogin(socialLoginRequest);
+    public ResponseEntity<ApiResponse<Object>> socialLogin(
+        @CookieValue(name = "device-token", required = false) String deviceTokenCookie,
+        @RequestBody SocialLoginRequest socialLoginRequest
+    ){
+        return authService.socialLogin(deviceTokenCookie, socialLoginRequest);
     }
 
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Object>> logout(
+        @CookieValue(name = "device-token", required = false) String deviceTokenCookie,
         @CookieValue(name = "refresh-token") String refreshToken,
-        @RequestHeader("Authorization") String accessToken) {
-        return authService.logout(refreshToken, accessToken);
+        @RequestHeader("Authorization") String accessToken
+    ) {
+        return authService.logout(deviceTokenCookie, refreshToken, accessToken);
     }
 }

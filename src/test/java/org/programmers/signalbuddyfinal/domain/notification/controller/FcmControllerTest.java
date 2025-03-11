@@ -5,16 +5,21 @@ import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.getTokenExample;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.jwtFormat;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessRequest;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessResponse;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.prettyPrint;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.epages.restdocs.apispec.ResourceSnippetParameters;
+import jakarta.servlet.http.Cookie;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.programmers.signalbuddyfinal.domain.notification.dto.FcmTokenRequest;
@@ -25,6 +30,7 @@ import org.programmers.signalbuddyfinal.global.support.ControllerTest;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseCookie;
 import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.ResultActions;
@@ -43,7 +49,15 @@ class FcmControllerTest extends ControllerTest {
     void registerToken() throws Exception {
         // Given
         FcmTokenRequest request = new FcmTokenRequest("test token");
-        doNothing().when(fcmService).registerToken(anyString(), any(CustomUser2Member.class));
+        ResponseCookie responseCookie = ResponseCookie
+            .from("device-token", UUID.randomUUID().toString())
+            .httpOnly(true)
+            .secure(true)
+            .path("/")
+            .build();
+
+        when(fcmService.registerToken(anyString(), any(CustomUser2Member.class)))
+            .thenReturn(responseCookie);
         
         // When
         ResultActions result = mockMvc.perform(
@@ -74,5 +88,78 @@ class FcmControllerTest extends ControllerTest {
                     )
                 )
             );
+    }
+
+    @DisplayName("device-token Cookie의 정보로 디바이스 토큰을 로그아웃 처리한다.")
+    @Test
+    void logoutToken() throws Exception {
+        // Given
+        Cookie deviceTokenCookie = makeCookie("device-token", UUID.randomUUID().toString());
+
+        doNothing().when(fcmService).logoutToken(anyString());
+
+        // When
+        ResultActions result = mockMvc.perform(
+            patch("/api/fcm/token/logout")
+                .cookie(deviceTokenCookie)
+        );
+
+        result.andExpect(status().isOk())
+            .andDo(
+                document(
+                    "디바이스 토큰 로그아웃",
+                    preprocessRequest(prettyPrint()),
+                    preprocessResponse(prettyPrint()),
+                    resource(
+                        ResourceSnippetParameters.builder()
+                            .tag(tag)
+                            .summary("디바이스 토큰 로그아웃")
+                            .build()
+                    )
+                )
+            );
+    }
+
+    @DisplayName("device-token Cookie의 정보로 디바이스 토큰을 삭제한다.")
+    @Test
+    @WithMockCustomUser
+    void deleteDeviceToken() throws Exception {
+        // Given
+        Cookie deviceTokenCookie = makeCookie("device-token", UUID.randomUUID().toString());
+        ResponseCookie responseCookie = ResponseCookie.from("device-token", "")
+            .maxAge(0).path("/")
+            .build();
+
+        when(fcmService.deleteDeviceToken(anyString(), any(CustomUser2Member.class)))
+            .thenReturn(responseCookie);
+
+        // When
+        ResultActions result = mockMvc.perform(
+            delete("/api/fcm/token")
+                .header(HttpHeaders.AUTHORIZATION, getTokenExample())
+                .cookie(deviceTokenCookie)
+        );
+
+        result.andExpect(status().isOk())
+            .andDo(
+                document(
+                    "디바이스 토큰 삭제",
+                    preprocessRequest(prettyPrint()),
+                    preprocessResponse(prettyPrint()),
+                    resource(
+                        ResourceSnippetParameters.builder()
+                            .tag(tag)
+                            .summary("디바이스 토큰 삭제")
+                            .requestHeaders(
+                                jwtFormat()
+                            )
+                            .build()
+                    )
+                )
+            );
+    }
+
+    private Cookie makeCookie(String name, String value) {
+        return new Cookie(name, value);
     }
 }

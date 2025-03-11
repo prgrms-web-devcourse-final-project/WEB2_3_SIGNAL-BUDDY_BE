@@ -115,6 +115,8 @@ public class SecurityConfig {
                 // 날씨
                 .requestMatchers(HttpMethod.GET, "/sse/weather/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/weather").hasRole(ADMIN)
+                // FCM
+                .requestMatchers(HttpMethod.PATCH, "/api/fcm/token/logout").permitAll()
                 .anyRequest().authenticated()
             );
 

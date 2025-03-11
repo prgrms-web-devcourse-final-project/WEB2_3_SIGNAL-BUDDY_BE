@@ -11,6 +11,7 @@ import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.exception.MemberErrorCode;
 import org.programmers.signalbuddyfinal.domain.member.mapper.MemberMapper;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
+import org.programmers.signalbuddyfinal.domain.notification.service.FcmService;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.exception.advice.dto.ErrorResponse;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
@@ -34,6 +35,7 @@ public class AuthService {
     private final JwtUtil jwtUtil;
     private final JwtService jwtService;
     private final MemberRepository memberRepository;
+    private final FcmService fcmService;
 
     // 토큰 재발행
     public ResponseEntity<ApiResponse<Object>> reissue(String refreshToken, String accessToken) {
@@ -48,13 +50,16 @@ public class AuthService {
     }
 
     // 기본 로그인
-    public ResponseEntity<ApiResponse<?>> login(LoginRequest loginRequest) {
-
-        return commonLogin(loginRequest.getId(), loginRequest.getPassword());
+    public ResponseEntity<ApiResponse<Object>> login(
+        String deviceTokenCookie,
+        LoginRequest loginRequest
+    ) {
+        return commonLogin(deviceTokenCookie, loginRequest.getId(), loginRequest.getPassword());
     }
 
     // 소셜 로그인
-    public ResponseEntity<ApiResponse<?>> socialLogin(
+    public ResponseEntity<ApiResponse<Object>> socialLogin(
+        String deviceToken,
         SocialLoginRequest socialLoginRequest) {
 
         Member existMember = memberRepository.findByProviderAndSocialId(
@@ -66,11 +71,14 @@ public class AuthService {
                 new ErrorResponse(MemberErrorCode.NOT_FOUND_MEMBER).getMessage()));
         }
 
-        return commonLogin(existMember.getEmail(), null);
+        return commonLogin(deviceToken, existMember.getEmail(), null);
     }
 
     // 공통 로그인 로직
-    private ResponseEntity<ApiResponse<?>> commonLogin(String email, String password) {
+    private ResponseEntity<ApiResponse<Object>> commonLogin(
+        String deviceTokenCookie,
+        String email, String password
+    ) {
 
         Authentication authentication = null;
         try {
@@ -87,14 +95,19 @@ public class AuthService {
         accessTokenSend2Client(headers, accessToken);
         refreshTokenSend2Client(headers, refreshToken, 7);
 
+        fcmService.loginToken(deviceTokenCookie);
+
         return ResponseEntity.ok()
             .headers(headers)
             .body(ApiResponse.createSuccess(createResponseBody(authentication)));
     }
 
-    public ResponseEntity<ApiResponse<Object>> logout(String refreshToken, String accessToken) {
-
+    public ResponseEntity<ApiResponse<Object>> logout(
+        String deviceTokenCookie,
+        String refreshToken, String accessToken
+    ) {
         jwtService.logout(accessToken);
+        fcmService.logoutToken(deviceTokenCookie);
 
         HttpHeaders headers = new HttpHeaders();
         refreshTokenSend2Client(headers, refreshToken, 0);

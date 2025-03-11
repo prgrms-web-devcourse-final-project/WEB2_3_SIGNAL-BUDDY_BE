@@ -35,7 +35,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         "/api/admins/join", "/api/members/files/**", "/actuator/prometheus",
         "/api/auth/auth-code", "/api/auth/verify-code", "/api/members/password-reset",
         "/api/auth/social-login", "/api/members/restore", "/api/auth/reissue",
-        "/api/auth/test/blacklist-expire", "/api/auth/test/time-expire/**"
+        "/api/auth/test/blacklist-expire", "/api/auth/test/time-expire/**", "/api/fcm/token/logout"
     );
 
     public JwtAuthorizationFilter(JwtUtil jwtUtil) {
