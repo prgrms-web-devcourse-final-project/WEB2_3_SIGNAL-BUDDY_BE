@@ -25,6 +25,10 @@ configurations {
     }
 }
 
+configurations.configureEach {
+    exclude group: 'commons-logging', module: 'commons-logging'
+}
+
 repositories {
     mavenCentral()
 }
@@ -119,6 +123,10 @@ dependencies {
 
     // Apache poi
     implementation 'org.apache.poi:poi-ooxml:5.2.3'
+
+    // https://mvnrepository.com/artifact/net.logstash.logback/logstash-logback-encoder
+    implementation 'net.logstash.logback:logstash-logback-encoder:8.0'
+
 }
 
 // JaCoCo 버전 설정
