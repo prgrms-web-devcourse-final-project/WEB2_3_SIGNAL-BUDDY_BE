@@ -16,7 +16,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.epages.restdocs.apispec.ResourceSnippetParameters;
-import com.google.protobuf.Api;
 import jakarta.servlet.http.Cookie;
 import java.util.concurrent.CompletableFuture;
 import org.junit.jupiter.api.DisplayName;
@@ -28,6 +27,7 @@ import org.programmers.signalbuddyfinal.domain.auth.dto.VerifyCodeRequest;
 import org.programmers.signalbuddyfinal.domain.auth.entity.Purpose;
 import org.programmers.signalbuddyfinal.domain.auth.service.AuthService;
 import org.programmers.signalbuddyfinal.domain.auth.service.EmailService;
+import org.programmers.signalbuddyfinal.domain.notification.service.FcmService;
 import org.programmers.signalbuddyfinal.domain.social.entity.Provider;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
 import org.programmers.signalbuddyfinal.global.support.ControllerTest;
@@ -46,6 +46,9 @@ class AuthControllerTest extends ControllerTest {
     @MockitoBean
     private EmailService emailService;
 
+    @MockitoBean
+    private FcmService fcmService;
+
     private String tag = "Auth API";
 
     @DisplayName("기본 로그인 성공")
@@ -55,17 +58,20 @@ class AuthControllerTest extends ControllerTest {
         //given
         String testAccessToken = "testAccessToken";
         String testRefreshToken = "testRefreshToken";
+        String deviceToken = "deviceToken";
 
         ApiResponse apiResponse = ApiResponse.createSuccessWithNoData();
-        ResponseEntity<ApiResponse<?>> response = ResponseEntity.ok()
+        ResponseEntity<ApiResponse<Object>> response = ResponseEntity.ok()
             .header("Set-Cookie","refresh-token=" + testRefreshToken)
             .header("Authorization", "Bearer " + testAccessToken)
             .body(apiResponse);
 
-        when(authService.login(any(LoginRequest.class))).thenReturn(response);
+        doNothing().when(fcmService).loginToken(anyString());
+        when(authService.login(anyString(), any(LoginRequest.class))).thenReturn(response);
 
         //when, then
         mockMvc.perform(post("/api/auth/login")
+                .cookie(new Cookie("device-token", deviceToken))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"id\":\"test@test.com\", \"password\":\"password\"}"))
             .andExpect(status().isOk())
@@ -92,18 +98,21 @@ class AuthControllerTest extends ControllerTest {
         //given
         String testAccessToken = "testAccessToken";
         String testRefreshToken = "testRefreshToken";
+        String deviceToken = "deviceToken";
         SocialLoginRequest socialLoginRequest = new SocialLoginRequest(Provider.GOOGLE, "1234");
 
         ApiResponse apiResponse = ApiResponse.createSuccessWithNoData();
-        ResponseEntity<ApiResponse<?>> response = ResponseEntity.ok()
+        ResponseEntity<ApiResponse<Object>> response = ResponseEntity.ok()
             .header("Set-Cookie","refresh-token=" + testRefreshToken)
             .header("Authorization", "Bearer " + testAccessToken)
             .body(apiResponse);
 
-        when(authService.socialLogin(any(SocialLoginRequest.class))).thenReturn(response);
+        doNothing().when(fcmService).loginToken(anyString());
+        when(authService.socialLogin(anyString(), any(SocialLoginRequest.class))).thenReturn(response);
 
         //when, then
         mockMvc.perform(post("/api/auth/social-login")
+                .cookie(new Cookie("device-token", deviceToken))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(socialLoginRequest)))
             .andExpect(status().isOk())
@@ -232,6 +241,7 @@ class AuthControllerTest extends ControllerTest {
         //given
         String refreshToken = "refreshToken";
         String accessToken = "accessToken";
+        String deviceToken = "deviceToken";
 
         ApiResponse apiResponse = ApiResponse.createSuccessWithNoData();
         ResponseEntity<ApiResponse<Object>> response = ResponseEntity.ok()
@@ -239,10 +249,12 @@ class AuthControllerTest extends ControllerTest {
             .header("Authorization", "Bearer " + accessToken)
             .body(apiResponse);
 
-        when(authService.reissue(anyString(), anyString())).thenReturn(response);
+        doNothing().when(fcmService).logoutToken(anyString());
+        when(authService.logout(anyString(), anyString(), anyString())).thenReturn(response);
 
         //when, then
-        mockMvc.perform(post("/api/auth/reissue")
+        mockMvc.perform(post("/api/auth/logout")
+                .cookie(new Cookie("device-token", deviceToken))
                 .cookie(new Cookie("refresh-token", refreshToken))
                 .header("Authorization", "Bearer " + accessToken))
             .andExpect(status().isOk())
@@ -258,5 +270,4 @@ class AuthControllerTest extends ControllerTest {
                 )
             );
     }
-
 }

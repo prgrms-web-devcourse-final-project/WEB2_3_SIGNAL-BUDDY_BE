@@ -11,7 +11,6 @@ import com.google.api.core.ApiFuture;
 import com.google.firebase.messaging.BatchResponse;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.MulticastMessage;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,6 +31,8 @@ import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
 import org.programmers.signalbuddyfinal.global.support.ServiceTest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpCookie;
+import org.springframework.http.ResponseCookie;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 class FcmServiceTest extends ServiceTest {
@@ -52,11 +53,12 @@ class FcmServiceTest extends ServiceTest {
     private ApiFuture<BatchResponse> apiFuture;
 
     private Member member;
+    private FcmToken fcmToken;
 
     @BeforeEach
     void setUp() {
         member = saveMember("test email", "tester");
-        saveFcmToken("test token1", member);
+        fcmToken = saveFcmToken("test token", member);
     }
 
     @DisplayName("알림 메시지를 보낸다.")
@@ -127,18 +129,76 @@ class FcmServiceTest extends ServiceTest {
     @Test
     void registerToken_Success() {
         // Given
-        String deviceToken = "test Token";
+        String deviceToken = "test Token2";
         CustomUser2Member user = getCurrentMember(member.getMemberId());
 
         // When
-        fcmService.registerToken(deviceToken, user);
+        HttpCookie result = fcmService.registerToken(deviceToken, user);
 
         // Then
-        List<FcmToken> actual = fcmTokenRepository.findAllByMemberId(user.getMemberId());
+        assertThat(fcmTokenRepository.findByIdOrThrow(result.getValue()).getDeviceToken())
+            .isEqualTo(deviceToken);
+    }
+
+    @DisplayName("사용자가 로그인하여 디바이스 토큰을 활성화한다.")
+    @Test
+    void loginToken() {
+        // Given
+        fcmToken.logout();
+
+        // When
+        fcmService.loginToken(fcmToken.getFcmTokenUuid());
+
+        // Then
+        assertThat(fcmTokenRepository.findAllByMemberId(member.getMemberId())).isNotEmpty();
+    }
+
+    @DisplayName("사용자가 로그아웃하여 디바이스 토큰을 비활성화한다.")
+    @Test
+    void logoutToken() {
+        // When
+        fcmService.logoutToken(fcmToken.getFcmTokenUuid());
+
+        // Then
+        assertThat(fcmTokenRepository.findAllByMemberId(member.getMemberId())).isEmpty();
+    }
+
+    @DisplayName("해당 디바이스 토큰 DB와 쿠키에서 삭제한다.")
+    @Test
+    void deleteDeviceToken_Success() {
+        // Given
+        String deviceTokenUuid = fcmToken.getFcmTokenUuid();
+        CustomUser2Member user = getCurrentMember(member.getMemberId());
+
+        // When
+        ResponseCookie result = fcmService.deleteDeviceToken(deviceTokenUuid, user);
+
+        // Then
         SoftAssertions.assertSoftly(softAssertions -> {
-            softAssertions.assertThat(actual.size()).isEqualTo(2);
-            softAssertions.assertThat(actual.get(1).getDeviceToken()).isEqualTo(deviceToken);
+            softAssertions.assertThat(fcmTokenRepository.findAllByMemberId(member.getMemberId()))
+                .isEmpty();
+            softAssertions.assertThat(result.getValue()).isEqualTo("");
+            softAssertions.assertThat(result.getName()).isEqualTo("device-token");
+            softAssertions.assertThat(result.getMaxAge()).isZero();
+            softAssertions.assertThat(result.getPath()).isEqualTo("/");
         });
+    }
+
+    @DisplayName("디바이스 토큰 소유자와 삭제 요청자가 다를 경우 실패한다.")
+    @Test
+    void deleteDeviceToken_Failure() {
+        // Given
+        String deviceTokenUuid = fcmToken.getFcmTokenUuid();
+        Member otherMember = saveMember("other email", "other");
+        CustomUser2Member user = getCurrentMember(otherMember.getMemberId());
+
+        // When & Then
+        try {
+            fcmService.deleteDeviceToken(deviceTokenUuid, user);
+        } catch (BusinessException e) {
+            assertThat(e.getErrorCode())
+                .isEqualTo(FcmErrorCode.FCM_TOKEN_ELIMINATOR_NOT_AUTHORIZED);
+        }
     }
 
     private Member saveMember(String email, String nickname) {

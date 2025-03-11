@@ -26,7 +26,8 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
     private final Set<String> excludeGetPaths = Set.of(
         "/api/feedbacks/{feedbackId}/comments", "/api/crossroads/**", "/api/feedbacks",
-        "/api/crossroads/{crossroadId}/state", "/api/feedbacks/{feedbackId}", "/sse/weather"
+        "/api/terms", "/api/crossroads/{crossroadId}/state", "/api/feedbacks/{feedbackId}",
+        "/sse/weather"
     );
     private final Set<String> excludeAllPaths = Set.of(
         "/", "/docs/**", "/actuator/health", "/webjars/**", "/api/auth/login",
@@ -34,7 +35,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         "/api/admins/join", "/api/members/files/**", "/actuator/prometheus",
         "/api/auth/auth-code", "/api/auth/verify-code", "/api/members/password-reset",
         "/api/auth/social-login", "/api/members/restore", "/api/auth/reissue",
-        "/api/auth/test/blacklist-expire", "/api/auth/test/time-expire/**"
+        "/api/auth/test/blacklist-expire", "/api/auth/test/time-expire/**", "/api/fcm/token/logout"
     );
 
     public JwtAuthorizationFilter(JwtUtil jwtUtil) {

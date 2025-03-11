@@ -45,7 +45,8 @@ public class BookmarkRepositoryCustomImpl implements BookmarkRepositoryCustom {
             .orderBy(new OrderSpecifier<>(Order.ASC, bookmark.sequence)).fetch();
 
         final Long count = queryFactory.select(bookmark.count()).from(bookmark).join(member)
-            .on(bookmark.member.eq(member).and(member.memberId.eq(memberId))).fetchOne();
+            .on(bookmark.member.eq(member).and(member.memberId.eq(memberId)))
+            .where(bookmark.deletedAt.isNull()).fetchOne();
         return new PageImpl<>(responses, pageable, count != null ? count : 0);
     }
 
@@ -60,10 +61,9 @@ public class BookmarkRepositoryCustomImpl implements BookmarkRepositoryCustom {
 
     @Override
     public Optional<Bookmark> findByCoordinateAndMemberIdNotDeleted(Point endPoint, Long memberId) {
-        final Bookmark fetchOne = queryFactory.selectFrom(bookmark)
-            .where(bookmark.coordinate.eq(endPoint).and(bookmark.member.memberId.eq(memberId))
-                .and(bookmark.deletedAt.isNull()))
-            .fetchOne();
+        final Bookmark fetchOne = queryFactory.selectFrom(bookmark).where(
+            bookmark.coordinate.eq(endPoint).and(bookmark.member.memberId.eq(memberId))
+                .and(bookmark.deletedAt.isNull())).fetchOne();
         return Optional.ofNullable(fetchOne);
     }
 }

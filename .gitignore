@@ -51,3 +51,6 @@ src/main/generated/
 
 ### Swagger ###
 src/main/resources/static/docs/
+
+### Log ###
+logs/
