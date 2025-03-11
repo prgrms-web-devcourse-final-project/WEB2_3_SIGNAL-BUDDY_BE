@@ -116,6 +116,9 @@ dependencies {
 
     // FireBase Admin SDK
     implementation 'com.google.firebase:firebase-admin:9.4.3'
+
+    // Apache poi
+    implementation 'org.apache.poi:poi-ooxml:5.2.3'
 }
 
 // JaCoCo 버전 설정

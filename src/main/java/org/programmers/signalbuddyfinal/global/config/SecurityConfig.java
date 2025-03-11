@@ -45,8 +45,8 @@ public class SecurityConfig {
     private static final String USER = "USER";
 
     @Bean
-    public JwtAuthorizationFilter jwtAuthorizationFilter(JwtUtil jwtUtil, RedisTemplate<String, String> redisTemplate) {
-        return new JwtAuthorizationFilter(jwtUtil, redisTemplate);
+    public JwtAuthorizationFilter jwtAuthorizationFilter(JwtUtil jwtUtil) {
+        return new JwtAuthorizationFilter(jwtUtil);
     }
 
     @Bean
@@ -77,6 +77,7 @@ public class SecurityConfig {
                     "/actuator/health",
                     "/webjars/**").permitAll()
                 // 웹소켓
+                .requestMatchers(HttpMethod.GET, "/sse/weather/**").permitAll()
                 .requestMatchers("/ws/location").permitAll()
                 .requestMatchers("/ws/navigation").hasAnyRole(ADMIN, USER) // 회원만 길찾기 가능.
                 // 로그인, 회원가입
@@ -111,6 +112,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/members/**").hasRole(USER)
                 // Prometheus 엔드포인트 허용
                 .requestMatchers("/actuator/prometheus").permitAll()
+                // 날씨
+                .requestMatchers(HttpMethod.GET, "/sse/weather/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/weather").hasRole(ADMIN)
                 .anyRequest().authenticated()
             );
 
@@ -125,7 +129,7 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable);
 
         http
-            .addFilterAfter(jwtAuthorizationFilter(jwtUtil, redisTemplate),
+            .addFilterAfter(jwtAuthorizationFilter(jwtUtil),
                 UsernamePasswordAuthenticationFilter.class);
 
         http.exceptionHandling(

@@ -13,6 +13,7 @@ import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
 import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
@@ -25,6 +26,7 @@ public class JwtUtil {
     private final CustomUserDetailsService customUserDetailsService;
     private final RefreshTokenRepository refreshTokenRepository;
     private final Key key;
+    private final RedisTemplate<String, String> redisTemplate;
 
     @Value("${jwt.access-token-expiration-time}")
     private Long accessTokenExpiration;
@@ -33,9 +35,11 @@ public class JwtUtil {
 
     public JwtUtil(@Value("${jwt.secret}") String secretKey,
         RefreshTokenRepository refreshTokenRepository,
-        CustomUserDetailsService customUserDetailsService) {
+        CustomUserDetailsService customUserDetailsService,
+        RedisTemplate<String, String> redisTemplate) {
         this.refreshTokenRepository = refreshTokenRepository;
         this.customUserDetailsService = customUserDetailsService;
+        this.redisTemplate = redisTemplate;
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         this.key = Keys.hmacShaKeyFor(keyBytes);
     }
@@ -100,6 +104,13 @@ public class JwtUtil {
 
     private CustomUserDetails authentication2User(Authentication authentication) {
         return (CustomUserDetails) authentication.getPrincipal();
+    }
+
+    public boolean checkBlacklist(String accessToken) {
+        Boolean isInBlackList = redisTemplate.hasKey("blacklist:access-token:" + accessToken);
+        Boolean isInPendingBlackList = redisTemplate.hasKey(("pending-blacklist:access-token:" + accessToken));
+
+        return Boolean.TRUE.equals(isInBlackList)&& Boolean.FALSE.equals(isInPendingBlackList);
     }
 
     // 테스트용

@@ -11,8 +11,6 @@ import static org.springframework.restdocs.operation.preprocess.Preprocessors.pr
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessResponse;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.prettyPrint;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -71,77 +69,6 @@ class FcmControllerTest extends ControllerTest {
                             .requestFields(
                                 fieldWithPath("deviceToken").type(JsonFieldType.STRING)
                                     .description("FCM에서 받은 디바이스 토큰")
-                            )
-                            .build()
-                    )
-                )
-            );
-    }
-
-    @DisplayName("디바이스 토큰을 수정한다.")
-    @Test
-    @WithMockCustomUser
-    void updateToken() throws Exception {
-        // Given
-        FcmTokenRequest request = new FcmTokenRequest("test update token");
-        doNothing().when(fcmService).updateToken(anyString(), any(CustomUser2Member.class));
-
-        // When
-        ResultActions result = mockMvc.perform(
-            patch("/api/fcm/token")
-                .header(HttpHeaders.AUTHORIZATION, getTokenExample())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request))
-        );
-
-        result.andExpect(status().isOk())
-            .andDo(
-                document(
-                    "디바이스 토큰 수정",
-                    preprocessRequest(prettyPrint()),
-                    preprocessResponse(prettyPrint()),
-                    resource(
-                        ResourceSnippetParameters.builder()
-                            .tag(tag)
-                            .summary("디바이스 토큰 수정")
-                            .requestHeaders(
-                                jwtFormat()
-                            )
-                            .requestFields(
-                                fieldWithPath("deviceToken").type(JsonFieldType.STRING)
-                                    .description("FCM에서 받은 새로운 디바이스 토큰")
-                            )
-                            .build()
-                    )
-                )
-            );
-    }
-
-    @DisplayName("해당 사용자의 디바이스 토큰을 삭제한다.")
-    @Test
-    @WithMockCustomUser
-    void deleteToken() throws Exception {
-        // Given
-        doNothing().when(fcmService).deleteToken(any(CustomUser2Member.class));
-
-        // When
-        ResultActions result = mockMvc.perform(
-            delete("/api/fcm/token")
-                .header(HttpHeaders.AUTHORIZATION, getTokenExample())
-        );
-
-        result.andExpect(status().isOk())
-            .andDo(
-                document(
-                    "디바이스 토큰 삭제",
-                    preprocessRequest(prettyPrint()),
-                    preprocessResponse(prettyPrint()),
-                    resource(
-                        ResourceSnippetParameters.builder()
-                            .tag(tag)
-                            .summary("디바이스 토큰 삭제")
-                            .requestHeaders(
-                                jwtFormat()
                             )
                             .build()
                     )

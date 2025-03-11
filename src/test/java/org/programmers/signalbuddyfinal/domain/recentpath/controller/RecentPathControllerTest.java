@@ -47,8 +47,8 @@ class RecentPathControllerTest extends ControllerTest {
         final Long recentPathId = 1L;
 
         final RecentPathResponse response = RecentPathResponse.builder().recentPathId(1L)
-            .lat(37.501).lng(127.001).name("Recent Path").lastAccessedAt(LocalDateTime.now())
-            .isBookmarked(false).build();
+            .lat(37.501).lng(127.001).name("Recent Path").address("Address")
+            .lastAccessedAt(LocalDateTime.now()).isBookmarked(false).build();
 
         given(recentPathService.updateRecentPathTime(recentPathId)).willReturn(response);
 
@@ -68,6 +68,8 @@ class RecentPathControllerTest extends ControllerTest {
                                 fieldWithPath("data.lng").type(JsonFieldType.NUMBER).description("경도"),
                                 fieldWithPath("data.name").type(JsonFieldType.STRING)
                                     .description("최근 경로 이름"),
+                                fieldWithPath("data.address").type(JsonFieldType.STRING)
+                                    .description("최근 경로 주소"),
                                 fieldWithPath("data.lastAccessedAt").type(JsonFieldType.STRING)
                                     .description("최근 방문 시각"),
                                 fieldWithPath("data.bookmarked").type(JsonFieldType.BOOLEAN)
@@ -100,7 +102,8 @@ class RecentPathControllerTest extends ControllerTest {
 
         final RecentPathLinkRequest recentPathLinkRequest = new RecentPathLinkRequest(1L);
         final RecentPathResponse response = RecentPathResponse.builder().recentPathId(recentPathId)
-            .lastAccessedAt(LocalDateTime.now()).isBookmarked(true).name("Recent Path").build();
+            .lastAccessedAt(LocalDateTime.now()).isBookmarked(true).name("Recent Path")
+            .address("Address").build();
         when(recentPathService.linkBookmark(recentPathId, recentPathLinkRequest)).thenReturn(
             response);
 
@@ -116,8 +119,8 @@ class RecentPathControllerTest extends ControllerTest {
                         .pathParameters(
                             parameterWithName("id").type(SimpleType.NUMBER).description("최근 경로 ID"))
                         .requestSchema(schema("RecentPathLinkRequest")).requestFields(
-                            fieldWithPath("bookmarkId").type(JsonFieldType.NUMBER)
-                                .description("북마크 ID")).responseSchema(schema("RecentPathResponse"))
+                            fieldWithPath("memberId").type(JsonFieldType.NUMBER)
+                                .description("멤버 ID")).responseSchema(schema("RecentPathResponse"))
                         .responseFields(ArrayUtils.addAll(commonResponseFormat(),
                             fieldWithPath("data.recentPathId").type(JsonFieldType.NUMBER)
                                 .description("최근 경로 ID"),
@@ -125,6 +128,8 @@ class RecentPathControllerTest extends ControllerTest {
                             fieldWithPath("data.lng").type(JsonFieldType.NUMBER).description("경도"),
                             fieldWithPath("data.name").type(JsonFieldType.STRING)
                                 .description("최근 경로 이름"),
+                            fieldWithPath("data.address").type(JsonFieldType.STRING)
+                                .description("최근 경로 주소"),
                             fieldWithPath("data.lastAccessedAt").type(JsonFieldType.STRING)
                                 .description("최근 방문 시각"),
                             fieldWithPath("data.bookmarked").type(JsonFieldType.BOOLEAN)

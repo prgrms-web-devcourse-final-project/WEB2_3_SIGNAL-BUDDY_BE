@@ -17,5 +17,4 @@ public interface BookmarkRepository extends JpaRepository<Bookmark, Long>,
 
     List<Bookmark> findAllBySequenceInAndMemberMemberId(List<Integer> targetSequences, Long id);
 
-    Optional<Bookmark> findByBookmarkIdAndMemberMemberId(Long id, Long memberId);
 }

@@ -4,10 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.getMockImageFile;
 
 import java.net.URL;
+import java.util.List;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -21,6 +24,8 @@ import org.programmers.signalbuddyfinal.domain.feedback.entity.Feedback;
 import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.FeedbackCategory;
 import org.programmers.signalbuddyfinal.domain.feedback.exception.FeedbackErrorCode;
 import org.programmers.signalbuddyfinal.domain.feedback.repository.FeedbackRepository;
+import org.programmers.signalbuddyfinal.domain.like.entity.Like;
+import org.programmers.signalbuddyfinal.domain.like.repository.LikeRepository;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
@@ -49,6 +54,9 @@ class FeedbackServiceTest extends ServiceTest {
 
     @Autowired
     private MemberRepository memberRepository;
+
+    @Autowired
+    private LikeRepository likeRepository;
 
     @MockitoBean
     private AwsFileService awsFileService;
@@ -242,6 +250,34 @@ class FeedbackServiceTest extends ServiceTest {
         });
     }
 
+    @DisplayName("사진이 첨부된 피드백에서 사진도 삭제하여 수정한다.")
+    @Test
+    void updateFeedback_DeleteImage() {
+        // Given
+        Feedback feedback = saveFeedback(
+            "test subject", "test content", member, crossroad
+        );
+        Long feedbackId = feedback.getFeedbackId();
+        FeedbackCategory updatedCategory = FeedbackCategory.DELAY;
+        String updatedContent = "update test content";
+        FeedbackRequest request = FeedbackRequest.builder()
+            .subject(feedback.getSubject()).content(updatedContent).secret(Boolean.FALSE)
+            .category(updatedCategory).crossroadId(crossroad.getCrossroadId())
+            .build();
+        MockMultipartFile updatedImageFile = null;
+        CustomUser2Member user = getCurrentMember(member.getMemberId(), MemberRole.USER);
+
+        // When
+        FeedbackResponse actual = feedbackService.updateFeedback(
+            feedbackId, request, updatedImageFile, user
+        );
+
+        // Then
+        assertThat(actual.getImageUrl()).isNull();
+        verify(awsFileService, times(0))
+            .uploadFileToS3(any(MockMultipartFile.class), anyString());
+    }
+
     @DisplayName("작성자가 아닌 일반 사용자가 피드백을 수정하면 실패한다.")
     @Test
     void updateFeedback_Failure() {
@@ -309,6 +345,29 @@ class FeedbackServiceTest extends ServiceTest {
         assertThat(feedbackRepository.findById(feedbackId).get().isDeleted()).isTrue();
     }
 
+    @DisplayName("사용자가 좋아요한 피드백 목록 조회")
+    @Test
+    void findPagedLikedFeedbacks() {
+        final List<Feedback> feedbacks = feedbackRepository.findAll().stream()
+            .filter(feedback -> !feedback.isDeleted())
+            .toList();
+        final Member likedUser = saveMember("test2@test.com", "tester2");
+
+        final List<Like> likes = List.of(
+            Like.create(likedUser, feedbacks.get(0)),
+            Like.create(likedUser, feedbacks.get(1)));
+        likeRepository.saveAll(likes);
+
+        final PageResponse<FeedbackResponse> likedFeedbacks = feedbackService.findPagedLikedFeedbacks(
+            likedUser.getMemberId(), Pageable.ofSize(10));
+
+        assertThat(feedbacks).hasSize(3);
+        assertThat(likedFeedbacks.getTotalElements()).isEqualTo(2);
+        assertThat(likedFeedbacks.getSearchResults()).allSatisfy(feedback -> {
+            assertThat(feedback.getMember().getMemberId()).isEqualTo(member.getMemberId());
+        });
+    }
+
     private Member saveMember(String email, String nickname) {
         return memberRepository.save(
             Member.builder().email(email).password("123456").role(MemberRole.USER)
@@ -332,13 +391,15 @@ class FeedbackServiceTest extends ServiceTest {
     private Feedback saveFeedback(String subject, String content, Member member, Crossroad crossroad) {
         return feedbackRepository.save(
             Feedback.create().subject(subject).content(content).secret(Boolean.FALSE)
-                .category(FeedbackCategory.ETC).member(member).crossroad(crossroad).build());
+                .imageUrl("image url").category(FeedbackCategory.ETC).member(member)
+                .crossroad(crossroad).build());
     }
 
     private Feedback saveSecretFeedback(String subject, String content, Member member, Crossroad crossroad) {
         return feedbackRepository.save(
             Feedback.create().subject(subject).content(content).secret(Boolean.TRUE)
-                .category(FeedbackCategory.ETC).member(member).crossroad(crossroad).build());
+                .imageUrl("image url").category(FeedbackCategory.ETC).member(member)
+                .crossroad(crossroad).build());
     }
 
     private void saveSoftDeleteFeedback(String subject, String content, Member member,

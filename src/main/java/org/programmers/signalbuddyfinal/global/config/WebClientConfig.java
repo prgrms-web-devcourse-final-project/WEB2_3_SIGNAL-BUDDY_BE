@@ -18,7 +18,10 @@ import java.time.Duration;
 public class WebClientConfig {
 
     @Value("${t-data-api.base-url}")
-    private String BASE_URL;
+    private String tDataApiBaseUrl;
+
+    @Value("${weather.base-url}")
+    private String weatherApiBaseUrl;
 
     private final int processors = Runtime.getRuntime().availableProcessors();    // PC의 Processor 개수
     private final HttpClient httpClient = HttpClient.create(
@@ -30,11 +33,21 @@ public class WebClientConfig {
                 .evictInBackground(Duration.ofMillis(1000L)) // 1초마다 유휴 Connections 확인하고 제거
                 .build()).responseTimeout(Duration.ofSeconds(30));    // 응답 초과 시간 30초로 설정
 
+    // tData API WebClient
     @Bean
     public WebClient seoulApiWebClient() {
-
         return WebClient.builder()
-            .baseUrl(BASE_URL)
+            .baseUrl(tDataApiBaseUrl)
+            .clientConnector(new ReactorClientHttpConnector(httpClient))
+            .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+            .build();
+    }
+
+    // 기상청 API WebClient
+    @Bean
+    public WebClient weatherApiWebClient() {
+        return WebClient.builder()
+            .baseUrl(weatherApiBaseUrl)
             .clientConnector(new ReactorClientHttpConnector(httpClient))
             .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
             .build();

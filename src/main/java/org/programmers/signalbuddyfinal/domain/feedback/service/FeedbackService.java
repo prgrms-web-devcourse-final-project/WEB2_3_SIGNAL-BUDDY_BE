@@ -22,6 +22,7 @@ import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.service.AwsFileService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -129,6 +130,8 @@ public class FeedbackService {
             String fileName = awsFileService.uploadFileToS3(image, feedbackDir);
             String imageUrl = awsFileService.getFileFromS3(fileName, feedbackDir).toString();
             feedback.updateImageUrl(imageUrl);
+        } else {
+            feedback.updateImageUrl(null);
         }
 
         return FeedbackMapper.INSTANCE.toResponse(feedback);
@@ -150,5 +153,11 @@ public class FeedbackService {
         likeRepository.deleteAllByFeedbackId(feedbackId);
         reportRepository.deleteAllByFeedbackId(feedbackId);
         feedbackRepository.deleteById(feedbackId);
+    }
+
+    public PageResponse<FeedbackResponse> findPagedLikedFeedbacks(Long memberId, Pageable pageable) {
+        final Page<FeedbackResponse> pagedLikedFeedbacks = likeRepository.findPagedLikedFeedbacks(
+            memberId, pageable);
+        return new PageResponse<>(pagedLikedFeedbacks);
     }
 }

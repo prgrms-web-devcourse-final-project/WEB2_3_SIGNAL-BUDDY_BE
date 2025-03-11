@@ -45,7 +45,7 @@ public class JwtService {
             throw new BusinessException(GlobalErrorCode.BAD_REQUEST);
         }
 
-        if(validateAccessTokenBlacklist(extractAccessToken)){
+        if(jwtUtil.checkBlacklist(extractAccessToken)){
             logout(accessToken);
             throw new BusinessException(GlobalErrorCode.BAD_REQUEST);
         }
@@ -92,10 +92,6 @@ public class JwtService {
             }
     }
 
-    private boolean validateAccessTokenBlacklist(String accessToken) {
-        return Boolean.TRUE.equals(redisTemplate.hasKey("blacklist:access-token:"+accessToken));
-    }
-
     private Claims extractClaimsFromToken(String type, String token) {
 
         try {
@@ -114,6 +110,10 @@ public class JwtService {
 
     // 기존의 액세스 토큰을 블랙리스트로 추가
     private void addBlackListExistingAccessToken(String accessToken, Date expirationDate) {
+
+        redisTemplate.opsForValue()
+                .set("pending-blacklist:access-token:"+accessToken, "pending",5, TimeUnit.MINUTES);
+
         redisTemplate.opsForValue()
             .set("blacklist:access-token:" + accessToken, expirationDate.toString(),
                 Duration.between(new Date().toInstant(), expirationDate.toInstant()).getSeconds(),

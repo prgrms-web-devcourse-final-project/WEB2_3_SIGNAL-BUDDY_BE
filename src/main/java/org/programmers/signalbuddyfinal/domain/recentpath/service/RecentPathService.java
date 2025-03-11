@@ -5,8 +5,9 @@ import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
+import org.programmers.signalbuddyfinal.domain.bookmark.dto.BookmarkRequest;
 import org.programmers.signalbuddyfinal.domain.bookmark.entity.Bookmark;
-import org.programmers.signalbuddyfinal.domain.bookmark.exception.BookmarkErrorCode;
+import org.programmers.signalbuddyfinal.domain.bookmark.mapper.BookmarkMapper;
 import org.programmers.signalbuddyfinal.domain.bookmark.repository.BookmarkRepository;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.exception.MemberErrorCode;
@@ -36,9 +37,14 @@ public class RecentPathService {
     public RecentPathResponse saveRecentPath(Long memberId, RecentPathRequest request) {
         final Member member = memberRepository.findById(memberId)
             .orElseThrow(() -> new BusinessException(MemberErrorCode.NOT_FOUND_MEMBER));
-
         final Point point = toPoint(request.getLng(), request.getLat());
-        final RecentPath recentPath = RecentPathMapper.INSTANCE.toEntity(request, point, member);
+
+        final RecentPath recentPath = findOrCreateRecentPath(point, request, member);
+
+        // 최근경로에 추가되는 좌표가 북마크에 저장되어 있으면 연관관계 생성.
+        bookmarkRepository.findByCoordinateAndMemberIdNotDeleted(point, memberId)
+            .ifPresent(recentPath::linkBookmark);
+
         final RecentPath save = recentPathRepository.save(recentPath);
         return RecentPathMapper.INSTANCE.toDto(save);
     }
@@ -74,6 +80,7 @@ public class RecentPathService {
         final RecentPath recentPath = recentPathRepository.findById(id)
             .orElseThrow(() -> new BusinessException(RecentPathErrorCode.NOT_FOUND_RECENT_PATH));
 
+        recentPath.getBookmark().delete();
         recentPath.unlinkBookmark();
     }
 
@@ -82,11 +89,41 @@ public class RecentPathService {
         final RecentPath recentPath = recentPathRepository.findById(id)
             .orElseThrow(() -> new BusinessException(RecentPathErrorCode.NOT_FOUND_RECENT_PATH));
 
-        final Long bookmarkId = recentPathLinkRequest.bookmarkId();
-        final Bookmark bookmark = bookmarkRepository.findById(bookmarkId)
-            .orElseThrow(() -> new BusinessException(BookmarkErrorCode.NOT_FOUND_BOOKMARK));
+        final Member member = memberRepository.findById(recentPathLinkRequest.memberId())
+            .orElseThrow(() -> new BusinessException(MemberErrorCode.NOT_FOUND_MEMBER));
 
+        final Bookmark bookmark = findOrCreateBookmark(recentPath, member);
         recentPath.linkBookmark(bookmark);
+
         return RecentPathMapper.INSTANCE.toDto(recentPath);
+    }
+
+    private Bookmark findOrCreateBookmark(RecentPath recentPath, Member member) {
+        return bookmarkRepository.findByCoordinateAndMemberIdNotDeleted(recentPath.getEndPoint(),
+            member.getMemberId()).orElseGet(() -> createNewBookmark(recentPath, member));
+    }
+
+    private Bookmark createNewBookmark(RecentPath recentPath, Member member) {
+        final int nextSequence =
+            bookmarkRepository.findTopByMemberOrderBySequenceDesc(member).map(Bookmark::getSequence)
+                .orElse(0) + 1;
+
+        final BookmarkRequest bookmarkRequest = BookmarkRequest.builder().address(recentPath.getAddress())
+            .name(recentPath.getName()).build();
+
+        final Bookmark newBookmark = BookmarkMapper.INSTANCE.toEntity(bookmarkRequest,
+            recentPath.getEndPoint(), member);
+        newBookmark.updateSequence(nextSequence);
+
+        return bookmarkRepository.save(newBookmark);
+    }
+
+
+    private RecentPath findOrCreateRecentPath(Point point, RecentPathRequest request,
+        Member member) {
+        return recentPathRepository.findByEndPointAndMemberMemberId(point, member.getMemberId()).map(existingPath -> {
+            existingPath.updateLastAccessedTime();
+            return existingPath;
+        }).orElseGet(() -> RecentPathMapper.INSTANCE.toEntity(request, point, member));
     }
 }

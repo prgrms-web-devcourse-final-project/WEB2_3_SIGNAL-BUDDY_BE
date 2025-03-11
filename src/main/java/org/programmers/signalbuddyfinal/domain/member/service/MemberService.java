@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.programmers.signalbuddyfinal.domain.auth.entity.Purpose;
 import org.programmers.signalbuddyfinal.domain.auth.exception.AuthErrorCode;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberJoinRequest;
+import org.programmers.signalbuddyfinal.domain.member.dto.MemberNotiAllowRequest;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberRestoreRequest;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberUpdateRequest;
@@ -18,6 +19,7 @@ import org.programmers.signalbuddyfinal.domain.member.mapper.MemberMapper;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
 import org.programmers.signalbuddyfinal.domain.social.entity.SocialProvider;
 import org.programmers.signalbuddyfinal.domain.social.repository.SocialProviderRepository;
+import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.exception.GlobalErrorCode;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
@@ -33,6 +35,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class MemberService {
 
     private final RedisTemplate<String, String> redisTemplate;
@@ -145,6 +148,41 @@ public class MemberService {
         return ResponseEntity.ok(ApiResponse.createSuccess(memberResponse));
     }
 
+    public boolean verifyPassword(String password, Long id) {
+        final Member member = findMemberById(id);
+
+        return bCryptPasswordEncoder.matches(password, member.getPassword());
+    }
+
+
+    // 프로필 이미지 설정
+    public String settingProfileImage(MultipartFile image){
+
+        String profilePath = saveProfileImageIfPresent(image);
+
+        if (profilePath != null) {
+            return awsFileService.getFileFromS3(profilePath, memberDir).toString();
+        } else {
+            // 프로필 이미지를 저장하지 않았을 경우 기본 이미지
+            return awsFileService.getFileFromS3(defaultProfileImage, memberDir)
+                .toString();
+        }
+    }
+
+    @Transactional
+    public void updateNotifyEnabled(
+        Long memberId, CustomUser2Member user,
+        MemberNotiAllowRequest request
+    ) {
+        Member member = memberRepository.findByIdOrThrow(memberId);
+
+        if (Member.isNotSameMember(user, member)) {
+            throw new BusinessException(MemberErrorCode.REQUESTER_IS_NOT_SAME);
+        }
+
+        member.updateNotifyEnabled(request.getNotifyEnabled());
+    }
+
     // 사용자 정보 저장
     private Member saveMember(MemberJoinRequest memberJoinRequest, String profileImageUrl,
         String type) {
@@ -192,28 +230,6 @@ public class MemberService {
 
         return member;
     }
-
-    public boolean verifyPassword(String password, Long id) {
-        final Member member = findMemberById(id);
-
-        return bCryptPasswordEncoder.matches(password, member.getPassword());
-    }
-
-
-    // 프로필 이미지 설정
-    public String settingProfileImage(MultipartFile image){
-
-        String profilePath = saveProfileImageIfPresent(image);
-
-        if (profilePath != null) {
-            return awsFileService.getFileFromS3(profilePath, memberDir).toString();
-        } else {
-            // 프로필 이미지를 저장하지 않았을 경우 기본 이미지
-            return awsFileService.getFileFromS3(defaultProfileImage, memberDir)
-                .toString();
-        }
-    }
-
 
     // 서비스에 등록된 이메일인지 확인 및 이메일 인증 여부 확인
     private Member validateEmailAndEmailAuthentication(Purpose purpose, String email) {

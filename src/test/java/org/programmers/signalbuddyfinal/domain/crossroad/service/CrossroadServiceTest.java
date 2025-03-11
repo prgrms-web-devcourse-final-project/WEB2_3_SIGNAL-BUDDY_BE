@@ -1,18 +1,24 @@
 package org.programmers.signalbuddyfinal.domain.crossroad.service;
 
+import static net.bytebuddy.matcher.ElementMatchers.is;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.when;
 
 import java.util.List;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.stubbing.OngoingStubbing;
 import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadApiResponse;
+import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadResponse;
 import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadStateApiResponse;
 import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadStateResponse;
 import org.programmers.signalbuddyfinal.domain.crossroad.dto.SignalState;
 import org.programmers.signalbuddyfinal.domain.crossroad.entity.Crossroad;
+import org.programmers.signalbuddyfinal.domain.crossroad.repository.CrossroadRedisRepository;
 import org.programmers.signalbuddyfinal.domain.crossroad.repository.CrossroadRepository;
 import org.programmers.signalbuddyfinal.global.db.RedisTestContainer;
 import org.programmers.signalbuddyfinal.global.monitoring.HttpRequestManager;
@@ -20,11 +26,13 @@ import org.programmers.signalbuddyfinal.global.support.ServiceTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.web.client.RestTemplate;
 
 class CrossroadServiceTest extends ServiceTest implements RedisTestContainer {
 
     @Autowired
     private CrossroadService crossroadService;
+
 
     @Autowired
     private RedisTemplate<Object, Object> redisTemplate;
@@ -107,4 +115,5 @@ class CrossroadServiceTest extends ServiceTest implements RedisTestContainer {
             CrossroadApiResponse.builder().crossroadApiId(apiId).name(name).lat(lat).lng(lng)
                 .build()));
     }
+
 }
