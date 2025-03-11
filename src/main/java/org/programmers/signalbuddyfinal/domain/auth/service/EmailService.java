@@ -3,7 +3,7 @@ package org.programmers.signalbuddyfinal.domain.auth.service;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import java.security.SecureRandom;
-import java.util.Random;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,6 +11,8 @@ import org.programmers.signalbuddyfinal.domain.auth.dto.EmailRequest;
 import org.programmers.signalbuddyfinal.domain.auth.dto.VerifyCodeRequest;
 import org.programmers.signalbuddyfinal.domain.auth.entity.Purpose;
 import org.programmers.signalbuddyfinal.domain.auth.exception.AuthErrorCode;
+import org.programmers.signalbuddyfinal.domain.member.exception.MemberErrorCode;
+import org.programmers.signalbuddyfinal.domain.member.repository.CustomMemberRepositoryImpl;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -31,12 +33,18 @@ public class EmailService {
     private final RedisTemplate<String, String> redisTemplate;
     private final JavaMailSender javaMailSender;
     private final SpringTemplateEngine templateEngine;
+    private final CustomMemberRepositoryImpl customMemberRepository;
 
     static final String PREFIX = "auth:email:";
 
     // 이메일 발송
     @Async
-    public void sendEmail(EmailRequest emailRequest) {
+    public CompletableFuture<Void> sendEmail(EmailRequest emailRequest) {
+
+        // 사용자 확인
+        if (customMemberRepository.findActiveMemberByEmail(emailRequest.getEmail()) == null) {
+            throw new BusinessException(MemberErrorCode.NOT_FOUND_MEMBER);
+        }
 
         MimeMessage message = javaMailSender.createMimeMessage();
         String code = createCode();
@@ -56,6 +64,8 @@ public class EmailService {
 
         // 이메일 발송
         javaMailSender.send(message);
+
+        return CompletableFuture.completedFuture(null);
     }
 
     // 인증 코드 검증

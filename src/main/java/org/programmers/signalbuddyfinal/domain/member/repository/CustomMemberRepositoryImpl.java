@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.programmers.signalbuddyfinal.domain.admin.dto.AdminMemberResponse;
 import org.programmers.signalbuddyfinal.domain.admin.dto.MemberFilterRequest;
 import org.programmers.signalbuddyfinal.domain.admin.dto.WithdrawalMemberResponse;
+import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.QMember;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
@@ -117,6 +118,16 @@ public class CustomMemberRepositoryImpl implements CustomMemberRepository {
             .fetchOne();
 
         return new PageResponse<>(new PageImpl<>(members, pageable, total));
+    }
+
+    @Override
+    public Member findActiveMemberByEmail(String email) {
+        return jpaQueryFactory.select(member)
+            .from(member)
+            .where(
+                eqStatus(MemberStatus.ACTIVITY),
+                member.email.eq(email)
+            ).fetchOne();
     }
 
     private BooleanExpression eqStatus(MemberStatus status) {
