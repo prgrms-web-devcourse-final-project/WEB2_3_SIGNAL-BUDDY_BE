@@ -48,6 +48,16 @@ public class CustomTermVersionRepositoryImpl implements CustomTermVersionReposit
             .where(termVersion.termVersionId.eq(termVersionId)).fetchOne();
     }
 
+    @Override
+    public TermVersion existsByEffectiveDate(TermCategory category, LocalDate effectiveStartDate) {
+        return jpaQueryFactory.select(termVersion)
+            .from(termVersion)
+            .innerJoin(term)
+            .on(term.termId.eq(termVersion.term.termId))
+            .where(eqTermCategory(category),
+                termVersion.effectiveEndDate.goe(effectiveStartDate)).fetchOne();
+    }
+
     private BooleanExpression eqTermCategory(TermCategory termCategory) {
         return (termCategory != null) ? term.termCategory.eq(termCategory) : null;
     }

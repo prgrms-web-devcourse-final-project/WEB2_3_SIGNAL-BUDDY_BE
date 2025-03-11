@@ -37,8 +37,8 @@ public class AdminTermService {
         }
 
         // 설정 기간에 이미 시행 중 혹은 시행 예정인 약관이 존재하는 경우
-        if (termRepository.existsByEffectiveDate(category,
-            createTermRequest.getEffectiveStartDate()) > 0) {
+        if (customTermVersionRepository.existsByEffectiveDate(category,
+            createTermRequest.getEffectiveStartDate()) != null) {
             throw new BusinessException(TermErrorCode.EFFECTIVE_DATE_CHANGE_REQUIRED);
         }
 
