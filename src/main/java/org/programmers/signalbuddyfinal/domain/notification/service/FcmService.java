@@ -16,6 +16,7 @@ import org.programmers.signalbuddyfinal.domain.notification.exception.FcmErrorCo
 import org.programmers.signalbuddyfinal.domain.notification.repository.FcmTokenRepository;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
+import org.springframework.http.ResponseCookie;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +31,9 @@ public class FcmService {
     private final FcmTokenRepository fcmTokenRepository;
     private final MemberRepository memberRepository;
 
+    private static final String DEVICE_TOKEN_COOKIE_NAME = "device-token";
+
+    @Transactional
     @Async("customTaskExecutor")
     public void sendMessage(FcmMessage request, Long receiverId) {
         List<FcmToken> fcmTokens = fcmTokenRepository.findAllByMemberId(receiverId);
@@ -57,16 +61,65 @@ public class FcmService {
         if (apiFuture.isCancelled()) {
             throw new BusinessException(FcmErrorCode.FCM_SEND_ERROR);
         }
+
+        for (FcmToken fcmToken : fcmTokens) {
+            fcmToken.updateLastUsedAt();
+        }
     }
 
     @Transactional
-    public void registerToken(String deviceToken, CustomUser2Member user) {
+    public ResponseCookie registerToken(String deviceToken, CustomUser2Member user) {
         Member member = memberRepository.findByIdOrThrow(user.getMemberId());
 
         FcmToken fcmToken = FcmToken.create()
             .deviceToken(deviceToken).member(member)
             .build();
-
         fcmTokenRepository.save(fcmToken);
+
+        return makeCookieByDeviceToken(fcmToken.getFcmTokenUuid());
+    }
+
+    @Transactional
+    public void loginToken(String fcmTokenUuid) {
+        if (fcmTokenUuid == null || fcmTokenUuid.isBlank()) {
+            return;
+        }
+
+        FcmToken fcmToken = fcmTokenRepository.findByIdOrThrow(fcmTokenUuid);
+        fcmToken.login();
+    }
+
+    @Transactional
+    public void logoutToken(String fcmTokenUuid) {
+        if (fcmTokenUuid == null || fcmTokenUuid.isBlank()) {
+            return;
+        }
+
+        FcmToken fcmToken = fcmTokenRepository.findByIdOrThrow(fcmTokenUuid);
+        fcmToken.logout();
+    }
+
+    @Transactional
+    public ResponseCookie deleteDeviceToken(String deviceTokenUuid, CustomUser2Member user) {
+        FcmToken fcmToken = fcmTokenRepository.findByIdOrThrow(deviceTokenUuid);
+
+        if (Member.isNotSameMember(user, fcmToken.getMember())) {
+            throw new BusinessException(FcmErrorCode.FCM_TOKEN_ELIMINATOR_NOT_AUTHORIZED);
+        }
+
+        fcmTokenRepository.delete(fcmToken);
+
+        return ResponseCookie.from(DEVICE_TOKEN_COOKIE_NAME, "")
+            .maxAge(0).path("/").build();
+    }
+
+    private ResponseCookie makeCookieByDeviceToken(String deviceTokenUuid) {
+        return ResponseCookie
+            .from(DEVICE_TOKEN_COOKIE_NAME, deviceTokenUuid)
+            .httpOnly(true)
+            .secure(true)
+            .path("/")
+            .sameSite("None")
+            .build();
     }
 }
