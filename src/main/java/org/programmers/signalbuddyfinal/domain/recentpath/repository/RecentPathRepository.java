@@ -18,5 +18,5 @@ public interface RecentPathRepository extends JpaRepository<RecentPath, Long> {
 
     List<RecentPath> findAllByBookmarkIn(Collection<Bookmark> bookmarks);
 
-    Optional<RecentPath> findByEndPoint(Point endPoint);
+    Optional<RecentPath> findByEndPointAndMemberMemberId(Point endPoint, Long memberMemberId);
 }

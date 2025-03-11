@@ -51,9 +51,10 @@ public class BookmarkService {
 
         final Point point = toPoint(request.getLng(), request.getLat());
 
-        bookmarkRepository.findByCoordinateAndMemberIdNotDeleted(point, memberId).ifPresent(bookmark -> {
-            throw new BusinessException(BookmarkErrorCode.ALREADY_EXIST_BOOKMARK);
-        });
+        bookmarkRepository.findByCoordinateAndMemberIdNotDeleted(point, memberId)
+            .ifPresent(bookmark -> {
+                throw new BusinessException(BookmarkErrorCode.ALREADY_EXIST_BOOKMARK);
+            });
 
         final int nextSequence =
             bookmarkRepository.findTopByMemberOrderBySequenceDesc(member).map(Bookmark::getSequence)
@@ -63,7 +64,7 @@ public class BookmarkService {
         bookmark.updateSequence(nextSequence);
 
         // 북마크 저장하는 좌표가 최근경로에 있다면 연관관계 생성
-        recentPathRepository.findByEndPoint(point)
+        recentPathRepository.findByEndPointAndMemberMemberId(point, memberId)
             .ifPresent(recentPath -> recentPath.linkBookmark(bookmark));
 
         final Bookmark save = bookmarkRepository.save(bookmark);
@@ -84,6 +85,11 @@ public class BookmarkService {
         final Point point = toPoint(request.getLng(), request.getLat());
 
         bookmark.update(point, request.getAddress(), request.getName());
+
+        // 최근경로 <-> 북마크 연관관계 맺어진게 있다면 수정 진행.
+        recentPathRepository.findByEndPointAndMemberMemberId(point, memberId).ifPresent(
+            recentPath -> recentPath.updateNameAndAddress(request.getName(), request.getAddress()));
+
         return BookmarkMapper.INSTANCE.toDto(bookmark);
     }
 
