@@ -1,6 +1,5 @@
 package org.programmers.signalbuddyfinal.domain.feedback.service;
 
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.comment.repository.CommentRepository;
 import org.programmers.signalbuddyfinal.domain.crossroad.entity.Crossroad;
@@ -13,8 +12,6 @@ import org.programmers.signalbuddyfinal.domain.feedback.exception.FeedbackErrorC
 import org.programmers.signalbuddyfinal.domain.feedback.mapper.FeedbackMapper;
 import org.programmers.signalbuddyfinal.domain.feedback.repository.FeedbackRepository;
 import org.programmers.signalbuddyfinal.domain.feedback_report.repository.FeedbackReportRepository;
-import org.programmers.signalbuddyfinal.domain.like.entity.Like;
-import org.programmers.signalbuddyfinal.domain.like.exception.LikeErrorCode;
 import org.programmers.signalbuddyfinal.domain.like.repository.LikeRepository;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
@@ -133,6 +130,8 @@ public class FeedbackService {
             String fileName = awsFileService.uploadFileToS3(image, feedbackDir);
             String imageUrl = awsFileService.getFileFromS3(fileName, feedbackDir).toString();
             feedback.updateImageUrl(imageUrl);
+        } else {
+            feedback.updateImageUrl(null);
         }
 
         return FeedbackMapper.INSTANCE.toResponse(feedback);
