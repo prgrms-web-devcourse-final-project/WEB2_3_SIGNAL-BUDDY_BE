@@ -13,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.security.jwt.JwtUtil;
 import org.programmers.signalbuddyfinal.global.security.jwt.TokenErrorCode;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.AntPathMatcher;
@@ -27,8 +26,8 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
     private final Set<String> excludeGetPaths = Set.of(
         "/api/feedbacks/{feedbackId}/comments", "/api/crossroads/**", "/api/feedbacks",
-        "/api/crossroads/{crossroadId}/state", "/api/feedbacks/{feedbackId}", "/sse/weather",
-        "/api/terms"
+        "/api/terms", "/api/crossroads/{crossroadId}/state", "/api/feedbacks/{feedbackId}",
+        "/sse/weather"
     );
     private final Set<String> excludeAllPaths = Set.of(
         "/", "/docs/**", "/actuator/health", "/webjars/**", "/api/auth/login",
