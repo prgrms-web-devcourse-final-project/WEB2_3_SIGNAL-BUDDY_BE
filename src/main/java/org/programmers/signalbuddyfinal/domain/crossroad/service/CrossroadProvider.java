@@ -6,6 +6,7 @@ import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadApiRespons
 import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadStateApiResponse;
 import org.programmers.signalbuddyfinal.domain.crossroad.exception.CrossroadErrorCode;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
@@ -25,7 +26,9 @@ public class CrossroadProvider {
     @Value("${t-data-api.traffic-light-api}")
     private String signalStateUrl;
 
+    @Qualifier("seoulApiWebClient")
     private final WebClient webClient;
+
 
     public List<CrossroadApiResponse> requestCrossroadApi(int page, int pageSize) {
         return webClient.get()

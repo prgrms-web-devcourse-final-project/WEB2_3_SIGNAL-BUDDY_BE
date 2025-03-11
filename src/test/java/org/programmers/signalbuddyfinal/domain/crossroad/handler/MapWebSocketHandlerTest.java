@@ -1,28 +1,32 @@
 package org.programmers.signalbuddyfinal.domain.crossroad.handler;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import static org.assertj.core.api.Assertions.assertThat;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyInt;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadResponse;
 import org.programmers.signalbuddyfinal.domain.crossroad.dto.LocationRequest;
 import org.programmers.signalbuddyfinal.domain.crossroad.service.CrossroadService;
+import org.programmers.signalbuddyfinal.domain.notification.dto.FcmMessage;
+import org.programmers.signalbuddyfinal.domain.notification.service.FcmService;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -42,6 +46,9 @@ class MapWebSocketHandlerTest {
     @Mock
     private WebSocketSession session;
 
+    @Mock
+    private FcmService fcmService;
+
     @InjectMocks
     private MapWebSocketHandler webSocketHandler;
 
@@ -55,7 +62,7 @@ class MapWebSocketHandlerTest {
 
         mockResponse = List.of(
             CrossroadResponse.builder().crossroadId(1L).crossroadApiId("API-123").name("테스트 교차로")
-                .lat(37.5665).lng(126.9780).status("ACTIVE").build());
+                .lat(37.5665).lng(126.9780).status(Boolean.TRUE).build());
 
         // ObjectMapper의 writeValueAsString을 Mocking
         lenient().when(objectMapper.writeValueAsString(any())).thenAnswer(
@@ -71,6 +78,7 @@ class MapWebSocketHandlerTest {
         when(objectMapper.readValue(payload, LocationRequest.class)).thenReturn(locationRequest);
         when(crossroadService.findNearestCrossroad(37.5665, 126.9780, 500)).thenReturn(
             mockResponse);
+        lenient().doNothing().when(fcmService).sendMessage(any(FcmMessage.class), anyLong());
 
         final CompletableFuture<String> futureResponse = new CompletableFuture<>();
         doAnswer(invocation -> {
@@ -97,6 +105,7 @@ class MapWebSocketHandlerTest {
 
         when(objectMapper.readValue(invalidPayload, LocationRequest.class)).thenReturn(
             new LocationRequest(200.0, 500.0, 500));
+        lenient().doNothing().when(fcmService).sendMessage(any(FcmMessage.class), anyLong());
 
         doAnswer(invocation -> {
             TextMessage sentMessage = invocation.getArgument(0, TextMessage.class);
@@ -125,6 +134,7 @@ class MapWebSocketHandlerTest {
 
         when(objectMapper.readValue(payload, LocationRequest.class)).thenThrow(
             new RuntimeException("Parsing Error"));
+        lenient().doNothing().when(fcmService).sendMessage(any(FcmMessage.class), anyLong());
 
         doAnswer(invocation -> {
             TextMessage sentMessage = invocation.getArgument(0, TextMessage.class);

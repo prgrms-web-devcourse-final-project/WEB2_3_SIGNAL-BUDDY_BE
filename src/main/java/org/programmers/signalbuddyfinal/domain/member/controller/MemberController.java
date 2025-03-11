@@ -11,6 +11,7 @@ import org.programmers.signalbuddyfinal.domain.bookmark.service.BookmarkService;
 import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackResponse;
 import org.programmers.signalbuddyfinal.domain.feedback.service.FeedbackService;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberJoinRequest;
+import org.programmers.signalbuddyfinal.domain.member.dto.MemberNotiAllowRequest;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberRestoreRequest;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberUpdateRequest;
@@ -19,6 +20,8 @@ import org.programmers.signalbuddyfinal.domain.member.service.MemberService;
 import org.programmers.signalbuddyfinal.domain.recentpath.dto.RecentPathRequest;
 import org.programmers.signalbuddyfinal.domain.recentpath.dto.RecentPathResponse;
 import org.programmers.signalbuddyfinal.domain.recentpath.service.RecentPathService;
+import org.programmers.signalbuddyfinal.global.annotation.CurrentUser;
+import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
 import org.springframework.data.domain.Pageable;
@@ -86,6 +89,14 @@ public class MemberController {
     public ResponseEntity<ApiResponse<PageResponse<FeedbackResponse>>> getFeedbacks(
         @PathVariable Long id, @PageableDefault(page = 0, size = 10) Pageable pageable) {
         final PageResponse<FeedbackResponse> feedbacks = feedbackService.findPagedExcludingMember(
+            id, pageable);
+        return ResponseEntity.ok(ApiResponse.createSuccess(feedbacks));
+    }
+
+    @GetMapping("{id}/feedbacks/liked")
+    public ResponseEntity<ApiResponse<PageResponse<FeedbackResponse>>> getFeedbacksLike(
+        @PathVariable Long id, @PageableDefault(page = 0, size = 10) Pageable pageable) {
+        final PageResponse<FeedbackResponse> feedbacks = feedbackService.findPagedLikedFeedbacks(
             id, pageable);
         return ResponseEntity.ok(ApiResponse.createSuccess(feedbacks));
     }
@@ -158,15 +169,22 @@ public class MemberController {
     }
 
     @PostMapping("/password-reset")
-    public ResponseEntity<ApiResponse<Object>> resetPassword(@Valid @RequestBody
-        ResetPasswordRequest resetPasswordRequest) {
+    public ResponseEntity<ApiResponse<Object>> resetPassword(
+        @Valid @RequestBody ResetPasswordRequest resetPasswordRequest) {
         return memberService.resetPassword(resetPasswordRequest);
     }
 
     @PostMapping("/restore")
-    public ResponseEntity<ApiResponse<MemberResponse>> restoreMember(@RequestBody
-    MemberRestoreRequest memberRestoreRequest) {
+    public ResponseEntity<ApiResponse<MemberResponse>> restoreMember(
+        @RequestBody MemberRestoreRequest memberRestoreRequest) {
         return memberService.restore(memberRestoreRequest);
     }
 
+    @PatchMapping("/{memberId}/notify-enabled")
+    public ResponseEntity<ApiResponse<Object>> updateNotifyEnabled(
+        @PathVariable("memberId") long memberId, @CurrentUser CustomUser2Member user,
+        @Valid @RequestBody MemberNotiAllowRequest request) {
+        memberService.updateNotifyEnabled(memberId, user, request);
+        return ResponseEntity.ok(ApiResponse.createSuccessWithNoData());
+    }
 }

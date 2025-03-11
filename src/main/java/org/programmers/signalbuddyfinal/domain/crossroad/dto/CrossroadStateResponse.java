@@ -17,11 +17,17 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class CrossroadStateResponse implements Serializable {
 
+    private Long transTimestamp;
+
     private Long crossroadId;
 
     private String crossroadApiId;
 
-    private Long transTimestamp;
+    private String name;
+
+    private Double lat;
+
+    private Double lng;
 
     private Integer northTimeLeft;
 

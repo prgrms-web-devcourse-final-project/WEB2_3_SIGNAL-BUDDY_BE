@@ -38,6 +38,9 @@ public class RecentPath extends BaseTimeEntity {
     @Column(nullable = false)
     private String name;
 
+    @Column
+    private String address;
+
     @Column(nullable = false)
     private Point endPoint;
 
@@ -54,10 +57,11 @@ public class RecentPath extends BaseTimeEntity {
     private Bookmark bookmark;
 
     @Builder
-    public RecentPath(String name, Point endPoint, Member member) {
+    public RecentPath(String name, Point endPoint, Member member, String address) {
         this.name = name;
         this.endPoint = endPoint;
         this.member = member;
+        this.address = address;
     }
 
     @PrePersist
@@ -75,5 +79,10 @@ public class RecentPath extends BaseTimeEntity {
 
     public void linkBookmark(Bookmark bookmark) {
         this.bookmark = bookmark;
+    }
+
+    public void updateNameAndAddress(String newName, String newAddress) {
+        this.name = newName;
+        this.address = newAddress;
     }
 }

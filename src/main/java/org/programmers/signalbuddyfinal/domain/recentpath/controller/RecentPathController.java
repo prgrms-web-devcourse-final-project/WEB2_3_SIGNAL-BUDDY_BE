@@ -36,8 +36,8 @@ public class RecentPathController {
     }
 
     @PostMapping("{id}/bookmarks")
-    public ResponseEntity<ApiResponse<RecentPathResponse>> addBookmark(@PathVariable Long id, @Valid @RequestBody
-        RecentPathLinkRequest recentPathLinkRequest) {
+    public ResponseEntity<ApiResponse<RecentPathResponse>> addBookmark(@PathVariable Long id,
+        @Valid @RequestBody RecentPathLinkRequest recentPathLinkRequest) {
         final RecentPathResponse response = recentPathService.linkBookmark(id,
             recentPathLinkRequest);
         return ResponseEntity.ok(ApiResponse.createSuccess(response));

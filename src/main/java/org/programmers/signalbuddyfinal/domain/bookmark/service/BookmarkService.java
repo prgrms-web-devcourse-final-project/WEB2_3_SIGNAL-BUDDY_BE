@@ -50,12 +50,23 @@ public class BookmarkService {
         final Member member = getMember(memberId);
 
         final Point point = toPoint(request.getLng(), request.getLat());
+
+        bookmarkRepository.findByCoordinateAndMemberIdNotDeleted(point, memberId)
+            .ifPresent(bookmark -> {
+                throw new BusinessException(BookmarkErrorCode.ALREADY_EXIST_BOOKMARK);
+            });
+
         final int nextSequence =
             bookmarkRepository.findTopByMemberOrderBySequenceDesc(member).map(Bookmark::getSequence)
                 .orElse(0) + 1;
 
         final Bookmark bookmark = BookmarkMapper.INSTANCE.toEntity(request, point, member);
         bookmark.updateSequence(nextSequence);
+
+        // 북마크 저장하는 좌표가 최근경로에 있다면 연관관계 생성
+        recentPathRepository.findByEndPointAndMemberMemberId(point, memberId)
+            .ifPresent(recentPath -> recentPath.linkBookmark(bookmark));
+
         final Bookmark save = bookmarkRepository.save(bookmark);
         return BookmarkMapper.INSTANCE.toDto(save);
     }
@@ -64,9 +75,6 @@ public class BookmarkService {
     public BookmarkResponse updateBookmark(BookmarkRequest request, Long id, Long memberId) {
         final Member member = getMember(memberId);
 
-        // TODO : 성능 개선
-//        final Bookmark bookmark = bookmarkRepository.findByBookmarkIdAndMemberMemberId(id, memberId)
-//            .orElseThrow(() -> new BusinessException(BookmarkErrorCode.NOT_FOUND_BOOKMARK));
         final Bookmark bookmark = bookmarkRepository.findById(id)
             .orElseThrow(() -> new BusinessException(BookmarkErrorCode.NOT_FOUND_BOOKMARK));
 
@@ -77,6 +85,11 @@ public class BookmarkService {
         final Point point = toPoint(request.getLng(), request.getLat());
 
         bookmark.update(point, request.getAddress(), request.getName());
+
+        // 최근경로 <-> 북마크 연관관계 맺어진게 있다면 수정 진행.
+        recentPathRepository.findByEndPointAndMemberMemberId(point, memberId).ifPresent(
+            recentPath -> recentPath.updateNameAndAddress(request.getName(), request.getAddress()));
+
         return BookmarkMapper.INSTANCE.toDto(bookmark);
     }
 
