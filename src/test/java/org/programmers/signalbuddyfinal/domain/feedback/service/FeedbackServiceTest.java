@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.getMockImageFile;
 
@@ -248,6 +250,34 @@ class FeedbackServiceTest extends ServiceTest {
         });
     }
 
+    @DisplayName("사진이 첨부된 피드백에서 사진도 삭제하여 수정한다.")
+    @Test
+    void updateFeedback_DeleteImage() {
+        // Given
+        Feedback feedback = saveFeedback(
+            "test subject", "test content", member, crossroad
+        );
+        Long feedbackId = feedback.getFeedbackId();
+        FeedbackCategory updatedCategory = FeedbackCategory.DELAY;
+        String updatedContent = "update test content";
+        FeedbackRequest request = FeedbackRequest.builder()
+            .subject(feedback.getSubject()).content(updatedContent).secret(Boolean.FALSE)
+            .category(updatedCategory).crossroadId(crossroad.getCrossroadId())
+            .build();
+        MockMultipartFile updatedImageFile = null;
+        CustomUser2Member user = getCurrentMember(member.getMemberId(), MemberRole.USER);
+
+        // When
+        FeedbackResponse actual = feedbackService.updateFeedback(
+            feedbackId, request, updatedImageFile, user
+        );
+
+        // Then
+        assertThat(actual.getImageUrl()).isNull();
+        verify(awsFileService, times(0))
+            .uploadFileToS3(any(MockMultipartFile.class), anyString());
+    }
+
     @DisplayName("작성자가 아닌 일반 사용자가 피드백을 수정하면 실패한다.")
     @Test
     void updateFeedback_Failure() {
@@ -361,13 +391,15 @@ class FeedbackServiceTest extends ServiceTest {
     private Feedback saveFeedback(String subject, String content, Member member, Crossroad crossroad) {
         return feedbackRepository.save(
             Feedback.create().subject(subject).content(content).secret(Boolean.FALSE)
-                .category(FeedbackCategory.ETC).member(member).crossroad(crossroad).build());
+                .imageUrl("image url").category(FeedbackCategory.ETC).member(member)
+                .crossroad(crossroad).build());
     }
 
     private Feedback saveSecretFeedback(String subject, String content, Member member, Crossroad crossroad) {
         return feedbackRepository.save(
             Feedback.create().subject(subject).content(content).secret(Boolean.TRUE)
-                .category(FeedbackCategory.ETC).member(member).crossroad(crossroad).build());
+                .imageUrl("image url").category(FeedbackCategory.ETC).member(member)
+                .crossroad(crossroad).build());
     }
 
     private void saveSoftDeleteFeedback(String subject, String content, Member member,
