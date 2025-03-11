@@ -16,6 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.epages.restdocs.apispec.ResourceSnippetParameters;
+import com.google.protobuf.Api;
 import jakarta.servlet.http.Cookie;
 import java.util.concurrent.CompletableFuture;
 import org.junit.jupiter.api.DisplayName;
@@ -166,7 +167,9 @@ class AuthControllerTest extends ControllerTest {
         String email = "test@test.com";
         EmailRequest emailRequest = new EmailRequest(email);
 
-        when(emailService.sendEmail(any(EmailRequest.class))).thenReturn(CompletableFuture.completedFuture(null));
+        ResponseEntity<ApiResponse<Object>> response = ResponseEntity.ok(ApiResponse.createSuccessWithNoData());
+
+        when(emailService.sendEmail(any(EmailRequest.class))).thenReturn(CompletableFuture.completedFuture(response));
 
         //when, then
         mockMvc.perform(post("/api/auth/auth-code")

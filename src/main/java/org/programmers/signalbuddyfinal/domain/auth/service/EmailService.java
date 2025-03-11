@@ -1,9 +1,12 @@
 package org.programmers.signalbuddyfinal.domain.auth.service;
 
+import com.google.protobuf.Api;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import java.security.SecureRandom;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,10 +16,13 @@ import org.programmers.signalbuddyfinal.domain.auth.entity.Purpose;
 import org.programmers.signalbuddyfinal.domain.auth.exception.AuthErrorCode;
 import org.programmers.signalbuddyfinal.domain.member.exception.MemberErrorCode;
 import org.programmers.signalbuddyfinal.domain.member.repository.CustomMemberRepositoryImpl;
+import org.programmers.signalbuddyfinal.global.config.AsyncConfig;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
+import org.programmers.signalbuddyfinal.global.exception.GlobalErrorCode;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -37,35 +43,49 @@ public class EmailService {
 
     static final String PREFIX = "auth:email:";
 
-    // 이메일 발송
-    @Async
-    public CompletableFuture<Void> sendEmail(EmailRequest emailRequest) {
-
+    public CompletableFuture<ResponseEntity<ApiResponse<Object>>> sendEmail(EmailRequest emailRequest) {
         // 사용자 확인
         if (customMemberRepository.findActiveMemberByEmail(emailRequest.getEmail()) == null) {
             throw new BusinessException(MemberErrorCode.NOT_FOUND_MEMBER);
         }
+        return CompletableFuture.supplyAsync(() -> {
+            MimeMessage message = javaMailSender.createMimeMessage();
+            String code = createCode();
 
-        MimeMessage message = javaMailSender.createMimeMessage();
-        String code = createCode();
+            try {
+                // 이메일 내용 기입
+                MimeMessageHelper helper = new MimeMessageHelper(message, true);
+                helper.setTo(emailRequest.getEmail());
+                helper.setSubject("[signalBuddy] 인증코드가 발송되었습니다.");
+                helper.setText(setContent(code), true);
+            } catch (MessagingException e) {
+                throw new BusinessException(AuthErrorCode.SEND_EMAIL_FAILED);
+            }
 
-        try {
-            // 이메일 내용 기입
-            MimeMessageHelper helper = new MimeMessageHelper(message, true);
-            helper.setTo(emailRequest.getEmail());
-            helper.setSubject("[signalBuddy] 인증코드가 발송되었습니다.");
-            helper.setText(setContent(code), true);
-        } catch (MessagingException e) {
-            throw new BusinessException(AuthErrorCode.SEND_EMAIL_FAILED);
-        }
+            // 인증 코드 저장
+            codeSave(emailRequest.getEmail(), code);
 
-        // 인증 코드 저장
-        codeSave(emailRequest.getEmail(), code);
+            // 이메일 발송
+            javaMailSender.send(message);
 
-        // 이메일 발송
-        javaMailSender.send(message);
+            return ResponseEntity.ok().body(ApiResponse.createSuccessWithNoData()); // 정상 처리 시 반환값
+        }).exceptionally(e -> {
+            Throwable cause = e.getCause();
 
-        return CompletableFuture.completedFuture(null);
+            String message = GlobalErrorCode.SERVER_ERROR.getMessage();
+            HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+
+            if (cause instanceof BusinessException) {
+                if (cause.getMessage().equals(MemberErrorCode.NOT_FOUND_MEMBER.getMessage())) {
+                    message = MemberErrorCode.NOT_FOUND_MEMBER.getMessage();
+                    status = MemberErrorCode.NOT_FOUND_MEMBER.getHttpStatus();
+                } else if (cause.getMessage().equals(AuthErrorCode.SEND_EMAIL_FAILED.getMessage())) {
+                    message = AuthErrorCode.SEND_EMAIL_FAILED.getMessage();
+                    status = AuthErrorCode.SEND_EMAIL_FAILED.getHttpStatus();
+                }
+            }
+            return ResponseEntity.status(status).body(ApiResponse.createError(message)); // 예외 처리 후 반환값
+        });
     }
 
     // 인증 코드 검증
