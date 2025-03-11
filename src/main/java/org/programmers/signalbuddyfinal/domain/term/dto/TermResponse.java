@@ -7,7 +7,7 @@ import lombok.Getter;
 @Builder
 public class TermResponse {
 
-    private long termId;
-    private long termVersionId;
+    private Long termId;
+    private Long termVersionId;
     private String content;
 }

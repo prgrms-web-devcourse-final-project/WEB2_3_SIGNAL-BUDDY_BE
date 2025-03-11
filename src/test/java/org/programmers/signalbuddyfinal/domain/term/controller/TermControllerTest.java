@@ -3,10 +3,13 @@ package org.programmers.signalbuddyfinal.domain.term.controller;
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.programmers.signalbuddyfinal.global.support.RestDocsFormatGenerators.commonResponseFormat;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessRequest;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.preprocessResponse;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.prettyPrint;
+import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
+import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -21,6 +24,7 @@ import org.programmers.signalbuddyfinal.global.support.ControllerTest;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.testcontainers.shaded.org.apache.commons.lang3.ArrayUtils;
 
 @WebMvcTest(TermController.class)
 class TermControllerTest extends ControllerTest {
@@ -40,11 +44,12 @@ class TermControllerTest extends ControllerTest {
             .content("testTerm")
             .build();
 
-        ResponseEntity<ApiResponse<TermResponse>> response = ResponseEntity.ok(ApiResponse.createSuccess(termResponse));
+        ResponseEntity<ApiResponse<TermResponse>> response = ResponseEntity.ok(
+            ApiResponse.createSuccess(termResponse));
         when(termService.getTerm(any(TermCategory.class))).thenReturn(response);
 
         mockMvc.perform(get("/api/terms")
-            .param("category", "PRIVACY"))
+                .param("category", "PRIVACY"))
             .andExpect(status().isOk())
             .andDo(document("사용자 약관 조회",
                     preprocessRequest(prettyPrint()),
@@ -53,6 +58,16 @@ class TermControllerTest extends ControllerTest {
                         ResourceSnippetParameters.builder()
                             .tag(tag)
                             .summary("사용자 약관 조회")
+                            .queryParameters(
+                                parameterWithName("category").description("약관 종류(ex.개인정보약관:PRIVACY, 이용약관:USE)")
+                            ).responseFields(
+                                ArrayUtils.addAll(
+                                commonResponseFormat(),
+                                fieldWithPath("data.termId").description("term ID"),
+                                fieldWithPath("data.termVersionId").description("term Version ID"),
+                                fieldWithPath("data.content").description("현재 시행 중인 약관")
+                                )
+                            )
                             .build()
                     )
                 )

@@ -10,13 +10,13 @@ import org.programmers.signalbuddyfinal.domain.term.entity.enums.TermCategory;
 @Getter
 public class AdminTermResponse {
 
-    private long termId;
-    private long termVersionId;
-    private String termTitle;
+    private Long termId;
+    private Long termVersionId;
+    private String title;
     private AgreementType agreementType;
-    private TermCategory termCategory;
+    private TermCategory category;
     private String version;
-    private String termContent;
+    private String content;
     private LocalDate effectiveStartDate;
     private LocalDate effectiveEndDate;
 }
