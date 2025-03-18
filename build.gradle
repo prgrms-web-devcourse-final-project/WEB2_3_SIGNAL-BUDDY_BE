@@ -93,14 +93,11 @@ dependencies {
     implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
 
     // Monitoring
-    implementation ("org.springframework.boot:spring-boot-starter-actuator")
-    runtimeOnly ("io.micrometer:micrometer-registry-prometheus")
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
 
     // Amazon S3
     implementation 'software.amazon.awssdk:s3:2.30.3'
-
-    // Monitoring
-    implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
     // Swagger + REST Docs
     testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
@@ -124,7 +121,7 @@ dependencies {
     // Apache poi
     implementation 'org.apache.poi:poi-ooxml:5.2.3'
 
-    // https://mvnrepository.com/artifact/net.logstash.logback/logstash-logback-encoder
+    // Log
     implementation 'net.logstash.logback:logstash-logback-encoder:8.0'
 
 }
