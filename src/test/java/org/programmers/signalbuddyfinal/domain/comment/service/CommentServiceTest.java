@@ -11,10 +11,7 @@ import java.util.Optional;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
 import org.programmers.signalbuddyfinal.domain.comment.dto.CommentRequest;
 import org.programmers.signalbuddyfinal.domain.comment.entity.Comment;
 import org.programmers.signalbuddyfinal.domain.comment.exception.CommentErrorCode;
@@ -41,7 +38,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 
 @Transactional
-@TestMethodOrder(OrderAnnotation.class)
 class CommentServiceTest extends ServiceTest {
 
     @Autowired
@@ -81,7 +77,6 @@ class CommentServiceTest extends ServiceTest {
 
     @DisplayName("일반 사용자가 자신의 피드백이 아닌 글에 댓글을 작성한다.")
     @Test
-    @Order(1)
     void writeComment() {
         // given
         Long feedbackId = feedback.getFeedbackId();
@@ -112,7 +107,6 @@ class CommentServiceTest extends ServiceTest {
 
     @DisplayName("사용자가 자신의 피드백에 댓글을 남긴다.")
     @Test
-    @Order(2)
     void writeComment_SameWriter() {
         // given
         Long feedbackId = feedback.getFeedbackId();
@@ -142,7 +136,6 @@ class CommentServiceTest extends ServiceTest {
 
     @DisplayName("피드백 작성자가 알림 설정을 허용하지 않아, 알림이 전송되지 않는다.")
     @Test
-    @Order(3)
     void writeComment_NotiDisabled() {
         // given
         Long feedbackId = feedback.getFeedbackId();
@@ -174,7 +167,6 @@ class CommentServiceTest extends ServiceTest {
 
     @DisplayName("관리자가 댓글(답변)을 작성한다.")
     @Test
-    @Order(4)
     void writeCommentByAdmin() {
         // given
         Long feedbackId = feedback.getFeedbackId();
@@ -206,7 +198,6 @@ class CommentServiceTest extends ServiceTest {
 
     @DisplayName("본인의 댓글을 수정한다.")
     @Test
-    @Order(5)
     void updateComment() {
         // given
         String updatedContent = "update comment content";
@@ -228,7 +219,6 @@ class CommentServiceTest extends ServiceTest {
 
     @DisplayName("댓글 작성자와 다른 사람이 수정 시, 실패한다.")
     @Test
-    @Order(6)
     void updateCommentFailure() {
         // given
         String updatedContent = "update comment content";
@@ -246,7 +236,6 @@ class CommentServiceTest extends ServiceTest {
 
     @DisplayName("일반 사용자가 본인 댓글을 삭제한다.")
     @Test
-    @Order(7)
     void deleteComment() {
         // given
         CustomUser2Member user = getCurrentMember(member.getMemberId(), MemberRole.USER);
@@ -260,7 +249,6 @@ class CommentServiceTest extends ServiceTest {
 
     @DisplayName("관리자가 일반 사용자의 댓글을 삭제한다.")
     @Test
-    @Order(8)
     void deleteCommentByAdmin() {
         // given
         CustomUser2Member user = getCurrentMember(admin.getMemberId(), MemberRole.ADMIN);
@@ -274,7 +262,6 @@ class CommentServiceTest extends ServiceTest {
 
     @DisplayName("댓글 작성자와 다른 사람이 삭제 시, 실패한다.")
     @Test
-    @Order(9)
     void deleteCommentFailure() {
         // given
         CustomUser2Member user = getCurrentMember(999999L, MemberRole.USER);
@@ -290,7 +277,6 @@ class CommentServiceTest extends ServiceTest {
 
     @DisplayName("관리자 본인의 댓글(답변)을 삭제한다.")
     @Test
-    @Order(10)
     void deleteAdminComment() {
         // given
         Long feedbackId = feedback.getFeedbackId();
