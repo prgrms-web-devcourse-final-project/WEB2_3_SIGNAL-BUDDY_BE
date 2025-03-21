@@ -3,6 +3,7 @@ package org.programmers.signalbuddyfinal.domain.like.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.programmers.signalbuddyfinal.domain.like.service.LikeService.getLikeKeyPrefix;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,6 +25,7 @@ import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
 import org.programmers.signalbuddyfinal.global.support.ServiceTest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 class LikeServiceTest extends ServiceTest implements RedisTestContainer {
@@ -77,9 +79,17 @@ class LikeServiceTest extends ServiceTest implements RedisTestContainer {
         feedback = feedbackRepository.save(entity);
     }
 
+    @AfterEach
+    void tearDown() {
+        RedisConnectionFactory factory = redisTemplate.getConnectionFactory();
+        if (factory != null) {
+            factory.getConnection().serverCommands().flushAll();
+        }
+    }
+
     @DisplayName("좋아요 추가를 성공한다.")
     @Test
-    void addLike() {
+    void addLike_Success() {
         // given
         CustomUser2Member user = new CustomUser2Member(
             new CustomUserDetails(member.getMemberId(), "", "",
@@ -98,14 +108,15 @@ class LikeServiceTest extends ServiceTest implements RedisTestContainer {
 
     @DisplayName("좋아요 취소를 성공한다.")
     @Test
-    void deleteLike() {
+    void deleteLike_Success() {
         // given
         CustomUser2Member user = new CustomUser2Member(
             new CustomUserDetails(member.getMemberId(), "", "",
                 "", "", MemberRole.USER, MemberStatus.ACTIVITY));
 
-        // when
         likeRepository.save(Like.create(member, feedback));
+
+        // when
         likeService.deleteLike(feedback.getFeedbackId(), user);
 
         // then
@@ -125,8 +136,9 @@ class LikeServiceTest extends ServiceTest implements RedisTestContainer {
             new CustomUserDetails(member.getMemberId(), "", "",
                 "", "", MemberRole.USER, MemberStatus.ACTIVITY));
 
-        // when
         likeRepository.save(Like.create(member, feedback));
+
+        // when
         LikeExistResponse actual = likeService.existsLike(feedbackId, user);
 
         // then
@@ -141,6 +153,43 @@ class LikeServiceTest extends ServiceTest implements RedisTestContainer {
         CustomUser2Member user = new CustomUser2Member(
             new CustomUserDetails(member.getMemberId(), "", "",
                 "", "", MemberRole.USER, MemberStatus.ACTIVITY));
+
+        // when
+        LikeExistResponse actual = likeService.existsLike(feedbackId, user);
+
+        // then
+        assertThat(actual.getStatus()).isFalse();
+    }
+
+    @DisplayName("Redis에 좋아요 추가 데이터가 임시 저장되어 있다.")
+    @Test
+    void existsLikeFromRedisTrue() {
+        // given
+        Long feedbackId = feedback.getFeedbackId();
+        CustomUser2Member user = new CustomUser2Member(
+            new CustomUserDetails(member.getMemberId(), "", "",
+                "", "", MemberRole.USER, MemberStatus.ACTIVITY));
+
+        likeService.addLike(feedbackId, user);
+
+        // when
+        LikeExistResponse actual = likeService.existsLike(feedbackId, user);
+
+        // then
+        assertThat(actual.getStatus()).isTrue();
+    }
+
+    @DisplayName("Redis에 좋아요 삭제 데이터가 임시 저장되어 있다.")
+    @Test
+    void existsLikeFromRedisFalse() {
+        // given
+        Long feedbackId = feedback.getFeedbackId();
+        CustomUser2Member user = new CustomUser2Member(
+            new CustomUserDetails(member.getMemberId(), "", "",
+                "", "", MemberRole.USER, MemberStatus.ACTIVITY));
+
+        likeRepository.save(Like.create(member, feedback));
+        likeService.deleteLike(feedbackId, user);
 
         // when
         LikeExistResponse actual = likeService.existsLike(feedbackId, user);
