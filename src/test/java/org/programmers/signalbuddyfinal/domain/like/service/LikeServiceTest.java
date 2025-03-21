@@ -15,6 +15,7 @@ import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.FeedbackCat
 import org.programmers.signalbuddyfinal.domain.feedback.repository.FeedbackRepository;
 import org.programmers.signalbuddyfinal.domain.like.dto.LikeExistResponse;
 import org.programmers.signalbuddyfinal.domain.like.entity.Like;
+import org.programmers.signalbuddyfinal.domain.like.exception.LikeErrorCode;
 import org.programmers.signalbuddyfinal.domain.like.repository.LikeRepository;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
@@ -22,6 +23,7 @@ import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
 import org.programmers.signalbuddyfinal.global.db.RedisTestContainer;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
+import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
 import org.programmers.signalbuddyfinal.global.support.ServiceTest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -106,6 +108,24 @@ class LikeServiceTest extends ServiceTest implements RedisTestContainer {
             + feedback.getFeedbackId() + ":" + member.getMemberId());
     }
 
+    @DisplayName("좋아요 추가를 실패한다.")
+    @Test
+    void addLike_Failure() {
+        // given
+        CustomUser2Member user = new CustomUser2Member(
+            new CustomUserDetails(member.getMemberId(), "", "",
+                "", "", MemberRole.USER, MemberStatus.ACTIVITY));
+
+        likeRepository.save(Like.create(member, feedback));
+
+        // when & then
+        try {
+            likeService.addLike(feedback.getFeedbackId(), user);
+        } catch (BusinessException e) {
+            assertThat(e.getErrorCode()).isEqualTo(LikeErrorCode.ALREADY_ADDED_LIKE);
+        }
+    }
+
     @DisplayName("좋아요 취소를 성공한다.")
     @Test
     void deleteLike_Success() {
@@ -125,6 +145,22 @@ class LikeServiceTest extends ServiceTest implements RedisTestContainer {
         assertThat(deleteLike).isEqualTo("CANCEL");
         redisTemplate.delete(getLikeKeyPrefix()
             + feedback.getFeedbackId() + ":" + member.getMemberId());
+    }
+
+    @DisplayName("좋아요 취소를 실패한다.")
+    @Test
+    void deleteLike_Failure() {
+        // given
+        CustomUser2Member user = new CustomUser2Member(
+            new CustomUserDetails(member.getMemberId(), "", "",
+                "", "", MemberRole.USER, MemberStatus.ACTIVITY));
+
+        // when & then
+        try {
+            likeService.deleteLike(feedback.getFeedbackId(), user);
+        } catch (BusinessException e) {
+            assertThat(e.getErrorCode()).isEqualTo(LikeErrorCode.NOT_FOUND_LIKE);
+        }
     }
 
     @DisplayName("해당 좋아요가 존재한다.")
