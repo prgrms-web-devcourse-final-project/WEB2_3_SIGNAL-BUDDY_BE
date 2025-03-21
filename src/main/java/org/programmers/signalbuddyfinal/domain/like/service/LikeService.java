@@ -45,6 +45,19 @@ public class LikeService {
     }
 
     public LikeExistResponse existsLike(Long feedbackId, CustomUser2Member user) {
+        String key = generateKey(feedbackId, user.getMemberId());
+
+        // Redis에 임시 저장되어 있는 경우
+        String cacheLike = redisTemplate.opsForValue().get(key);
+        if (cacheLike != null) {
+            // 좋아요 추가 요청일 때
+            if (LikeRequestType.ADD.name().equals(cacheLike)) {
+                return LikeExistResponse.createTrue();
+            }
+            // 좋아요 삭제 요청일 때
+            return LikeExistResponse.createFalse();
+        }
+
         boolean isExisted = likeRepository.existsByMemberAndFeedback(user.getMemberId(), feedbackId);
         return new LikeExistResponse(isExisted);
     }
