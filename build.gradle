@@ -145,22 +145,38 @@ def MapStruct = [
 // 측정 안하고 싶은 패턴
 def jacocoExcludePatterns = [
         "*.*Application*",
+        "**/*Application*",
         "*.*Config*",
         "*.*Exception*",
         "*.*ErrorCode*",
         "*.*Request*",
         "*.*Response*",
         "*.*Interceptor*",
+        "**/Interceptor*",
         "*.*Filter*",
+        "**/*Filter*",
         "*.*Handler*",
+        "**/*Handler*",
         "*.*Resolver*",
+        "**/*Resolver*",
         "*.*DataInitializer*",
         "*.*RestDocsFormatGenerators*",
         "*.dto.*",
+        "**/dto/**",
         "*.config.*",
+        "**/config/**",
         "*.entity.*",
+        "**/entity/**",
+        "*.exception.*",
+        "**/exception/**",
+        "*.repository.*",
+        "**/repository/**",
+        "*.util.*",
+        "**/util/**",
         "*.test.*",
-        "*.resources.*"
+        "**/test/**",
+        "*.resources.*",
+        "**/resources/**"
 ]
 
 // 코드 커버리지 기준 설정
