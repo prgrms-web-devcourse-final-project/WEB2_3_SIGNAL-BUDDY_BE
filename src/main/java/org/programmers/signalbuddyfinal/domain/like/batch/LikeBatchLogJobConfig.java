@@ -70,7 +70,7 @@ public class LikeBatchLogJobConfig {
             .dataSource(dataSource)
             .selectClause("SELECT STEP_EXECUTION_ID, JOB_EXECUTION_ID")
             .fromClause("FROM BATCH_STEP_EXECUTION")
-            .whereClause("WHERE STEP_NAME IN ('updateLikeBatch', 'deleteLikeLogBatch')"
+            .whereClause("WHERE STEP_NAME IN ('updateLikeBatch', 'deleteLikeLogBatch') "
                 + "AND START_TIME < :threshold")
             .parameterValues(Map.of("threshold",
                 LocalDateTime.now().minusMinutes(Long.parseLong(expiredMinutes))))
