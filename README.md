@@ -6,11 +6,11 @@
 ---
 
 ## 팀원 소개
-| BE | BE | BE | BE | BE |
-| --- | --- | --- | --- | --- |
-| <img src="https://avatars.githubusercontent.com/u/103233073?v=4" width=400px alt="오병일"/> | <img src="https://avatars.githubusercontent.com/u/82895809?v=4" width=400px alt="김동진"> | <img src="https://avatars.githubusercontent.com/u/108854865?v=4" width=400px alt="이동민"> | <img src="https://avatars.githubusercontent.com/u/104908845?v=4" width=400px alt="임서현"> | <img src="https://avatars.githubusercontent.com/u/145355985?v=4" width=400px alt="최주하"> |
-| [오병일](https://github.com/ByungilOh-Fillip) | [김동진](https://github.com/Dongjin0224) | [이동민](https://github.com/DongminL) | [임서현](https://github.com/limseohyeon) | [최주하](https://github.com/zzuharchive) |
-| 팀장 | 팀원 | 팀원 | 팀원 | 팀원 |
+|                                            BE                                             |                                           BE                                            |                                            BE                                            |                                           BE                                            |                                            BE                                            |
+|:-----------------------------------------------------------------------------------------:|:---------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------:|:---------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------:|
+| <img src="https://avatars.githubusercontent.com/u/103233073?v=4" width=400px alt="오병일"/>  | <img src="https://avatars.githubusercontent.com/u/82895809?v=4" width=400px alt="김동진">  | <img src="https://avatars.githubusercontent.com/u/108854865?v=4" width=400px alt="이동민">  | <img src="https://avatars.githubusercontent.com/u/104908845?v=4" width=400px alt="임서현"> | <img src="https://avatars.githubusercontent.com/u/145355985?v=4" width=400px alt="최주하">  |
+|                        [오병일](https://github.com/ByungilOh-Fillip)                         |                          [김동진](https://github.com/Dongjin0224)                          |                            [이동민](https://github.com/DongminL)                            |                          [임서현](https://github.com/limseohyeon)                          |                          [최주하](https://github.com/zzuharchive)                           |
+|                                            팀장                                             |                                           팀원                                            |                                            팀원                                            |                                            PO                                            |                                            팀원                                            |
 
 ---
 ## 목표와 기능
@@ -87,9 +87,16 @@
 </aside>
 
 ---
-## 프로젝트 아키텍처
-![7](https://github.com/user-attachments/assets/907b7b3f-db91-4fac-aa2a-35bd85cb3755)
+## Project Architecture
 
+### Infrastructure
+![전체 아키텍처](https://github.com/user-attachments/assets/e2159b76-6fce-4cb0-adf8-d475eac1305c)
+
+### CI / CD
+![CI/CD](https://github.com/user-attachments/assets/3cc790df-c3a3-4af6-86e2-04d38cf00b40)
+
+### Monitoring
+![Monitoring](https://github.com/user-attachments/assets/d2a7a419-4f45-46af-bc72-d910c762e593)
 
 ---
 ## 요구사항 명세와 기능 명세
