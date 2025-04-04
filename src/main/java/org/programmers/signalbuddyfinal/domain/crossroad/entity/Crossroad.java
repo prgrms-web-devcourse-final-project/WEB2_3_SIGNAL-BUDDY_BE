@@ -1,6 +1,7 @@
 package org.programmers.signalbuddyfinal.domain.crossroad.entity;
 
 import jakarta.persistence.*;
+import java.util.Objects;
 import lombok.*;
 import org.hibernate.annotations.SQLRestriction;
 import org.locationtech.jts.geom.Point;
@@ -10,8 +11,6 @@ import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadApiRespons
 @Entity(name = "crossroads")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Builder
 @ToString
 @SQLRestriction("status = true")
 public class Crossroad extends BaseTimeEntity {
@@ -31,6 +30,14 @@ public class Crossroad extends BaseTimeEntity {
 
     @Column(nullable = false)
     private Boolean status;
+
+    @Builder(builderMethodName = "create")
+    public Crossroad(String crossroadApiId, String name, Point coordinate) {
+        this.crossroadApiId = Objects.requireNonNull(crossroadApiId);
+        this.name = Objects.requireNonNull(name);
+        this.coordinate = Objects.requireNonNull(coordinate);
+        this.status = Boolean.TRUE;
+    }
 
     public Crossroad(CrossroadApiResponse response) {
         this.crossroadApiId = response.getCrossroadApiId();
