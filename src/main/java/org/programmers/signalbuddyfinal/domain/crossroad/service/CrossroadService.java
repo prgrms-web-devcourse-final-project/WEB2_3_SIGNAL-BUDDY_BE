@@ -44,13 +44,13 @@ public class CrossroadService {
 
     @Transactional
     public void saveCrossroadDates(int page, int pageSize) {
-        List<CrossroadApiResponse> responseList = crossroadProvider.requestCrossroadApi(page,
-            pageSize);
+        List<CrossroadApiResponse> responseList =
+            crossroadProvider.requestCrossroadApi(page, pageSize);
 
         List<Crossroad> entityList = new ArrayList<>();
         for (CrossroadApiResponse response : responseList) {
             if (response.getLng() != null && response.getLat() != null) {
-                entityList.add(new Crossroad(response));
+                entityList.add(response.toEntity());
             }
         }
 

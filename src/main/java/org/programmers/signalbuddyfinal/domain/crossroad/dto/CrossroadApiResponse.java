@@ -36,4 +36,12 @@ public class CrossroadApiResponse {
         this.lat = crossroad.getCoordinate().getY();
         this.lng = crossroad.getCoordinate().getX();
     }
+
+    public Crossroad toEntity() {
+        return Crossroad.create()
+            .crossroadApiId(this.crossroadApiId)
+            .name(this.name)
+            .coordinate(this.toPoint())
+            .build();
+    }
 }
