@@ -9,7 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Point;
-import org.programmers.signalbuddyfinal.global.util.PointUtil;
+import org.programmers.signalbuddyfinal.global.util.PointUtils;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
@@ -28,7 +28,7 @@ import org.programmers.signalbuddyfinal.global.support.ServiceTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockMultipartFile;
 
-public class PostItServiceTest extends ServiceTest {
+class PostItServiceTest extends ServiceTest {
 
     @Autowired
     private PostItRepository postItRepository;
@@ -78,7 +78,7 @@ public class PostItServiceTest extends ServiceTest {
 
     @Test
     @DisplayName("포스트잇 등록 성공 테스트")
-    public void createPostItSuccessTest() {
+    void createPostItSuccessTest() {
         PostItCreateRequest request = createPostItCreateRequest("제목", "내용",
             LocalDateTime.of(25, 1, 1, 0, 0));
 
@@ -91,7 +91,7 @@ public class PostItServiceTest extends ServiceTest {
 
     @Test
     @DisplayName("비회원 포스트잇 등록시 예외 발생 테스트")
-    public void nonMemberCreatePostItTest() {
+    void nonMemberCreatePostItTest() {
         PostItCreateRequest request = createPostItCreateRequest("제목", "내용",
             LocalDateTime.of(25, 1, 1, 0, 0));
 
@@ -101,10 +101,10 @@ public class PostItServiceTest extends ServiceTest {
 
     @Test
     @DisplayName("포스트잇 수정 성공 테스트")
-    public void updatePostItTest() {
+    void updatePostItTest() {
 
         postItRepository.save(
-            createPostIt(Danger.NOTICE, PointUtil.toPoint(1.0203, 1.3048), "제목1",
+            createPostIt(Danger.NOTICE, PointUtils.toPoint(1.0203, 1.3048), "제목1",
                 "제목1", "img1", LocalDateTime.of(2025, 1, 1, 0, 0), member1));
         PostItRequest request = createPostItRequest("제목", "내용");
 
@@ -116,10 +116,10 @@ public class PostItServiceTest extends ServiceTest {
 
     @Test
     @DisplayName("포스트잇 수정시 작성자와 수정자가 다른 경우 예외 발생 테스트")
-    public void otherUserUpdatePostItTest() {
+    void otherUserUpdatePostItTest() {
 
         postItRepository.save(
-            createPostIt(Danger.NOTICE, PointUtil.toPoint(1.0203, 1.3048), "제목1",
+            createPostIt(Danger.NOTICE, PointUtils.toPoint(1.0203, 1.3048), "제목1",
                 "제목1", "img1", LocalDateTime.of(2025, 1, 1, 0, 0), member1));
         PostItRequest request = createPostItRequest("제목", "내용");
 
@@ -129,9 +129,9 @@ public class PostItServiceTest extends ServiceTest {
 
     @Test
     @DisplayName("포스트잇 삭제 성공 테스트")
-    public void deletePostItSuccessTest() {
+    void deletePostItSuccessTest() {
         postItRepository.save(
-            createPostIt(Danger.NOTICE, PointUtil.toPoint(1.0203, 1.3048), "제목1",
+            createPostIt(Danger.NOTICE, PointUtils.toPoint(1.0203, 1.3048), "제목1",
                 "제목1", "img1", LocalDateTime.of(2025, 1, 1, 0, 0), member1));
 
         postItService.deletePostIt(1L, user1);
@@ -141,10 +141,10 @@ public class PostItServiceTest extends ServiceTest {
 
     @Test
     @DisplayName("포스트잇 삭제시 작성자와 수정자가 다른 경우 예외 발생 테스트")
-    public void otherUserDeletePostItTest() {
+    void otherUserDeletePostItTest() {
 
         postItRepository.save(
-            createPostIt(Danger.NOTICE, PointUtil.toPoint(1.0203, 1.3048), "제목1",
+            createPostIt(Danger.NOTICE, PointUtils.toPoint(1.0203, 1.3048), "제목1",
                 "제목1", "img1", LocalDateTime.of(2025, 1, 1, 0, 0), member1));
         PostItRequest request = createPostItRequest("제목", "내용");
 
@@ -155,9 +155,9 @@ public class PostItServiceTest extends ServiceTest {
 
     @Test
     @DisplayName("포스트잇 해결 상태 변경 성공 테스트")
-    public void completePostItTest() {
+    void completePostItTest() {
         postItRepository.save(
-            createPostIt(Danger.NOTICE, PointUtil.toPoint(1.0203, 1.3048), "제목1",
+            createPostIt(Danger.NOTICE, PointUtils.toPoint(1.0203, 1.3048), "제목1",
                 "제목1", "img1", LocalDateTime.of(2025, 1, 1, 0, 0), member1));
 
         postItService.completePostIt(1L);

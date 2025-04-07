@@ -2,7 +2,7 @@ package org.programmers.signalbuddyfinal.domain.postit.service;
 
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
-import org.programmers.signalbuddyfinal.global.util.PointUtil;
+import org.programmers.signalbuddyfinal.global.util.PointUtils;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
 import org.programmers.signalbuddyfinal.domain.postit.dto.PostItCreateRequest;
@@ -42,7 +42,7 @@ public class PostItService {
         Member member = memberRepository.findByIdOrThrow(user.getMemberId());
 
         String imageUrl = convertImageFile(image);
-        Point coordinate = PointUtil.toPoint(postItCreateRequest.getLat(), postItCreateRequest.getLng());
+        Point coordinate = PointUtils.toPoint(postItCreateRequest.getLat(), postItCreateRequest.getLng());
 
         Postit postit = Postit.creator()
             .danger(postItCreateRequest.getDanger())

@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Point;
 import org.programmers.signalbuddyfinal.domain.admin.dto.PostItFilterRequest;
 import org.programmers.signalbuddyfinal.domain.admin.dto.enums.Deleted;
-import org.programmers.signalbuddyfinal.global.util.PointUtil;
+import org.programmers.signalbuddyfinal.global.util.PointUtils;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
@@ -22,7 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
-public class AdminPostItRepositoryTest extends RepositoryTest {
+class AdminPostItRepositoryTest extends RepositoryTest {
 
     Pageable pageable;
     Member member;
@@ -43,17 +43,17 @@ public class AdminPostItRepositoryTest extends RepositoryTest {
             .memberStatus(MemberStatus.ACTIVITY)
             .build());
 
-        createPostIt(Danger.NOTICE, PointUtil.toPoint(1.0203, 1.3048), "제목1",
+        createPostIt(Danger.NOTICE, PointUtils.toPoint(1.0203, 1.3048), "제목1",
             "내용1",
             "https://image1.com/imageUrl",
             LocalDateTime.of(2025, 1, 2, 1, 30), null,
             member);
-        createPostIt(Danger.WARNING, PointUtil.toPoint(1.0203, 1.3048), "검색 테스트",
+        createPostIt(Danger.WARNING, PointUtils.toPoint(1.0203, 1.3048), "검색 테스트",
             "내용1",
             "https://image1.com/imageUrl",
             LocalDateTime.of(2025, 2, 26, 1, 30), LocalDateTime.of(2025, 1, 10, 3, 30),
             member);
-        createPostIt(Danger.NOTICE, PointUtil.toPoint(1.0203, 1.3048), "제목1",
+        createPostIt(Danger.NOTICE, PointUtils.toPoint(1.0203, 1.3048), "제목1",
             "검색 테스트",
             "https://image1.com/imageUrl",
             LocalDateTime.of(2025, 1, 2, 1, 30),null ,
@@ -66,7 +66,7 @@ public class AdminPostItRepositoryTest extends RepositoryTest {
 
     @DisplayName("한개의 조건이 설정된 포스트잇 필더링 조회")
     @Test
-    public void 한개의_조건이_설정된_포스트잇_필터링_조회() {
+    void 한개의_조건이_설정된_포스트잇_필터링_조회() {
 
         PostItFilterRequest dateFilter = createFilter(LocalDateTime.of(2025, 1, 1, 0, 0),
             LocalDateTime.of(2025, 4, 1, 0, 0), null, null, null);
@@ -90,7 +90,7 @@ public class AdminPostItRepositoryTest extends RepositoryTest {
 
     @DisplayName("중복 조건 포스트잇 필더링 조회")
     @Test
-    public void 중복_조건_포스트잇_필터링_조회() {
+    void 중복_조건_포스트잇_필터링_조회() {
 
         PostItFilterRequest dateAndDangerFilter = createFilter(LocalDateTime.of(2025, 1, 1, 0, 0),
             LocalDateTime.of(2025, 4, 1, 0, 0), Danger.WARNING, null, null);
@@ -106,7 +106,7 @@ public class AdminPostItRepositoryTest extends RepositoryTest {
 
     @DisplayName("필터가 전부 null 인 경우 테스트")
     @Test
-    public void 전체_null_조회() {
+    void 전체_null_조회() {
 
         PostItFilterRequest nullFilter = createFilter(null, null, null, null,
             null);
