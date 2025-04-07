@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.locationtech.jts.geom.Point;
 import org.programmers.signalbuddyfinal.domain.crossroad.entity.Crossroad;
-import org.programmers.signalbuddyfinal.global.util.PointUtil;
+import org.programmers.signalbuddyfinal.global.util.PointUtils;
 
 @Getter
 @Builder
@@ -33,7 +33,7 @@ public class CrossroadResponse {
     private Boolean status;
 
     public Point toPoint() {
-        return PointUtil.toPoint(this.lat, this.lng);
+        return PointUtils.toPoint(this.lat, this.lng);
     }
 
     public CrossroadResponse(Crossroad crossroad) {
