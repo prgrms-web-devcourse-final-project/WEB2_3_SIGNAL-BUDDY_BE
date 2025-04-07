@@ -29,6 +29,6 @@ public class LikeUpdateRequest {
             return LikeRequestType.CANCEL;
         }
 
-        throw new BusinessException(LikeErrorCode.Illegal_REQUEST_TYPE);
+        throw new BusinessException(LikeErrorCode.ILLEGAL_REQUEST_TYPE);
     }
 }
