@@ -20,7 +20,7 @@ import org.programmers.signalbuddyfinal.domain.crossroad.repository.CrossroadRep
 import org.programmers.signalbuddyfinal.domain.crossroad.repository.CustomCrossroadRepositoryImpl;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.monitoring.HttpRequestManager;
-import org.programmers.signalbuddyfinal.global.util.PointUtil;
+import org.programmers.signalbuddyfinal.global.util.PointUtils;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
@@ -41,6 +41,7 @@ public class CrossroadService {
     private final CrossroadProvider crossroadProvider;
     private final HttpRequestManager httpRequestManager;
     private final RedisTemplate<Object, Object> redisTemplate;
+    private final CrossroadMapper crossroadMapper;
 
     @Transactional
     public void saveCrossroadDates(int page, int pageSize) {
@@ -93,7 +94,9 @@ public class CrossroadService {
         }
 
         try{
-            CrossroadResponse responseDB = new CrossroadResponse(crossroadRepository.findByCrossroadId(id));
+            CrossroadResponse responseDB = crossroadMapper.toResponse(
+                crossroadRepository.findByCrossroadId(id)
+            );
             crossroadRedisRepository.save(responseDB);
 
             return responseDB;
@@ -122,8 +125,9 @@ public class CrossroadService {
             throw new BusinessException(CrossroadErrorCode.CROSSROAD_API_REQUEST_FAILED);
         }
 
-        CrossroadStateResponse response =
-            CrossroadMapper.INSTANCE.toResponse(apiResponses.get(0), crossroad);
+        CrossroadStateResponse response = crossroadMapper.toStateResponse(
+            apiResponses.get(0), crossroad
+        );
         putStateCache(crossroadId, response);
         return response;
     }
@@ -160,7 +164,7 @@ public class CrossroadService {
     @Transactional(readOnly = true)
     public List<Long> getCrossroadIdsByCoordinates(Coordinate[] coordinates, int radius) {
         final List<Point> points = Arrays.stream(coordinates)
-            .map(coordinate -> PointUtil.toPoint(coordinate.getLat(), coordinate.getLng()))
+            .map(coordinate -> PointUtils.toPoint(coordinate.getLat(), coordinate.getLng()))
             .toList();
         return crossroadRepository.findByCoordinateInWithRadius(points, radius);
     }
