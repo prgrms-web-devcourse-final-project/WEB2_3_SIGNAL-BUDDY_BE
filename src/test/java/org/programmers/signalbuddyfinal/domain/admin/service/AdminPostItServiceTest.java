@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Point;
 import org.programmers.signalbuddyfinal.domain.admin.dto.PostItFilterRequest;
 import org.programmers.signalbuddyfinal.domain.admin.dto.enums.Deleted;
-import org.programmers.signalbuddyfinal.global.util.PointUtil;
+import org.programmers.signalbuddyfinal.global.util.PointUtils;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
@@ -56,18 +56,18 @@ public class AdminPostItServiceTest extends ServiceTest {
 
         for (int i = 0; i < 20; i++) {
             member.add(createMember("user" + i + "@gmail.com", "user" + i));
-            createPostIt(Danger.WARNING, PointUtil.toPoint(1.0203, 1.3048), "제목1", "내용1",
+            createPostIt(Danger.WARNING, PointUtils.toPoint(1.0203, 1.3048), "제목1", "내용1",
                 "https://image1.com/imageUrl",
                 LocalDateTime.of(2025, 1, 2, 1, 30), LocalDateTime.of(2025, 1, 8, 1, 30),
                 member.get(i));
         }
 
-        solvedPostit = createPostIt(Danger.WARNING, PointUtil.toPoint(1.0203, 1.3048), "제목1",
+        solvedPostit = createPostIt(Danger.WARNING, PointUtils.toPoint(1.0203, 1.3048), "제목1",
             "내용1",
             "https://image1.com/imageUrl",
             LocalDateTime.now().plusDays(5), LocalDateTime.now().plusDays(5),
             member.get(0));
-        unsolvedPostit = createPostIt(Danger.WARNING, PointUtil.toPoint(1.0203, 1.3048), "제목1",
+        unsolvedPostit = createPostIt(Danger.WARNING, PointUtils.toPoint(1.0203, 1.3048), "제목1",
             "내용1",
             "https://image1.com/imageUrl",
             LocalDateTime.of(2025, 1, 2, 1, 30), null,
@@ -77,7 +77,7 @@ public class AdminPostItServiceTest extends ServiceTest {
 
     @DisplayName("포스트잇 전체 조회 성공 테스트")
     @Test
-    public void getAllPostItSuccessTest() {
+    void getAllPostItSuccessTest() {
 
         assertThat(adminPostItService.getAllPostIt(pageable).getTotalElements()).isEqualTo(22);
         assertThat(adminPostItService.getAllPostIt(pageable).getPageSize()).isEqualTo(10);
@@ -86,7 +86,7 @@ public class AdminPostItServiceTest extends ServiceTest {
     @Test
     @DisplayName("관리자 포스트잇 미해결 -> 해결 변경 성공 테스트")
     @Transactional
-    public void adminCompletePostItSuccessTest() {
+    void adminCompletePostItSuccessTest() {
         adminPostItService.completePostIt(unsolvedPostit.getPostitId(),
             LocalDateTime.now().plusDays(7));
 
@@ -96,7 +96,7 @@ public class AdminPostItServiceTest extends ServiceTest {
 
     @Test
     @DisplayName("관리자 포스트잇 해결 - 미해결 포스트잇 변경 성공 테스트")
-    public void adminAlreadyCompletePostItExceptionTest() {
+    void adminAlreadyCompletePostItExceptionTest() {
         postitSolveRepository.save(PostitSolve.creator()
             .content("내용")
             .imageUrl("https://image1.com/imageUrl")
@@ -115,7 +115,7 @@ public class AdminPostItServiceTest extends ServiceTest {
     @Test
     @DisplayName("관리자 해결 -> 미해결 변경시 만료일이 현재일보다 이전인 경우")
     @Transactional
-    public void expireDateExceptionTest() {
+    void expireDateExceptionTest() {
 
         assertThrows(BusinessException.class, () -> {
             adminPostItService.completePostIt(unsolvedPostit.getPostitId(),
@@ -125,7 +125,7 @@ public class AdminPostItServiceTest extends ServiceTest {
 
     @DisplayName("포스트잇 기간별 조회 시작일 미지정 예외 테스트")
     @Test
-    public void 기간별_조회_시작일_미지정_테스트() {
+    void 기간별_조회_시작일_미지정_테스트() {
 
         PostItFilterRequest noStartDateFilter = createFilter(null,
             LocalDateTime.of(2025, 1, 25, 0, 0, 0), null, null, null);
@@ -137,7 +137,7 @@ public class AdminPostItServiceTest extends ServiceTest {
 
     @DisplayName("포스트잇 기간별 조회 시작일 > 종료일 예외 테스트")
     @Test
-    public void 기간별_조회_시작일_종료일_비교_테스트() {
+    void 기간별_조회_시작일_종료일_비교_테스트() {
 
         PostItFilterRequest afterStartDateFilter = createFilter(
             LocalDateTime.of(2025, 1, 25, 0, 0, 0),

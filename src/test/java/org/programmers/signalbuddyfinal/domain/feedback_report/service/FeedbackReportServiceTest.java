@@ -6,7 +6,6 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadApiResponse;
 import org.programmers.signalbuddyfinal.domain.crossroad.entity.Crossroad;
 import org.programmers.signalbuddyfinal.domain.crossroad.repository.CrossroadRepository;
 import org.programmers.signalbuddyfinal.domain.feedback.entity.Feedback;
@@ -173,9 +172,12 @@ class FeedbackReportServiceTest extends ServiceTest {
     }
 
     private Crossroad saveCrossroad(String apiId, String name, double lat, double lng) {
-        return crossroadRepository.save(new Crossroad(
-            CrossroadApiResponse.builder().crossroadApiId(apiId).name(name).lat(lat).lng(lng)
-                .build()));
+        return crossroadRepository.save(
+            Crossroad.create()
+                .crossroadApiId(apiId).name(name)
+                .lat(lat).lng(lng)
+                .build()
+        );
     }
 
     private Feedback saveFeedback(String subject, String content, Member member, Crossroad crossroad) {

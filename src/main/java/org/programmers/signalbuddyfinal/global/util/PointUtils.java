@@ -1,10 +1,13 @@
 package org.programmers.signalbuddyfinal.global.util;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 
-public final class PointUtil {
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public final class PointUtils {
 
     private static final GeometryFactory geometryFactory = new GeometryFactory();
 

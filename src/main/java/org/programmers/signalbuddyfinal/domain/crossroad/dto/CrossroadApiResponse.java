@@ -2,10 +2,12 @@ package org.programmers.signalbuddyfinal.domain.crossroad.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.*;
-import org.locationtech.jts.geom.Point;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.crossroad.entity.Crossroad;
-import org.programmers.signalbuddyfinal.global.util.PointUtil;
 
 @Getter
 @Builder
@@ -26,14 +28,18 @@ public class CrossroadApiResponse {
     @JsonProperty("mapCtptIntLot")
     private Double lng; // 경도
 
-    public Point toPoint() {
-        return PointUtil.toPoint(this.lat, this.lng);
-    }
-
     public CrossroadApiResponse(Crossroad crossroad) {
         this.crossroadApiId = crossroad.getCrossroadApiId();
         this.name = crossroad.getName();
         this.lat = crossroad.getCoordinate().getY();
         this.lng = crossroad.getCoordinate().getX();
+    }
+
+    public Crossroad toEntity() {
+        return Crossroad.create()
+            .crossroadApiId(this.crossroadApiId)
+            .name(this.name)
+            .lat(this.lat).lng(this.lng)
+            .build();
     }
 }

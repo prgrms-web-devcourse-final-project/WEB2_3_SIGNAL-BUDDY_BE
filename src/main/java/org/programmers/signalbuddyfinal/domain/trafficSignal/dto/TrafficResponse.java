@@ -3,7 +3,7 @@ package org.programmers.signalbuddyfinal.domain.trafficSignal.dto;
 import lombok.*;
 import org.locationtech.jts.geom.Point;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.entity.TrafficSignal;
-import org.programmers.signalbuddyfinal.global.util.PointUtil;
+import org.programmers.signalbuddyfinal.global.util.PointUtils;
 
 @Getter
 @Builder
@@ -25,7 +25,7 @@ public class TrafficResponse {
 
     private Double lng;
 
-    public Point toPoint() { return PointUtil.toPoint(this.lat, this.lng); }
+    public Point toPoint() { return PointUtils.toPoint(this.lat, this.lng); }
 
     public TrafficResponse(TrafficSignal trafficSignal) {
         this.trafficSignalId = trafficSignal.getTrafficSignalId();

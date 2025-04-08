@@ -1,17 +1,24 @@
 package org.programmers.signalbuddyfinal.domain.crossroad.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import java.util.Objects;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.hibernate.annotations.SQLRestriction;
 import org.locationtech.jts.geom.Point;
 import org.programmers.signalbuddyfinal.domain.basetime.BaseTimeEntity;
-import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadApiResponse;
+import org.programmers.signalbuddyfinal.global.util.PointUtils;
 
 @Entity(name = "crossroads")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Builder
 @ToString
 @SQLRestriction("status = true")
 public class Crossroad extends BaseTimeEntity {
@@ -32,10 +39,14 @@ public class Crossroad extends BaseTimeEntity {
     @Column(nullable = false)
     private Boolean status;
 
-    public Crossroad(CrossroadApiResponse response) {
-        this.crossroadApiId = response.getCrossroadApiId();
-        this.name = response.getName();
-        this.coordinate = response.toPoint();
+    @Builder(builderMethodName = "create")
+    public Crossroad(String crossroadApiId, String name, Double lat, Double lng) {
+        this.crossroadApiId = Objects.requireNonNull(crossroadApiId);
+        this.name = Objects.requireNonNull(name);
+        this.coordinate = PointUtils.toPoint(
+            Objects.requireNonNull(lat),
+            Objects.requireNonNull(lng)
+        );
         this.status = Boolean.TRUE;
     }
 }

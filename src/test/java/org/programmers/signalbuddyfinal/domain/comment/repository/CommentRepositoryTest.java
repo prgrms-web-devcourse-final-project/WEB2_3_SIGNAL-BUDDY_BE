@@ -8,7 +8,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.programmers.signalbuddyfinal.domain.comment.dto.CommentResponse;
 import org.programmers.signalbuddyfinal.domain.comment.entity.Comment;
-import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadApiResponse;
 import org.programmers.signalbuddyfinal.domain.crossroad.entity.Crossroad;
 import org.programmers.signalbuddyfinal.domain.crossroad.repository.CrossroadRepository;
 import org.programmers.signalbuddyfinal.domain.feedback.entity.Feedback;
@@ -48,10 +47,10 @@ class CommentRepositoryTest extends RepositoryTest {
             .profileImageUrl("https://test-image.com/test-123131").build();
         member = memberRepository.save(member);
 
-        Crossroad crossroad = new Crossroad(CrossroadApiResponse.builder()
+        Crossroad crossroad = Crossroad.create()
             .crossroadApiId("13214").name("00사거리")
             .lat(37.12222).lng(127.12132)
-            .build());
+            .build();
         crossroad = crossroadRepository.save(crossroad);
 
         String subject = "test subject";
