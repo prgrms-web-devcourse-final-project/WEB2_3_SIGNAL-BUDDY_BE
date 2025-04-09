@@ -44,7 +44,7 @@ public class CrossroadService {
     private final CrossroadMapper crossroadMapper;
 
     @Transactional
-    public void saveCrossroadDates(int page, int pageSize) {
+    public void saveCrossroadData(int page, int pageSize) {
         List<CrossroadApiResponse> responseList =
             crossroadProvider.requestCrossroadApi(page, pageSize);
 
