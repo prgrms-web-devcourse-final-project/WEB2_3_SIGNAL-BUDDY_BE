@@ -85,7 +85,7 @@ class CrossroadServiceTest extends ServiceTest implements RedisTestContainer {
     @DisplayName("교차로 데이터가 중복 저장되어 실패한다.")
     @Test
     void saveCrossroadData_Failure() {
-// Given
+        // Given
         int page = 2;
         int pageSize = 10;
 
