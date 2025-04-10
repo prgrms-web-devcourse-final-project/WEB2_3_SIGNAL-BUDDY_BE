@@ -33,7 +33,7 @@ public class CrossroadController {
         @Min(1) @RequestParam("page") int page,
         @Min(10) @RequestParam("size") int pageSize
     ) {
-        crossroadService.saveCrossroadDates(page, pageSize);
+        crossroadService.saveCrossroadData(page, pageSize);
         return ResponseEntity.ok(ApiResponse.createSuccessWithNoData());
     }
 

@@ -44,7 +44,7 @@ public class CrossroadService {
     private final CrossroadMapper crossroadMapper;
 
     @Transactional
-    public void saveCrossroadDates(int page, int pageSize) {
+    public void saveCrossroadData(int page, int pageSize) {
         List<CrossroadApiResponse> responseList =
             crossroadProvider.requestCrossroadApi(page, pageSize);
 
@@ -93,18 +93,12 @@ public class CrossroadService {
             return responseRedis;
         }
 
-        try{
-            CrossroadResponse responseDB = crossroadMapper.toResponse(
-                crossroadRepository.findByCrossroadId(id)
-            );
-            crossroadRedisRepository.save(responseDB);
+        CrossroadResponse responseDB = crossroadMapper.toResponse(
+            crossroadRepository.findByIdOrThrow(id)
+        );
+        crossroadRedisRepository.save(responseDB);
 
-            return responseDB;
-
-        } catch (NullPointerException e) {
-            log.error("❌ crossroad Not Found : {}", e.getMessage(), e);
-            throw new BusinessException(CrossroadErrorCode.NOT_FOUND_CROSSROAD);
-        }
+        return responseDB;
     }
 
     public CrossroadStateResponse checkSignalState(Long crossroadId) {
