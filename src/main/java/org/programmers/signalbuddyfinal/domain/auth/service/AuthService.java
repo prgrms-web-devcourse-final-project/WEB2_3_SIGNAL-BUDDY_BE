@@ -4,7 +4,9 @@ import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.programmers.signalbuddyfinal.domain.auth.dto.LoginRequest;
+import org.programmers.signalbuddyfinal.domain.auth.dto.LoginResponse;
 import org.programmers.signalbuddyfinal.domain.auth.dto.NewTokenResponse;
+import org.programmers.signalbuddyfinal.domain.auth.dto.ReissueResponse;
 import org.programmers.signalbuddyfinal.domain.auth.dto.SocialLoginRequest;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
@@ -13,7 +15,6 @@ import org.programmers.signalbuddyfinal.domain.member.mapper.MemberMapper;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
 import org.programmers.signalbuddyfinal.domain.notification.service.FcmService;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
-import org.programmers.signalbuddyfinal.global.exception.advice.dto.ErrorResponse;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
 import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
 import org.programmers.signalbuddyfinal.global.security.jwt.JwtService;
@@ -38,19 +39,17 @@ public class AuthService {
     private final FcmService fcmService;
 
     // 토큰 재발행
-    public ResponseEntity<ApiResponse<Object>> reissue(String refreshToken, String accessToken) {
+    public ReissueResponse reissue(String refreshToken, String accessToken) {
         NewTokenResponse newTokenResponse = jwtService.reissue(refreshToken, accessToken);
         HttpHeaders headers = new HttpHeaders();
         accessTokenSend2Client(headers, newTokenResponse.getAccessToken());
         refreshTokenSend2Client(headers, newTokenResponse.getRefreshToken(), 7);
 
-        return ResponseEntity.ok()
-            .headers(headers)
-            .body(ApiResponse.createSuccessWithNoData());
+        return new ReissueResponse(headers);
     }
 
     // 기본 로그인
-    public ResponseEntity<ApiResponse<Object>> login(
+    public LoginResponse login(
         String deviceTokenCookie,
         LoginRequest loginRequest
     ) {
@@ -58,7 +57,7 @@ public class AuthService {
     }
 
     // 소셜 로그인
-    public ResponseEntity<ApiResponse<Object>> socialLogin(
+    public LoginResponse socialLogin(
         String deviceToken,
         SocialLoginRequest socialLoginRequest) {
 
@@ -67,15 +66,14 @@ public class AuthService {
             .orElse(null);
 
         if (existMember == null) {
-            return ResponseEntity.ok().body(ApiResponse.createError(
-                new ErrorResponse(MemberErrorCode.NOT_FOUND_MEMBER).getMessage()));
+            return LoginResponse.fail(MemberErrorCode.NOT_FOUND_MEMBER.getMessage());
         }
 
         return commonLogin(deviceToken, existMember.getEmail(), null);
     }
 
     // 공통 로그인 로직
-    private ResponseEntity<ApiResponse<Object>> commonLogin(
+    private LoginResponse commonLogin(
         String deviceTokenCookie,
         String email, String password
     ) {
@@ -84,8 +82,7 @@ public class AuthService {
         try {
             authentication = createAuthentication(email, password);
         } catch (BusinessException e) {
-            return ResponseEntity.ok()
-                .body(ApiResponse.createError(new ErrorResponse(e.getErrorCode()).getMessage()));
+            return LoginResponse.fail(e.getErrorCode().getMessage());
         }
 
         String accessToken = jwtUtil.generateAccessToken(authentication);
@@ -97,9 +94,7 @@ public class AuthService {
 
         fcmService.loginToken(deviceTokenCookie);
 
-        return ResponseEntity.ok()
-            .headers(headers)
-            .body(ApiResponse.createSuccess(createResponseBody(authentication)));
+        return LoginResponse.success(headers, createResponseBody(authentication));
     }
 
     public ResponseEntity<ApiResponse<Object>> logout(
