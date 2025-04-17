@@ -1,5 +1,6 @@
 package org.programmers.signalbuddyfinal.global.config;
 
+import org.programmers.signalbuddyfinal.domain.air_quality.dto.CachedAirQuality;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -30,6 +31,13 @@ public class RedisConfig {
         redisTemplate.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
 
         return redisTemplate;
+    }
+
+    @Bean
+    public RedisTemplate<String, CachedAirQuality> cachedAirQualityRedisTemplate(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, CachedAirQuality> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+        return template;
     }
 
     @Bean
