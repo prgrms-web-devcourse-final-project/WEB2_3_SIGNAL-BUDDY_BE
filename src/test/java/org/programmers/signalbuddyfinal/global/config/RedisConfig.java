@@ -34,6 +34,13 @@ public class RedisConfig {
     }
 
     @Bean
+    public RedisTemplate<String, CachedAirQuality> cachedAirQualityRedisTemplate(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, CachedAirQuality> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+        return template;
+    }
+
+    @Bean
     public PlatformTransactionManager transactionManager() {
         return new JpaTransactionManager();
     }
