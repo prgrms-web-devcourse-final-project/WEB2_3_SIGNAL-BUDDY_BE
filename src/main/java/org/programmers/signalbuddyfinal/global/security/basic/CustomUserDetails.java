@@ -2,6 +2,7 @@ package org.programmers.signalbuddyfinal.global.security.basic;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.springframework.security.core.GrantedAuthority;
@@ -63,5 +64,16 @@ public class CustomUserDetails implements UserDetails {
     @Override
     public String getUsername() {
         return email;
+    }
+
+
+    public CustomUserDetails(Member member) {
+        this.memberId = member.getMemberId();
+        this.email = member.getEmail();
+        this.password = member.getPassword();
+        this.profileImageUrl = member.getProfileImageUrl();
+        this.nickname = member.getNickname();
+        this.role = member.getRole();
+        this.status = member.getMemberStatus();
     }
 }

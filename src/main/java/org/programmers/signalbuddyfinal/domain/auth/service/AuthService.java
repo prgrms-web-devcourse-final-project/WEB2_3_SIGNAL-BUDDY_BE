@@ -99,8 +99,8 @@ public class AuthService {
 
     public ResponseEntity<ApiResponse<Object>> logout(
         String deviceTokenCookie,
-        String refreshToken, String accessToken
-    ) {
+        String accessToken, String refreshToken
+        ) {
         jwtService.logout(accessToken);
         fcmService.logoutToken(deviceTokenCookie);
 
