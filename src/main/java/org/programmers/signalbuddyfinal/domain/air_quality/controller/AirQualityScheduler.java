@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-@Component
+@Configuration
 @RequiredArgsConstructor
 public class AirQualityScheduler {
     private final AirQualityService airQualityService;
