@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.auth.dto.EmailRequest;
 import org.programmers.signalbuddyfinal.domain.auth.dto.LoginRequest;
 import org.programmers.signalbuddyfinal.domain.auth.dto.LoginResponse;
+import org.programmers.signalbuddyfinal.domain.auth.dto.LogoutResponse;
 import org.programmers.signalbuddyfinal.domain.auth.dto.ReissueResponse;
 import org.programmers.signalbuddyfinal.domain.auth.dto.SocialLoginRequest;
 import org.programmers.signalbuddyfinal.domain.auth.dto.VerifyCodeRequest;
@@ -98,6 +99,8 @@ public class AuthController {
         @CookieValue(name = "refresh-token") String refreshToken,
         @RequestHeader("Authorization") String accessToken
     ) {
-        return authService.logout(deviceTokenCookie, refreshToken, accessToken);
+        LogoutResponse logoutResponse = authService.logout(deviceTokenCookie, refreshToken, accessToken);
+        return ResponseEntity.ok().headers(logoutResponse.getHttpHeaders())
+            .body(ApiResponse.createSuccessWithNoData());
     }
 }

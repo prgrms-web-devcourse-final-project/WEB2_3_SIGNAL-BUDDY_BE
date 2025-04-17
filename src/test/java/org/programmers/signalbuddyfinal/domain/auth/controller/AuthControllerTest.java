@@ -1,6 +1,7 @@
 package org.programmers.signalbuddyfinal.domain.auth.controller;
 
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
@@ -11,19 +12,18 @@ import static org.springframework.restdocs.operation.preprocess.Preprocessors.pr
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.prettyPrint;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.epages.restdocs.apispec.ResourceSnippetParameters;
 import jakarta.servlet.http.Cookie;
-import java.util.StringTokenizer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.programmers.signalbuddyfinal.domain.auth.dto.EmailRequest;
 import org.programmers.signalbuddyfinal.domain.auth.dto.LoginRequest;
 import org.programmers.signalbuddyfinal.domain.auth.dto.LoginResponse;
+import org.programmers.signalbuddyfinal.domain.auth.dto.LogoutResponse;
 import org.programmers.signalbuddyfinal.domain.auth.dto.ReissueResponse;
 import org.programmers.signalbuddyfinal.domain.auth.dto.SocialLoginRequest;
 import org.programmers.signalbuddyfinal.domain.auth.dto.VerifyCodeRequest;
@@ -39,8 +39,6 @@ import org.programmers.signalbuddyfinal.domain.notification.service.FcmService;
 import org.programmers.signalbuddyfinal.domain.social.entity.Provider;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
 import org.programmers.signalbuddyfinal.global.support.ControllerTest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -246,16 +244,13 @@ class AuthControllerTest extends ControllerTest {
     @DisplayName("로그아웃")
     @Test
     void successLogout() throws Exception {
-
         //given
-        ApiResponse apiResponse = ApiResponse.createSuccessWithNoData();
-        ResponseEntity<ApiResponse<Object>> response = ResponseEntity.ok()
-            .header("Set-Cookie","refresh-token=" + loginResponse.getHttpHeaders().getFirst("Set-Cookie"))
-            .header("Authorization", "Bearer " +  loginResponse.getHttpHeaders().getFirst("Authorization"))
-            .body(apiResponse);
+        HttpHeaders afterLogoutHeaders = new HttpHeaders();
+        afterLogoutHeaders.add(HttpHeaders.SET_COOKIE, "refresh-token=deletedToken; Max-Age=0; Path=/; HttpOnly");
+        LogoutResponse logoutResponse = new LogoutResponse(afterLogoutHeaders);
 
         doNothing().when(fcmService).logoutToken(anyString());
-        when(authService.logout(anyString(), anyString(), anyString())).thenReturn(response);
+        when(authService.logout(anyString(), anyString(), anyString())).thenReturn(logoutResponse);
 
         //when, then
         mockMvc.perform(post("/api/auth/logout")
@@ -263,6 +258,7 @@ class AuthControllerTest extends ControllerTest {
                 .cookie(new Cookie("refresh-token", loginResponse.getHttpHeaders().getFirst("Set-Cookie")))
                 .header("Authorization", "Bearer " + loginResponse.getHttpHeaders().getFirst("Authorization")))
             .andExpect(status().isOk())
+            .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Max-Age=0")))
             .andDo(document("로그아웃",
                     preprocessRequest(prettyPrint()),
                     preprocessResponse(prettyPrint()),

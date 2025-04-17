@@ -14,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.programmers.signalbuddyfinal.domain.auth.dto.LoginRequest;
 import org.programmers.signalbuddyfinal.domain.auth.dto.LoginResponse;
+import org.programmers.signalbuddyfinal.domain.auth.dto.LogoutResponse;
 import org.programmers.signalbuddyfinal.domain.auth.dto.NewTokenResponse;
 import org.programmers.signalbuddyfinal.domain.auth.dto.ReissueResponse;
 import org.programmers.signalbuddyfinal.domain.auth.dto.SocialLoginRequest;
@@ -94,10 +95,9 @@ class AuthServiceTest extends ServiceTest implements RedisTestContainer {
         savedMember = memberRepository.save(member);
         savedSocialProvider = socialProviderRepository.save(socialProvider);
         doNothing().when(fcmService).loginToken(anyString());
-        doNothing().when(fcmService).logoutToken(anyString());
     }
 
-    @DisplayName("기본 로그인에 성공한다")
+    @DisplayName("기본 로그인에 성공한다.")
     @Test
     void basic_login_success() {
         // given
@@ -114,7 +114,7 @@ class AuthServiceTest extends ServiceTest implements RedisTestContainer {
             "refresh-token");
     }
 
-    @DisplayName("소셜 로그인에 성공한다")
+    @DisplayName("소셜 로그인에 성공한다.")
     @Test
     void social_login_success() {
         // given
@@ -278,5 +278,26 @@ class AuthServiceTest extends ServiceTest implements RedisTestContainer {
             .hasMessageContaining(AuthErrorCode.UNAUTHORIZED.getMessage());
 
         verify(jwtService, times(1)).reissue(originAccessToken, null);
+    }
+
+    @DisplayName("로그아웃에 성공한다.")
+    @Test
+    void logout_success(){
+        // given
+        String accessToken = "access-token";
+        String refreshToken = "refresh-token";
+
+        doNothing().when(jwtService).logout(accessToken);
+        doNothing().when(fcmService).logoutToken(anyString());
+
+        // when
+        LogoutResponse actualLogoutResponse = authService.logout(deviceTokenCookie, accessToken, refreshToken);
+
+        // then
+        verify(jwtService, times(1)).logout(accessToken);
+
+        String afterLogoutSetCookieHeader = actualLogoutResponse.getHttpHeaders().getFirst("Set-Cookie");
+
+        assertThat(afterLogoutSetCookieHeader).contains("Max-Age=0");
     }
 }

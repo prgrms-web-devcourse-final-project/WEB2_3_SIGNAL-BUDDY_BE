@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.programmers.signalbuddyfinal.domain.auth.dto.LoginRequest;
 import org.programmers.signalbuddyfinal.domain.auth.dto.LoginResponse;
+import org.programmers.signalbuddyfinal.domain.auth.dto.LogoutResponse;
 import org.programmers.signalbuddyfinal.domain.auth.dto.NewTokenResponse;
 import org.programmers.signalbuddyfinal.domain.auth.dto.ReissueResponse;
 import org.programmers.signalbuddyfinal.domain.auth.dto.SocialLoginRequest;
@@ -97,7 +98,7 @@ public class AuthService {
         return LoginResponse.success(headers, createResponseBody(authentication));
     }
 
-    public ResponseEntity<ApiResponse<Object>> logout(
+    public LogoutResponse logout(
         String deviceTokenCookie,
         String accessToken, String refreshToken
         ) {
@@ -107,9 +108,7 @@ public class AuthService {
         HttpHeaders headers = new HttpHeaders();
         refreshTokenSend2Client(headers, refreshToken, 0);
 
-        return ResponseEntity.ok()
-            .headers(headers)
-            .body(ApiResponse.createSuccessWithNoData());
+        return new LogoutResponse(headers);
     }
 
     // Authentication 객체 생성
