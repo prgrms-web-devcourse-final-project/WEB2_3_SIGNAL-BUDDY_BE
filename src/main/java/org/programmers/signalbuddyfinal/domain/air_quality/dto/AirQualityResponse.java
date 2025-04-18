@@ -9,7 +9,6 @@ import lombok.Getter;
 @Builder
 @Data
 public class AirQualityResponse implements Serializable {
-
     private String grade;
     private String pm10;
     private String pm25;
