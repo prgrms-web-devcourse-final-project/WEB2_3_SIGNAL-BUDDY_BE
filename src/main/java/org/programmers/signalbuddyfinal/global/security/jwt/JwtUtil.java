@@ -1,12 +1,15 @@
 package org.programmers.signalbuddyfinal.global.security.jwt;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import java.security.Key;
+import java.time.Duration;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 import javax.crypto.SecretKey;
 import lombok.extern.slf4j.Slf4j;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
@@ -44,6 +47,7 @@ public class JwtUtil {
         this.key = Keys.hmacShaKeyFor(keyBytes);
     }
 
+    // 액세스 토큰 생성
     public String generateAccessToken(Authentication authentication) {
 
         CustomUserDetails nowMember = authentication2User(authentication);
@@ -58,6 +62,7 @@ public class JwtUtil {
             .compact();
     }
 
+    // 리프레시 토큰 생성
     @Transactional
     public String generateRefreshToken(Authentication authentication) {
 
@@ -76,6 +81,7 @@ public class JwtUtil {
         return refreshToken;
     }
 
+    // 토큰에서 Claim 추출
     public Claims parseToken(String token) {
 
         return Jwts.parser()
@@ -85,6 +91,24 @@ public class JwtUtil {
                 .getPayload();
     }
 
+    // 토큰에서 Claim 추출
+    public Claims extractClaimsOrThrow(String type, String token) {
+
+        try {
+            return parseToken(token);
+        } catch (ExpiredJwtException e) {
+            log.info(e.getMessage());
+            if (type.equals("accessToken")) {
+                return e.getClaims();
+            }
+            throw new BusinessException(TokenErrorCode.EXPIRED_REFRESH_TOKEN);
+        } catch (JwtException e) {
+            log.info(e.getMessage());
+            throw new BusinessException(TokenErrorCode.INVALID_TOKEN);
+        }
+    }
+
+    // Bearer를 제거한 액세스 토큰 값 추출
     public String extractAccessToken(String bearerToken){
 
         if (bearerToken == null || !bearerToken.startsWith("Bearer ")) {
@@ -106,11 +130,33 @@ public class JwtUtil {
         return (CustomUserDetails) authentication.getPrincipal();
     }
 
+    // 기존의 액세스 토큰을 블랙리스트로 추가
+    public void addBlackListExistingAccessToken(String accessToken, Date expirationDate) {
+
+        redisTemplate.opsForValue()
+            .set("pending-blacklist:access-token:"+accessToken, "pending",5, TimeUnit.MINUTES);
+
+        redisTemplate.opsForValue()
+            .set("blacklist:access-token:" + accessToken, expirationDate.toString(),
+                Duration.between(new Date().toInstant(), expirationDate.toInstant()).getSeconds(),
+                TimeUnit.SECONDS);
+    }
+
+    // 블랙리스트 체크
     public boolean checkBlacklist(String accessToken) {
         Boolean isInBlackList = redisTemplate.hasKey("blacklist:access-token:" + accessToken);
         Boolean isInPendingBlackList = redisTemplate.hasKey(("pending-blacklist:access-token:" + accessToken));
 
         return Boolean.TRUE.equals(isInBlackList)&& Boolean.FALSE.equals(isInPendingBlackList);
+    }
+
+    // 액세스 토큰 유효기간 체크
+    public void validateAccessTokenExpiration(Claims accessTokenClaims, String accessToken) {
+        Date accessTokenExpirationDate = accessTokenClaims.getExpiration();
+
+        if(accessTokenExpirationDate.after(new Date())) {
+            addBlackListExistingAccessToken(accessToken, accessTokenExpirationDate);
+        }
     }
 
     // 테스트용
