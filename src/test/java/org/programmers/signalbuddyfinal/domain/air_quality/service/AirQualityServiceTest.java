@@ -1,4 +1,4 @@
-package org.programmers.signalbuddyfinal.domain.air_quality;
+package org.programmers.signalbuddyfinal.domain.air_quality.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -6,16 +6,13 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.time.LocalDateTime;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.programmers.signalbuddyfinal.domain.air_quality.dto.AirQualityResponse;
 import org.programmers.signalbuddyfinal.domain.air_quality.dto.CachedAirQuality;
-import org.programmers.signalbuddyfinal.domain.air_quality.service.AirQualityService;
 import org.programmers.signalbuddyfinal.global.config.RedisConfig;
 import org.programmers.signalbuddyfinal.global.db.RedisTestContainer;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
