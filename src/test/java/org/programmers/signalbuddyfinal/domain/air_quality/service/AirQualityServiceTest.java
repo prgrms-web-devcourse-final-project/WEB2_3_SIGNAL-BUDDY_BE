@@ -3,7 +3,6 @@ package org.programmers.signalbuddyfinal.domain.air_quality.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.time.LocalDateTime;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterAll;
@@ -42,7 +41,7 @@ public class AirQualityServiceTest extends ServiceTest implements RedisTestConta
     @Autowired
     private AirQualityService airQualityService;
     @Autowired
-    private RedisTemplate<String, CachedAirQuality> redisTemplate;
+    private RedisTemplate<Object, Object> redisTemplate;
     private static MockWebServer mockWebServer;
     private String key = "air-quality: ";
     private static CachedAirQuality cache;
@@ -56,8 +55,7 @@ public class AirQualityServiceTest extends ServiceTest implements RedisTestConta
             .pm10("61")
             .pm25("20")
             .build();
-        cache = new CachedAirQuality(airQualityResponse, true,
-            LocalDateTime.of(2025, 1, 1, 1, 1));
+        cache = new CachedAirQuality(airQualityResponse, true);
     }
 
     @BeforeEach
@@ -90,7 +88,7 @@ public class AirQualityServiceTest extends ServiceTest implements RedisTestConta
         createMockWebServer(createResponse());
 
         AirQualityResponse response = airQualityService.getAirQuality();
-        CachedAirQuality cache = redisTemplate.opsForValue().get(key);
+        CachedAirQuality cache = (CachedAirQuality) redisTemplate.opsForValue().get(key);
 
         assertThat(response.getGrade()).isEqualTo("보통");
         assertThat(cache).isNotNull();
@@ -128,10 +126,10 @@ public class AirQualityServiceTest extends ServiceTest implements RedisTestConta
 
         createMockWebServer(createFailResponse());
         redisTemplate.opsForValue().set(key, cache);
-        CachedAirQuality before = redisTemplate.opsForValue().get(key);
+        CachedAirQuality before = (CachedAirQuality) redisTemplate.opsForValue().get(key);
 
         airQualityService.updateAriQuality();
-        CachedAirQuality after = redisTemplate.opsForValue().get(key);
+        CachedAirQuality after = (CachedAirQuality) redisTemplate.opsForValue().get(key);
 
         assertThat(after.isFresh()).isFalse();
         assertThat(after.getData()).isEqualTo(before.getData());

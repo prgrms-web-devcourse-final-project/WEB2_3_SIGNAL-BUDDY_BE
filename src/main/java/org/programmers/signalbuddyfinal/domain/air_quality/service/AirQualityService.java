@@ -1,7 +1,6 @@
 package org.programmers.signalbuddyfinal.domain.air_quality.service;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,13 +18,13 @@ import org.springframework.stereotype.Service;
 public class AirQualityService {
 
     private final AirQualityProvider airQualityProvider;
-    private final RedisTemplate<String, CachedAirQuality> redisTemplate;
+    private final RedisTemplate<Object, Object> redisTemplate;
 
     private static final String key = "air-quality: ";
     private static final Duration TTL = Duration.ofHours(2);
 
     public AirQualityResponse getAirQuality() {
-        CachedAirQuality cached = redisTemplate.opsForValue().get(key);
+        CachedAirQuality cached = (CachedAirQuality) redisTemplate.opsForValue().get(key);
         if (cached != null && cached.isFresh()) {
             return cached.getData();
         }
@@ -42,7 +41,7 @@ public class AirQualityService {
             return response;
         } else {
             // 응답 실패
-            CachedAirQuality previous = redisTemplate.opsForValue().get(key);
+            CachedAirQuality previous = (CachedAirQuality) redisTemplate.opsForValue().get(key);
             if (previous != null) {
                 saveToCache(previous.getData(), false);
                 return previous.getData();
@@ -60,7 +59,6 @@ public class AirQualityService {
     }
 
     private void saveToCache(AirQualityResponse airQualityResponse, boolean fresh) {
-        redisTemplate.opsForValue().set(key, new CachedAirQuality(airQualityResponse, fresh,
-            LocalDateTime.now()), TTL);
+        redisTemplate.opsForValue().set(key, new CachedAirQuality(airQualityResponse, fresh), TTL);
     }
 }
