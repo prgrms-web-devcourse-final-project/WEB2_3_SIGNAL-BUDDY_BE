@@ -30,10 +30,11 @@ public class AdminFeedbackService {
         if (!MemberRole.ADMIN.equals(user.getRole())) {
             throw new BusinessException(GlobalErrorCode.ADMIN_ONLY);
         }
+
         return new PageResponse<>(
             feedbackRepository.findAllByFilter(
                 pageable, target, request.getKeyword(), request.getStatus(),
-                request.getCategory(), startDate, endDate,deleted
+                request.getCategory(), startDate, endDate, deleted
             )
         );
     }

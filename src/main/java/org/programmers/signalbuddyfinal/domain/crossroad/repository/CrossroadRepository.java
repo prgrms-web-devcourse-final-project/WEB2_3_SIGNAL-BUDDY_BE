@@ -12,9 +12,7 @@ public interface CrossroadRepository extends JpaRepository<Crossroad, Long>,
     CustomCrossroadRepository {
 
     default Crossroad findByIdOrThrow(Long id) {
-        return findById(id).orElseThrow(
-            () -> new BusinessException(CrossroadErrorCode.NOT_FOUND_CROSSROAD));
+        return findById(id)
+            .orElseThrow(() -> new BusinessException(CrossroadErrorCode.NOT_FOUND_CROSSROAD));
     }
-
-    Crossroad findByCrossroadId(Long CrossroadId);
 }
