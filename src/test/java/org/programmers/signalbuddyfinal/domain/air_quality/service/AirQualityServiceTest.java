@@ -1,13 +1,12 @@
 package org.programmers.signalbuddyfinal.domain.air_quality.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.programmers.signalbuddyfinal.domain.air_quality.dto.AirQualityResponse;
@@ -18,73 +17,65 @@ import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.support.ServiceTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.util.TestPropertyValues;
-import org.springframework.context.ApplicationContextInitializer;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 
+import java.io.IOException;
+
 @SpringBootTest
-@ContextConfiguration(initializers = AirQualityServiceTest.MockServerInitializer.class)
 @Import(RedisConfig.class)
 @TestPropertySource(properties = {
     "schedule.air-quality-api.cron=0 0 0/1 * * ?",
     "schedule.air-quality-api.lockAtMostFor=10m",
     "schedule.air-quality-api.lockAtLeastFor=50m"
 })
-
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class AirQualityServiceTest extends ServiceTest implements RedisTestContainer {
 
     @Autowired
     private AirQualityService airQualityService;
+
     @Autowired
     private RedisTemplate<Object, Object> redisTemplate;
+
     private static MockWebServer mockWebServer;
-    private String key = "air-quality: ";
-    private static CachedAirQuality cache;
+
+    private final String key = "air-quality: ";
+
+    private static CachedAirQuality cachedAirQuality;
 
     @BeforeAll
-    static void setUp() throws Exception {
+    static void startMockServer() throws IOException {
         mockWebServer = new MockWebServer();
         mockWebServer.start();
-        AirQualityResponse airQualityResponse = AirQualityResponse.builder()
+
+        AirQualityResponse response = AirQualityResponse.builder()
             .grade("보통")
             .pm10("61")
             .pm25("20")
             .build();
-        cache = new CachedAirQuality(airQualityResponse, true);
-    }
-
-    @BeforeEach
-    void clearRedis() {
-        RedisConnectionFactory factory = redisTemplate.getConnectionFactory();
-        if (factory != null) {
-            factory.getConnection().serverCommands().flushAll();
-        }
+        cachedAirQuality = new CachedAirQuality(response, true);
     }
 
     @AfterAll
-    static void tearDown() throws Exception {
+    static void stopMockServer() throws IOException {
         mockWebServer.shutdown();
     }
 
-    public static class MockServerInitializer implements
-        ApplicationContextInitializer<ConfigurableApplicationContext> {
-
-        @Override
-        public void initialize(ConfigurableApplicationContext applicationContext) {
-            String baseUrl = "http://localhost:" + mockWebServer.getPort();
-            TestPropertyValues.of("air-quality.base-url=" + baseUrl)
-                .applyTo(applicationContext.getEnvironment());
-        }
+    @DynamicPropertySource
+    static void overrideProperties(DynamicPropertyRegistry registry) {
+        registry.add("air-quality.base-url", () -> "http://localhost:" + mockWebServer.getPort());
     }
 
-    @DisplayName("첫 요청 청공 시 응답 반환 및 캐싱 테스트")
+    @DisplayName("첫 요청 성공 시 응답 반환 및 캐싱 테스트")
     @Test
     void successRequestTest() {
+        flushRedis();
         createMockWebServer(createResponse());
 
         AirQualityResponse response = airQualityService.getAirQuality();
@@ -96,13 +87,13 @@ public class AirQualityServiceTest extends ServiceTest implements RedisTestConta
         assertThat(cache.isFresh()).isTrue();
     }
 
-    @DisplayName("두번 째 요청시 캐싱된 데이터 반환")
+    @DisplayName("두 번째 요청 시 캐싱된 데이터 반환")
     @Test
     void successSecondRequestTest() {
-
+        flushRedis();
         int count = mockWebServer.getRequestCount();
         createMockWebServer(createResponse());
-        redisTemplate.opsForValue().set(key, cache);
+        redisTemplate.opsForValue().set(key, cachedAirQuality);
 
         AirQualityResponse response = airQualityService.getAirQuality();
 
@@ -116,16 +107,18 @@ public class AirQualityServiceTest extends ServiceTest implements RedisTestConta
     @DisplayName("failBack 실패 테스트")
     @Test
     void failBackRequestTest() {
+        flushRedis();
         createMockWebServer(createFailResponse());
+
         assertThrows(BusinessException.class, () -> airQualityService.getAirQuality());
     }
 
     @DisplayName("failBack 성공 테스트")
     @Test
     void failBackSuccessTest() {
-
+        flushRedis();
         createMockWebServer(createFailResponse());
-        redisTemplate.opsForValue().set(key, cache);
+        redisTemplate.opsForValue().set(key, cachedAirQuality);
         CachedAirQuality before = (CachedAirQuality) redisTemplate.opsForValue().get(key);
 
         airQualityService.updateAriQuality();
@@ -133,15 +126,20 @@ public class AirQualityServiceTest extends ServiceTest implements RedisTestConta
 
         assertThat(after.isFresh()).isFalse();
         assertThat(after.getData()).isEqualTo(before.getData());
-
     }
 
-    private void createMockWebServer(String response){
+    private void flushRedis() {
+        RedisConnectionFactory factory = redisTemplate.getConnectionFactory();
+        if (factory != null) {
+            factory.getConnection().serverCommands().flushAll();
+        }
+    }
+
+    private void createMockWebServer(String response) {
         mockWebServer.enqueue(new MockResponse()
             .setBody(response)
             .addHeader("Content-Type", "application/json")
-            .setResponseCode(200)
-        );
+            .setResponseCode(200));
     }
 
     private String createResponse() {
@@ -172,13 +170,15 @@ public class AirQualityServiceTest extends ServiceTest implements RedisTestConta
     }
 
     private String createFailResponse() {
-        return "<RESULT>\n"
-            + "<script/>\n"
-            + "<script/>\n"
-            + "<CODE>ERROR-300</CODE>\n"
-            + "<MESSAGE>\n"
-            + "<![CDATA[ 필수 값이 누락되어 있습니다. 요청인자를 참고 하십시오. ]]>\n"
-            + "</MESSAGE>\n"
-            + "</RESULT>";
+        return """
+                <RESULT>
+                <script/>
+                <script/>
+                <CODE>ERROR-300</CODE>
+                <MESSAGE>
+                <![CDATA[ 필수 값이 누락되어 있습니다. 요청인자를 참고 하십시오. ]]>
+                </MESSAGE>
+                </RESULT>
+            """;
     }
 }
