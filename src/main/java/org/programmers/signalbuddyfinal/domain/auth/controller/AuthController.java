@@ -51,9 +51,9 @@ public class AuthController {
 
     @PostMapping("/reissue")
     public ResponseEntity<ApiResponse<Object>> reissue(
-        @CookieValue(name = "refresh-token") String refreshToken,
-        @RequestHeader("Authorization") String accessToken) {
-        ReissueResponse reissueResponse = authService.reissue(refreshToken, accessToken);
+        @RequestHeader("Authorization") String accessToken,
+        @CookieValue(name = "refresh-token") String refreshToken) {
+        ReissueResponse reissueResponse = authService.reissue(accessToken, refreshToken);
         return ResponseEntity.ok().headers(reissueResponse.getHttpHeaders())
             .body(ApiResponse.createSuccessWithNoData());
     }
@@ -96,10 +96,10 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Object>> logout(
         @CookieValue(name = "device-token", required = false) String deviceTokenCookie,
-        @CookieValue(name = "refresh-token") String refreshToken,
-        @RequestHeader("Authorization") String accessToken
+        @RequestHeader("Authorization") String accessToken,
+        @CookieValue(name = "refresh-token") String refreshToken
     ) {
-        LogoutResponse logoutResponse = authService.logout(deviceTokenCookie, refreshToken, accessToken);
+        LogoutResponse logoutResponse = authService.logout(deviceTokenCookie, accessToken, refreshToken);
         return ResponseEntity.ok().headers(logoutResponse.getHttpHeaders())
             .body(ApiResponse.createSuccessWithNoData());
     }

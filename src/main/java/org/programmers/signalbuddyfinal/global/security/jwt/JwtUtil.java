@@ -31,12 +31,12 @@ public class JwtUtil {
     private final Key key;
     private final RedisTemplate<String, String> redisTemplate;
 
-    @Value("${jwt.access-token-expiration-time}")
     private Long accessTokenExpiration;
-    @Value("${jwt.refresh-token-expiration-time}")
     private Long refreshTokenExpiration;
 
     public JwtUtil(@Value("${jwt.secret}") String secretKey,
+        @Value("${jwt.access-token-expiration-time}") Long accessTokenExpiration,
+        @Value("${jwt.refresh-token-expiration-time}") Long refreshTokenExpiration,
         RefreshTokenRepository refreshTokenRepository,
         CustomUserDetailsService customUserDetailsService,
         RedisTemplate<String, String> redisTemplate) {
@@ -45,6 +45,8 @@ public class JwtUtil {
         this.redisTemplate = redisTemplate;
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         this.key = Keys.hmacShaKeyFor(keyBytes);
+        this.accessTokenExpiration = accessTokenExpiration;
+        this.refreshTokenExpiration = refreshTokenExpiration;
     }
 
     // 액세스 토큰 생성
@@ -130,7 +132,7 @@ public class JwtUtil {
         return (CustomUserDetails) authentication.getPrincipal();
     }
 
-    // 기존의 액세스 토큰을 블랙리스트로 추가
+    // 액세스 토큰을 블랙리스트로 추가
     public void addBlackListExistingAccessToken(String accessToken, Date expirationDate) {
 
         redisTemplate.opsForValue()

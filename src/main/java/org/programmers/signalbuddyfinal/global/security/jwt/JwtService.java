@@ -27,7 +27,7 @@ public class JwtService {
     private final RedisTemplate<String, String> redisTemplate;
 
     public NewTokenResponse reissue(String accessToken, String refreshToken) {
-
+log.info("accessToken: {} refreshToken: {}", accessToken, refreshToken);
         String extractAccessToken = jwtUtil.extractAccessToken(accessToken);
 
         Claims claimsAccessToken = jwtUtil.extractClaimsOrThrow("accessToken", extractAccessToken);

@@ -47,20 +47,20 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         FilterChain filterChain) throws ServletException, IOException {
 
         if (isExcludedPath(request)) {
-            doFilter(request, response, filterChain);
+            filterChain.doFilter(request, response);
             return;
         }
 
         String accessToken = null;
 
         try {
+            log.info("Access token: {}", request.getHeader("Authorization"));
             accessToken = jwtUtil.extractAccessToken(request.getHeader("Authorization"));
-            log.debug("Access token: {}", accessToken);
             jwtUtil.parseToken(accessToken);
         } catch (BusinessException e) {
             if (e.getErrorCode() == TokenErrorCode.ACCESS_TOKEN_NOT_EXIST) {
                 if (antPathMatcher.match("/ws/**", request.getRequestURI())) {
-                    doFilter(request, response, filterChain);
+                    filterChain.doFilter(request, response);
                     return;
                 }
                 request.setAttribute(EXCEPTION_ATTRIBUTE, "ACCESS_TOKEN_NOT_EXIST");
