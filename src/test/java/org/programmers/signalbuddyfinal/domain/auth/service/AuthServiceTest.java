@@ -99,7 +99,7 @@ class AuthServiceTest extends ServiceTest implements RedisTestContainer {
 
     @DisplayName("기본 로그인에 성공한다.")
     @Test
-    void basic_login_success() {
+    void givenRightData_whenBasicLogin_thenSuccess() {
         // given
         LoginRequest loginRequest = new LoginRequest(savedMember.getEmail(), "password");
 
@@ -116,7 +116,7 @@ class AuthServiceTest extends ServiceTest implements RedisTestContainer {
 
     @DisplayName("소셜 로그인에 성공한다.")
     @Test
-    void social_login_success() {
+    void givenRightData_whenSocialLogin_thenSuccess() {
         // given
         SocialLoginRequest socialLoginRequest = new SocialLoginRequest(
             savedSocialProvider.getOauthProvider(), savedSocialProvider.getSocialId());
@@ -135,7 +135,7 @@ class AuthServiceTest extends ServiceTest implements RedisTestContainer {
 
     @DisplayName("탈퇴한 회원으로 기본 로그인에 실패한다.")
     @Test
-    void basic_login_fail_withdrawal_member() {
+    void givenWithdrawalMember_whenBasicLogin_thenReturnWithdrawnMemberMessage() {
         // given
         Member withdrawalMember = Member.builder()
             .email("withdrawal@test.com")
@@ -159,7 +159,7 @@ class AuthServiceTest extends ServiceTest implements RedisTestContainer {
 
     @DisplayName("비밀번호 불일치로 기본 로그인에 실패한다.")
     @Test
-    void basic_login_fail_wrong_password() {
+    void givenNotMatchedPassword_whenBasicLogin_thenReturnNotFoundMemberMessage() {
         // given
         LoginRequest loginRequest = new LoginRequest(savedMember.getEmail(), "wrongPassword");
 
@@ -173,7 +173,7 @@ class AuthServiceTest extends ServiceTest implements RedisTestContainer {
 
     @DisplayName("회원가입되지 않은 계정으로 기본 로그인에 실패한다.")
     @Test
-    void basic_login_fail_not_exist_account() {
+    void givenNotExistentAccount_whenBasicLogin_thenReturnNotFoundMemberMessage() {
         // given
         String email = "not-exist-email@test.com";
         String password = "password";
@@ -189,7 +189,7 @@ class AuthServiceTest extends ServiceTest implements RedisTestContainer {
 
     @DisplayName("회원가입되지 않은 계정으로 소셜 로그인에 실패한다.")
     @Test
-    void social_login_fail_not_exist_account() {
+    void givenNotExistentAccount_whenSocialLogin_thenReturnNotFoundMemberMessage() {
         // given
         SocialLoginRequest socialLoginRequest = new SocialLoginRequest(Provider.GOOGLE,
             "not-exist-provider");
@@ -205,7 +205,7 @@ class AuthServiceTest extends ServiceTest implements RedisTestContainer {
 
     @DisplayName("탈퇴한 회원으로 소셜 로그인에 실패한다.")
     @Test
-    void social_login_fail_withdrawal_member() {
+    void givenWithdrawalMember_whenSocialLogin_thenReturnWithdrawnMemberMessage() {
         // given
         Member withdrawalSocialAccount = Member.builder()
             .email("withdrawal@test.com")
@@ -239,7 +239,7 @@ class AuthServiceTest extends ServiceTest implements RedisTestContainer {
 
     @DisplayName("토큰 재발행에 성공한다.")
     @Test
-    void token_reissue_success() {
+    void givenValidTokens_whenReissue_thenReturnNewTokens() {
         // given
         String originRefreshToken = "origin-refresh-token";
         String originAccessToken = "origin-access-token";
@@ -265,7 +265,7 @@ class AuthServiceTest extends ServiceTest implements RedisTestContainer {
 
     @DisplayName("리프레시 토큰이 없어 토큰 재발행에 실패한다.")
     @Test
-    void token_reissue_fail() {
+    void givenRefreshTokenIsNull_whenReissue_thenThrowsUnauthorizedError() {
         // given
         String originAccessToken = "origin-access-token";
 
@@ -282,7 +282,7 @@ class AuthServiceTest extends ServiceTest implements RedisTestContainer {
 
     @DisplayName("로그아웃에 성공한다.")
     @Test
-    void logout_success(){
+    void givenValidToken_whenLogout_thenSuccess(){
         // given
         String accessToken = "access-token";
         String refreshToken = "refresh-token";
