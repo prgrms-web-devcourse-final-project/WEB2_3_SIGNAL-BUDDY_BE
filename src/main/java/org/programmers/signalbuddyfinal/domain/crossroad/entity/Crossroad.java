@@ -40,7 +40,7 @@ public class Crossroad extends BaseTimeEntity {
     private Boolean status;
 
     @Builder(builderMethodName = "create")
-    public Crossroad(String crossroadApiId, String name, Double lat, Double lng) {
+    private Crossroad(String crossroadApiId, String name, Double lat, Double lng) {
         this.crossroadApiId = Objects.requireNonNull(crossroadApiId);
         this.name = Objects.requireNonNull(name);
         this.coordinate = PointUtils.toPoint(

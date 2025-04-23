@@ -124,6 +124,9 @@ dependencies {
     // Log
     implementation 'net.logstash.logback:logstash-logback-encoder:8.0'
 
+    // Xml
+    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.19.0-rc2"
+
 }
 
 // JaCoCo 버전 설정

@@ -3,7 +3,6 @@ package org.programmers.signalbuddyfinal.domain.crossroad.service;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Point;
@@ -23,7 +22,6 @@ import org.programmers.signalbuddyfinal.global.monitoring.HttpRequestManager;
 import org.programmers.signalbuddyfinal.global.util.PointUtils;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,8 +31,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class CrossroadService {
 
-    private static final String STATE_PREFIX = "crossroad-state:";
-
     private final CrossroadRepository crossroadRepository;
     private final CrossroadRedisRepository crossroadRedisRepository;
     private final CustomCrossroadRepositoryImpl customCrossroadRepository;
@@ -42,9 +38,10 @@ public class CrossroadService {
     private final HttpRequestManager httpRequestManager;
     private final RedisTemplate<Object, Object> redisTemplate;
     private final CrossroadMapper crossroadMapper;
+    private final CrossroadCacheService crossroadCacheService;
 
     @Transactional
-    public void saveCrossroadDates(int page, int pageSize) {
+    public void saveCrossroadData(int page, int pageSize) {
         List<CrossroadApiResponse> responseList =
             crossroadProvider.requestCrossroadApi(page, pageSize);
 
@@ -93,24 +90,18 @@ public class CrossroadService {
             return responseRedis;
         }
 
-        try{
-            CrossroadResponse responseDB = crossroadMapper.toResponse(
-                crossroadRepository.findByCrossroadId(id)
-            );
-            crossroadRedisRepository.save(responseDB);
+        CrossroadResponse responseDB = crossroadMapper.toResponse(
+            crossroadRepository.findByIdOrThrow(id)
+        );
+        crossroadRedisRepository.save(responseDB);
 
-            return responseDB;
-
-        } catch (NullPointerException e) {
-            log.error("❌ crossroad Not Found : {}", e.getMessage(), e);
-            throw new BusinessException(CrossroadErrorCode.NOT_FOUND_CROSSROAD);
-        }
+        return responseDB;
     }
 
     public CrossroadStateResponse checkSignalState(Long crossroadId) {
         httpRequestManager.increase(crossroadId);
 
-        CrossroadStateResponse cache = getStateCache(crossroadId);
+        CrossroadStateResponse cache = crossroadCacheService.getStateCache(crossroadId);
         if (cache != null && cache.getTransTimestamp() != null) {
             return cache;
         }
@@ -128,7 +119,7 @@ public class CrossroadService {
         CrossroadStateResponse response = crossroadMapper.toStateResponse(
             apiResponses.get(0), crossroad
         );
-        putStateCache(crossroadId, response);
+        crossroadCacheService.putStateCache(crossroadId, response);
         return response;
     }
 
@@ -145,20 +136,6 @@ public class CrossroadService {
 
     public List<CrossroadResponse> findNearestCrossroad(double lat, double lng, int radius) {
         return crossroadRepository.findNearestCrossroads(lat, lng, radius);
-    }
-
-    private void putStateCache(Long crossroadId, CrossroadStateResponse response) {
-        ValueOperations<Object, Object> operations = redisTemplate.opsForValue();
-
-        int minTimeLeft = response.minTimeLeft();
-        minTimeLeft *= 100; // 1/10초 단위를 1/1000(ms)로 변환
-
-        operations.set(STATE_PREFIX + crossroadId, response, minTimeLeft, TimeUnit.MILLISECONDS);
-    }
-
-    private CrossroadStateResponse getStateCache(Long crossroadId) {
-        ValueOperations<Object, Object> operations = redisTemplate.opsForValue();
-        return (CrossroadStateResponse) operations.get(STATE_PREFIX + crossroadId);
     }
 
     @Transactional(readOnly = true)

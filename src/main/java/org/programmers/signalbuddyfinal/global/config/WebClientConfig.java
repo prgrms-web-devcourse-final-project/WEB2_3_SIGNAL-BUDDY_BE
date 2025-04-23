@@ -23,6 +23,9 @@ public class WebClientConfig {
     @Value("${weather.base-url}")
     private String weatherApiBaseUrl;
 
+    @Value("${air-quality.base-url}")
+    private String airQualityApiBaseUrl;
+
     private final int processors = Runtime.getRuntime().availableProcessors();    // PC의 Processor 개수
     private final HttpClient httpClient = HttpClient.create(
             ConnectionProvider.builder("ApiConnections")
@@ -48,6 +51,16 @@ public class WebClientConfig {
     public WebClient weatherApiWebClient() {
         return WebClient.builder()
             .baseUrl(weatherApiBaseUrl)
+            .clientConnector(new ReactorClientHttpConnector(httpClient))
+            .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+            .build();
+    }
+
+    // 미세먼지 API WebClient
+    @Bean
+    public WebClient airQualityApiWebClient() {
+        return WebClient.builder()
+            .baseUrl(airQualityApiBaseUrl)
             .clientConnector(new ReactorClientHttpConnector(httpClient))
             .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
             .build();
