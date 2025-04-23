@@ -117,7 +117,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/weather").hasRole(ADMIN)
                 // FCM
                 .requestMatchers(HttpMethod.PATCH, "/api/fcm/token/logout").permitAll()
+                // 미세먼지
+                .requestMatchers(HttpMethod.GET, "/api/air-quality/**").permitAll()
                 .anyRequest().authenticated()
+
             );
 
         // 기본 로그인 관련 설정
