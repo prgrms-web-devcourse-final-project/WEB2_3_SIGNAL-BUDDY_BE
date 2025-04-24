@@ -13,6 +13,7 @@ import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.exception.MemberErrorCode;
 import org.programmers.signalbuddyfinal.domain.member.mapper.MemberMapper;
+import org.programmers.signalbuddyfinal.domain.member.repository.CustomMemberRepositoryImpl;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
 import org.programmers.signalbuddyfinal.domain.notification.service.FcmService;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
@@ -37,6 +38,7 @@ public class AuthService {
     private final JwtUtil jwtUtil;
     private final JwtService jwtService;
     private final MemberRepository memberRepository;
+    private final CustomMemberRepositoryImpl customMemberRepository;
     private final FcmService fcmService;
 
     public ReissueResponse reissue(String refreshToken, String accessToken) {
@@ -59,7 +61,7 @@ public class AuthService {
         String deviceToken,
         SocialLoginRequest socialLoginRequest) {
 
-        Member existMember = memberRepository.findByProviderAndSocialId(
+        Member existMember = customMemberRepository.findByProviderAndSocialId(
                 socialLoginRequest.getProvider(), socialLoginRequest.getSocialUserId())
             .orElse(null);
 

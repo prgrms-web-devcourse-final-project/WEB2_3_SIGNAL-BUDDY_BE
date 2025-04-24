@@ -31,10 +31,4 @@ public interface MemberRepository extends JpaRepository<Member, Long>, CustomMem
     }
 
     boolean existsByNickname(String nickName);
-
-    @Query("select m from members m "
-        + "inner join SocialProvider s "
-        + "on m.memberId = s.member.memberId "
-        + "where s.oauthProvider = :provider and s.socialId = :socialId")
-    Optional<Member> findByProviderAndSocialId(Provider provider, String socialId);
 }

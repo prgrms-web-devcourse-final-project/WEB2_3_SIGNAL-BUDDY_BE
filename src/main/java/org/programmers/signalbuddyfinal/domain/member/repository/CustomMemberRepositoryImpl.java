@@ -6,11 +6,13 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDateTime;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.programmers.signalbuddyfinal.domain.admin.dto.AdminMemberResponse;
 import org.programmers.signalbuddyfinal.domain.admin.dto.MemberFilterRequest;
 import org.programmers.signalbuddyfinal.domain.admin.dto.WithdrawalMemberResponse;
+import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.QMember;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
@@ -117,6 +119,16 @@ public class CustomMemberRepositoryImpl implements CustomMemberRepository {
             .fetchOne();
 
         return new PageResponse<>(new PageImpl<>(members, pageable, total));
+    }
+
+    @Override
+    public Optional<Member> findByProviderAndSocialId(Provider provider, String socialId) {
+        return Optional.ofNullable(jpaQueryFactory.select(member)
+            .from(member)
+            .innerJoin(socialProvider)
+            .on(member.memberId.eq(socialProvider.member.memberId))
+            .where(socialProvider.oauthProvider.eq(provider)
+                .and(socialProvider.socialId.eq(socialId))).fetchOne());
     }
 
     private BooleanExpression eqStatus(MemberStatus status) {
