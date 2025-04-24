@@ -34,7 +34,6 @@ public class EmailService {
 
     static final String PREFIX = "auth:email:";
 
-    // 이메일 발송
     @Async
     public void sendEmail(EmailRequest emailRequest) {
 
@@ -42,7 +41,6 @@ public class EmailService {
         String code = createCode();
 
         try {
-            // 이메일 내용 기입
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
             helper.setTo(emailRequest.getEmail());
             helper.setSubject("[signalBuddy] 인증코드가 발송되었습니다.");
@@ -51,14 +49,11 @@ public class EmailService {
             throw new BusinessException(AuthErrorCode.SEND_EMAIL_FAILED);
         }
 
-        // 인증 코드 저장
         codeSave(emailRequest.getEmail(), code);
 
-        // 이메일 발송
         javaMailSender.send(message);
     }
 
-    // 인증 코드 검증
     public ResponseEntity<ApiResponse<Object>> verifyCode(VerifyCodeRequest verifyCodeRequest) {
 
         ValueOperations<String, String> valueOperations = redisTemplate.opsForValue();
@@ -83,7 +78,6 @@ public class EmailService {
         }
     }
 
-    // 인증 코드 생성
     private String createCode() {
 
         SecureRandom secureRandom = new SecureRandom();
@@ -92,7 +86,6 @@ public class EmailService {
         return String.format("%06d", authenticationCode);
     }
 
-    // 이메일 내용 작성
     private String setContent(String code) {
 
         Context context = new Context();
@@ -107,7 +100,6 @@ public class EmailService {
         return content;
     }
 
-    // 인증 코드 저장
     private void codeSave(String email, String code) {
 
         // 이미 요청한 메일에 대한 인증코드가 존재하는 경우, 삭제한다.

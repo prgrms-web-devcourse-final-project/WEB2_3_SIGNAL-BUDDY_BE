@@ -1,6 +1,7 @@
 package org.programmers.signalbuddyfinal.domain.auth.controller;
 
 import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
@@ -11,26 +12,35 @@ import static org.springframework.restdocs.operation.preprocess.Preprocessors.pr
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.prettyPrint;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.epages.restdocs.apispec.ResourceSnippetParameters;
 import jakarta.servlet.http.Cookie;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.programmers.signalbuddyfinal.domain.auth.dto.EmailRequest;
 import org.programmers.signalbuddyfinal.domain.auth.dto.LoginRequest;
+import org.programmers.signalbuddyfinal.domain.auth.dto.LoginResponse;
+import org.programmers.signalbuddyfinal.domain.auth.dto.LogoutResponse;
+import org.programmers.signalbuddyfinal.domain.auth.dto.ReissueResponse;
 import org.programmers.signalbuddyfinal.domain.auth.dto.SocialLoginRequest;
 import org.programmers.signalbuddyfinal.domain.auth.dto.VerifyCodeRequest;
 import org.programmers.signalbuddyfinal.domain.auth.entity.Purpose;
 import org.programmers.signalbuddyfinal.domain.auth.service.AuthService;
 import org.programmers.signalbuddyfinal.domain.auth.service.EmailService;
+import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
+import org.programmers.signalbuddyfinal.domain.member.entity.Member;
+import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
+import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
+import org.programmers.signalbuddyfinal.domain.member.mapper.MemberMapper;
 import org.programmers.signalbuddyfinal.domain.notification.service.FcmService;
 import org.programmers.signalbuddyfinal.domain.social.entity.Provider;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
 import org.programmers.signalbuddyfinal.global.support.ControllerTest;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.restdocs.payload.JsonFieldType;
@@ -49,34 +59,50 @@ class AuthControllerTest extends ControllerTest {
     private FcmService fcmService;
 
     private String tag = "Auth API";
+    private String deviceToken = "deviceToken";
+    private HttpHeaders headers = new HttpHeaders();
+    private MemberResponse memberResponse;
+    private LoginResponse loginResponse;
+    private Member member;
+
+    @BeforeEach
+    void setUp() {
+        // Set-Cookie 정책을 작성해주어야 함.
+        headers.set("Set-Cookie", "refresh-token=refreshTokenValue; Path=/; HttpOnly");
+        headers.set("Authorization", "Bearer "+"accessToken");
+
+        member = Member.builder()
+            .memberId(1l)
+            .email("loginMember@test.com")
+            .nickname("로그인 테스트용")
+            .profileImageUrl("프로필 경로")
+            .role(MemberRole.USER)
+            .memberStatus(MemberStatus.ACTIVITY)
+            .password("password")
+            .build();
+
+        memberResponse = MemberMapper.INSTANCE.toDto(member);
+        loginResponse = LoginResponse.success(headers, memberResponse);
+    }
 
     @DisplayName("기본 로그인 성공")
     @Test
     void successLogin() throws Exception {
 
         //given
-        String testAccessToken = "testAccessToken";
-        String testRefreshToken = "testRefreshToken";
-        String deviceToken = "deviceToken";
-
-        ApiResponse apiResponse = ApiResponse.createSuccessWithNoData();
-        ResponseEntity<ApiResponse<Object>> response = ResponseEntity.ok()
-            .header("Set-Cookie","refresh-token=" + testRefreshToken)
-            .header("Authorization", "Bearer " + testAccessToken)
-            .body(apiResponse);
+        LoginRequest loginRequest = new LoginRequest(member.getEmail(), member.getPassword());
 
         doNothing().when(fcmService).loginToken(anyString());
-        when(authService.login(anyString(), any(LoginRequest.class))).thenReturn(response);
+        when(authService.login(anyString(), any(LoginRequest.class))).thenReturn(loginResponse);
 
         //when, then
         mockMvc.perform(post("/api/auth/login")
                 .cookie(new Cookie("device-token", deviceToken))
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"id\":\"test@test.com\", \"password\":\"password\"}"))
+                .content(objectMapper.writeValueAsString(loginRequest)))
             .andExpect(status().isOk())
-            .andExpect(header().string("Authorization", "Bearer " + testAccessToken))
-            .andExpect(header().string("Set-Cookie", "refresh-token="+testRefreshToken))
-            .andExpect(cookie().value("refresh-token", testRefreshToken))
+            .andExpect(header().string("Authorization", loginResponse.getHttpHeaders().getFirst("Authorization")))
+            .andExpect(header().string("Set-Cookie", loginResponse.getHttpHeaders().getFirst("Set-Cookie")))
             .andDo(document("기본 로그인",
                     preprocessRequest(prettyPrint()),
                     preprocessResponse(prettyPrint()),
@@ -95,29 +121,19 @@ class AuthControllerTest extends ControllerTest {
     void successSocialLogin() throws Exception {
 
         //given
-        String testAccessToken = "testAccessToken";
-        String testRefreshToken = "testRefreshToken";
-        String deviceToken = "deviceToken";
         SocialLoginRequest socialLoginRequest = new SocialLoginRequest(Provider.GOOGLE, "1234");
 
-        ApiResponse apiResponse = ApiResponse.createSuccessWithNoData();
-        ResponseEntity<ApiResponse<Object>> response = ResponseEntity.ok()
-            .header("Set-Cookie","refresh-token=" + testRefreshToken)
-            .header("Authorization", "Bearer " + testAccessToken)
-            .body(apiResponse);
-
         doNothing().when(fcmService).loginToken(anyString());
-        when(authService.socialLogin(anyString(), any(SocialLoginRequest.class))).thenReturn(response);
+        when(authService.socialLogin(anyString(), any(SocialLoginRequest.class))).thenReturn(loginResponse);
 
         //when, then
         mockMvc.perform(post("/api/auth/social-login")
-                .cookie(new Cookie("device-token", deviceToken))
                 .contentType(MediaType.APPLICATION_JSON)
+                .cookie(new Cookie("device-token", deviceToken))
                 .content(objectMapper.writeValueAsString(socialLoginRequest)))
             .andExpect(status().isOk())
-            .andExpect(header().string("Authorization", "Bearer " + testAccessToken))
-            .andExpect(header().string("Set-Cookie", "refresh-token="+testRefreshToken))
-            .andExpect(cookie().value("refresh-token", testRefreshToken))
+            .andExpect(header().string("Authorization", loginResponse.getHttpHeaders().getFirst("Authorization")))
+            .andExpect(header().string("Set-Cookie", loginResponse.getHttpHeaders().getFirst("Set-Cookie")))
             .andDo(document("소셜 로그인",
                     preprocessRequest(prettyPrint()),
                     preprocessResponse(prettyPrint()),
@@ -136,25 +152,21 @@ class AuthControllerTest extends ControllerTest {
     void successReissueTokens() throws Exception {
 
         //given
-        String newRefreshToken = "newRefreshToken";
-        String newAccessToken = "newAccessToken";
+        HttpHeaders afterReissueHeaders = new HttpHeaders();
+        afterReissueHeaders.set("Set-Cookie", "refresh-token=newRefreshToken; Path=/; HttpOnly");
+        afterReissueHeaders.set("Authorization", "newAccessToken");
+        ReissueResponse reissueResponse = new ReissueResponse(afterReissueHeaders);
 
-        ApiResponse apiResponse = ApiResponse.createSuccessWithNoData();
-        ResponseEntity<ApiResponse<Object>> response = ResponseEntity.ok()
-                .header("Set-Cookie","refresh-token=" + newRefreshToken)
-                .header("Authorization", "Bearer " + newAccessToken)
-                .body(apiResponse);
-
-        when(authService.reissue(anyString(), anyString())).thenReturn(response);
+        when(authService.reissue(anyString(), anyString())).thenReturn(reissueResponse);
 
         //when, then
         mockMvc.perform(post("/api/auth/reissue")
-                .cookie(new Cookie("refresh-token", newRefreshToken))
-                .header("Authorization", "Bearer " + newAccessToken))
+                .contentType(MediaType.APPLICATION_JSON)
+                .cookie(new Cookie("refresh-token", "refreshToken"))
+                .header("Authorization", "Bearer " + headers.get("Authorization")))
             .andExpect(status().isOk())
-            .andExpect(header().string("Authorization", "Bearer " + newAccessToken))
-            .andExpect(header().string("Set-Cookie", "refresh-token="+newRefreshToken))
-            .andExpect(cookie().value("refresh-token", newRefreshToken))
+            .andExpect(header().string("Authorization", reissueResponse.getHttpHeaders().getFirst("Authorization")))
+            .andExpect(header().string("Set-Cookie", reissueResponse.getHttpHeaders().getFirst("Set-Cookie")))
             .andDo(document("액세스 토큰 및 리프레시 토큰 재발행",
                     preprocessRequest(prettyPrint()),
                     preprocessResponse(prettyPrint()),
@@ -172,9 +184,7 @@ class AuthControllerTest extends ControllerTest {
     @Test
     void sendAuthenticationCode() throws Exception {
         // given
-        String email = "test@test.com";
-        EmailRequest emailRequest = new EmailRequest(email);
-
+        EmailRequest emailRequest = new EmailRequest(member.getEmail());
         doNothing().when(emailService).sendEmail(any(EmailRequest.class));
 
         //when, then
@@ -200,7 +210,7 @@ class AuthControllerTest extends ControllerTest {
     @Test
     void verifyAuthenticationCode() throws Exception {
         // given
-        VerifyCodeRequest verifyCodeRequest = new VerifyCodeRequest(Purpose.NEW_PASSWORD, "test@test.com", "123456");
+        VerifyCodeRequest verifyCodeRequest = new VerifyCodeRequest(Purpose.NEW_PASSWORD, member.getEmail(), "123456");
 
         ApiResponse<Object> apiResponse = ApiResponse.createSuccessWithNoData();
         ResponseEntity<ApiResponse<Object>> responseEntity = ResponseEntity.ok().body(apiResponse);
@@ -234,27 +244,21 @@ class AuthControllerTest extends ControllerTest {
     @DisplayName("로그아웃")
     @Test
     void successLogout() throws Exception {
-
         //given
-        String refreshToken = "refreshToken";
-        String accessToken = "accessToken";
-        String deviceToken = "deviceToken";
-
-        ApiResponse apiResponse = ApiResponse.createSuccessWithNoData();
-        ResponseEntity<ApiResponse<Object>> response = ResponseEntity.ok()
-            .header("Set-Cookie","refresh-token=" + refreshToken)
-            .header("Authorization", "Bearer " + accessToken)
-            .body(apiResponse);
+        HttpHeaders afterLogoutHeaders = new HttpHeaders();
+        afterLogoutHeaders.add(HttpHeaders.SET_COOKIE, "refresh-token=deletedToken; Max-Age=0; Path=/; HttpOnly");
+        LogoutResponse logoutResponse = new LogoutResponse(afterLogoutHeaders);
 
         doNothing().when(fcmService).logoutToken(anyString());
-        when(authService.logout(anyString(), anyString(), anyString())).thenReturn(response);
+        when(authService.logout(anyString(), anyString(), anyString())).thenReturn(logoutResponse);
 
         //when, then
         mockMvc.perform(post("/api/auth/logout")
                 .cookie(new Cookie("device-token", deviceToken))
-                .cookie(new Cookie("refresh-token", refreshToken))
-                .header("Authorization", "Bearer " + accessToken))
+                .cookie(new Cookie("refresh-token", loginResponse.getHttpHeaders().getFirst("Set-Cookie")))
+                .header("Authorization", "Bearer " + loginResponse.getHttpHeaders().getFirst("Authorization")))
             .andExpect(status().isOk())
+            .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Max-Age=0")))
             .andDo(document("로그아웃",
                     preprocessRequest(prettyPrint()),
                     preprocessResponse(prettyPrint()),

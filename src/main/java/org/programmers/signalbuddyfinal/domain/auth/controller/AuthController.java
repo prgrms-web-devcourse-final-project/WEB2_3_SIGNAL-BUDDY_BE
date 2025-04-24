@@ -4,6 +4,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.auth.dto.EmailRequest;
 import org.programmers.signalbuddyfinal.domain.auth.dto.LoginRequest;
+import org.programmers.signalbuddyfinal.domain.auth.dto.LoginResponse;
+import org.programmers.signalbuddyfinal.domain.auth.dto.LogoutResponse;
+import org.programmers.signalbuddyfinal.domain.auth.dto.ReissueResponse;
 import org.programmers.signalbuddyfinal.domain.auth.dto.SocialLoginRequest;
 import org.programmers.signalbuddyfinal.domain.auth.dto.VerifyCodeRequest;
 import org.programmers.signalbuddyfinal.domain.auth.service.AuthService;
@@ -29,15 +32,30 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Object>> login(
         @CookieValue(name = "device-token", required = false) String deviceTokenCookie,
         @RequestBody LoginRequest loginRequest
-    ){
-        return authService.login(deviceTokenCookie, loginRequest);
+    ) {
+        LoginResponse loginResponse = authService.login(deviceTokenCookie, loginRequest);
+
+        // 로그인 성공
+        if (loginResponse.getMemberResponse() != null) {
+            return ResponseEntity.ok()
+                .headers(loginResponse.getHttpHeaders())
+                .body(ApiResponse.createSuccess(loginResponse.getMemberResponse()));
+        }
+
+        // 로그인 실패
+        else {
+            return ResponseEntity.ok()
+                .body(ApiResponse.createError(loginResponse.getMessage()));
+        }
     }
 
     @PostMapping("/reissue")
     public ResponseEntity<ApiResponse<Object>> reissue(
-        @CookieValue(name = "refresh-token") String refreshToken,
-        @RequestHeader("Authorization") String accessToken) {
-        return authService.reissue(refreshToken, accessToken);
+        @RequestHeader("Authorization") String accessToken,
+        @CookieValue(name = "refresh-token") String refreshToken) {
+        ReissueResponse reissueResponse = authService.reissue(accessToken, refreshToken);
+        return ResponseEntity.ok().headers(reissueResponse.getHttpHeaders())
+            .body(ApiResponse.createSuccessWithNoData());
     }
 
     @PostMapping("/auth-code")
@@ -47,7 +65,8 @@ public class AuthController {
     }
 
     @PostMapping("/verify-code")
-    public ResponseEntity<ApiResponse<Object>> verifyCode(@Valid @RequestBody VerifyCodeRequest verifyCodeRequest) {
+    public ResponseEntity<ApiResponse<Object>> verifyCode(
+        @Valid @RequestBody VerifyCodeRequest verifyCodeRequest) {
         return emailService.verifyCode(verifyCodeRequest);
     }
 
@@ -55,16 +74,33 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Object>> socialLogin(
         @CookieValue(name = "device-token", required = false) String deviceTokenCookie,
         @RequestBody SocialLoginRequest socialLoginRequest
-    ){
-        return authService.socialLogin(deviceTokenCookie, socialLoginRequest);
+    ) {
+
+        LoginResponse loginResponse = authService.socialLogin(deviceTokenCookie,
+            socialLoginRequest);
+
+        // 소셜 로그인 성공
+        if (loginResponse.getMemberResponse() != null) {
+            return ResponseEntity.ok()
+                .headers(loginResponse.getHttpHeaders())
+                .body(ApiResponse.createSuccess(loginResponse.getMemberResponse()));
+        }
+
+        // 소셜 로그인 실패
+        else {
+            return ResponseEntity.ok()
+                .body(ApiResponse.createError(loginResponse.getMessage()));
+        }
     }
 
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Object>> logout(
         @CookieValue(name = "device-token", required = false) String deviceTokenCookie,
-        @CookieValue(name = "refresh-token") String refreshToken,
-        @RequestHeader("Authorization") String accessToken
+        @RequestHeader("Authorization") String accessToken,
+        @CookieValue(name = "refresh-token") String refreshToken
     ) {
-        return authService.logout(deviceTokenCookie, refreshToken, accessToken);
+        LogoutResponse logoutResponse = authService.logout(deviceTokenCookie, accessToken, refreshToken);
+        return ResponseEntity.ok().headers(logoutResponse.getHttpHeaders())
+            .body(ApiResponse.createSuccessWithNoData());
     }
 }

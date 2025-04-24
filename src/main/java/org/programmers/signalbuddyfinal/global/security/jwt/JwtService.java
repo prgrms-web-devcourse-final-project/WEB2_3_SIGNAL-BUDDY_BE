@@ -1,11 +1,6 @@
 package org.programmers.signalbuddyfinal.global.security.jwt;
 
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.JwtException;
-import java.time.Duration;
-import java.util.Date;
-import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.programmers.signalbuddyfinal.domain.auth.dto.NewTokenResponse;
@@ -31,12 +26,12 @@ public class JwtService {
     private final JwtUtil jwtUtil;
     private final RedisTemplate<String, String> redisTemplate;
 
-    public NewTokenResponse reissue(String refreshToken, String accessToken) {
-
+    public NewTokenResponse reissue(String accessToken, String refreshToken) {
+        log.info("accessToken: {} refreshToken: {}", accessToken, refreshToken);
         String extractAccessToken = jwtUtil.extractAccessToken(accessToken);
 
-        Claims claimsAccessToken = extractClaimsFromToken("accessToken", extractAccessToken);
-        Claims claimsRefreshToken = extractClaimsFromToken("refreshToken", refreshToken);
+        Claims claimsAccessToken = jwtUtil.extractClaimsOrThrow("accessToken", extractAccessToken);
+        Claims claimsRefreshToken = jwtUtil.extractClaimsOrThrow("refreshToken", refreshToken);
 
         String memberIdFromAccessToken = claimsAccessToken.getSubject();
         String memberIdFromRefreshToken = claimsRefreshToken.getSubject();
@@ -45,14 +40,15 @@ public class JwtService {
             throw new BusinessException(GlobalErrorCode.BAD_REQUEST);
         }
 
-        if(jwtUtil.checkBlacklist(extractAccessToken)){
+        if (jwtUtil.checkBlacklist(extractAccessToken)) {
             logout(accessToken);
             throw new BusinessException(GlobalErrorCode.BAD_REQUEST);
         }
 
-        validateAccessTokenExpiration(claimsAccessToken, extractAccessToken);
+        jwtUtil.validateAccessTokenExpiration(claimsAccessToken, extractAccessToken);
 
-        String existingRefreshToken = refreshTokenRepository.findByMemberId(memberIdFromRefreshToken);
+        String existingRefreshToken = refreshTokenRepository.findByMemberId(
+            memberIdFromRefreshToken);
         if (existingRefreshToken == null) {
             throw new BusinessException(AuthErrorCode.UNAUTHORIZED);
         }
@@ -72,72 +68,34 @@ public class JwtService {
     public void logout(String accessToken) {
 
         String extractAccessToken = jwtUtil.extractAccessToken(accessToken);
-        Claims claimsAccessToken = extractClaimsFromToken("accessToken", extractAccessToken);
+        Claims claimsAccessToken = jwtUtil.extractClaimsOrThrow("accessToken", extractAccessToken);
 
-        // 액세스 토큰 블랙리스트 처리
-        addBlackListExistingAccessToken(extractAccessToken, claimsAccessToken.getExpiration());
+        jwtUtil.addBlackListExistingAccessToken(extractAccessToken,
+            claimsAccessToken.getExpiration());
 
-        // 리프레시 토큰 삭제
-        if(!refreshTokenRepository.findByMemberId(claimsAccessToken.getSubject()).isEmpty())
-        {refreshTokenRepository.delete(claimsAccessToken.getSubject());}
-
-    }
-
-    private void validateAccessTokenExpiration(Claims accessTokenClaims, String accessToken) {
-
-            Date accessTokenExpirationDate = accessTokenClaims.getExpiration();
-
-            if(accessTokenExpirationDate.after(new Date())) {
-                addBlackListExistingAccessToken(accessToken, accessTokenExpirationDate);
-            }
-    }
-
-    private Claims extractClaimsFromToken(String type, String token) {
-
-        try {
-            return jwtUtil.parseToken(token);
-        } catch (ExpiredJwtException e) {
-            log.info(e.getMessage());
-            if (type.equals("accessToken")) {
-                return e.getClaims();
-            }
-            throw new BusinessException(TokenErrorCode.EXPIRED_REFRESH_TOKEN);
-        } catch (JwtException e) {
-            log.info(e.getMessage());
-            throw new BusinessException(TokenErrorCode.INVALID_TOKEN);
+        if (!refreshTokenRepository.findByMemberId(claimsAccessToken.getSubject()).isEmpty()) {
+            refreshTokenRepository.delete(claimsAccessToken.getSubject());
         }
-    }
 
-    // 기존의 액세스 토큰을 블랙리스트로 추가
-    private void addBlackListExistingAccessToken(String accessToken, Date expirationDate) {
-
-        redisTemplate.opsForValue()
-                .set("pending-blacklist:access-token:"+accessToken, "pending",5, TimeUnit.MINUTES);
-
-        redisTemplate.opsForValue()
-            .set("blacklist:access-token:" + accessToken, expirationDate.toString(),
-                Duration.between(new Date().toInstant(), expirationDate.toInstant()).getSeconds(),
-                TimeUnit.SECONDS);
     }
 
     // 테스트용 코드
-    public ResponseEntity<ApiResponse<Object>> addBlackListExistingAccessTokenForTest(
-        String accessToken){
+    public ResponseEntity<ApiResponse<Object>> addBlackListExistingAccessTokenForTest(String accessToken) {
 
         String extractAccessToken = jwtUtil.extractAccessToken(accessToken);
         Claims claimsAccessToken = jwtUtil.parseToken(extractAccessToken);
-        addBlackListExistingAccessToken(extractAccessToken, claimsAccessToken.getExpiration());
+        jwtUtil.addBlackListExistingAccessToken(extractAccessToken, claimsAccessToken.getExpiration());
         return ResponseEntity.ok(ApiResponse.createSuccessWithNoData());
     }
 
-    public ResponseEntity<ApiResponse<Object>> deleteBlackListExistingAccessTokenForTest(String accessToken){
+    public ResponseEntity<ApiResponse<Object>> deleteBlackListExistingAccessTokenForTest(String accessToken) {
 
         String extractAccessToken = jwtUtil.extractAccessToken(accessToken);
         redisTemplate.delete("blacklist:access-token:" + extractAccessToken);
         return ResponseEntity.ok(ApiResponse.createSuccessWithNoData());
     }
 
-    public ResponseEntity<ApiResponse<Object>> createShortTimeAccessToken(Long memberId){
+    public ResponseEntity<ApiResponse<Object>> createShortTimeAccessToken(Long memberId) {
         String accessToken = jwtUtil.generateAccessTokenWithShortExpiration(memberId);
         HttpHeaders headers = new HttpHeaders();
         headers.add("Authorization", "Bearer " + accessToken);

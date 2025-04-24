@@ -37,7 +37,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
             customUserDetails = customUserDetailsService.loadUserByUsername(username);
         } catch (UsernameNotFoundException e) {
             throw new BusinessException(MemberErrorCode.NOT_FOUND_MEMBER);
-        } catch (DisabledException e){
+        } catch (DisabledException e) {
             throw new BusinessException(MemberErrorCode.WITHDRAWN_MEMBER);
         }
 
@@ -45,6 +45,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
             throw new BusinessException(MemberErrorCode.NOT_FOUND_MEMBER);
         }
 
-        return new UsernamePasswordAuthenticationToken(customUserDetails, null, customUserDetails.getAuthorities());
+        return new UsernamePasswordAuthenticationToken(customUserDetails, null,
+            customUserDetails.getAuthorities());
     }
 }

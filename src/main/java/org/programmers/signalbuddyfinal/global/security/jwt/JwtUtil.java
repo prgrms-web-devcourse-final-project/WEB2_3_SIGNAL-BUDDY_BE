@@ -1,12 +1,15 @@
 package org.programmers.signalbuddyfinal.global.security.jwt;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import java.security.Key;
+import java.time.Duration;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 import javax.crypto.SecretKey;
 import lombok.extern.slf4j.Slf4j;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
@@ -28,12 +31,12 @@ public class JwtUtil {
     private final Key key;
     private final RedisTemplate<String, String> redisTemplate;
 
-    @Value("${jwt.access-token-expiration-time}")
     private Long accessTokenExpiration;
-    @Value("${jwt.refresh-token-expiration-time}")
     private Long refreshTokenExpiration;
 
     public JwtUtil(@Value("${jwt.secret}") String secretKey,
+        @Value("${jwt.access-token-expiration-time}") Long accessTokenExpiration,
+        @Value("${jwt.refresh-token-expiration-time}") Long refreshTokenExpiration,
         RefreshTokenRepository refreshTokenRepository,
         CustomUserDetailsService customUserDetailsService,
         RedisTemplate<String, String> redisTemplate) {
@@ -42,6 +45,8 @@ public class JwtUtil {
         this.redisTemplate = redisTemplate;
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         this.key = Keys.hmacShaKeyFor(keyBytes);
+        this.accessTokenExpiration = accessTokenExpiration;
+        this.refreshTokenExpiration = refreshTokenExpiration;
     }
 
     public String generateAccessToken(Authentication authentication) {
@@ -70,7 +75,6 @@ public class JwtUtil {
             .signWith(key)
             .compact();
 
-        // 리프레시 토큰 저장
         refreshTokenRepository.save(nowMember.getMemberId(), refreshToken);
 
         return refreshToken;
@@ -85,6 +89,22 @@ public class JwtUtil {
                 .getPayload();
     }
 
+    public Claims extractClaimsOrThrow(String type, String token) {
+
+        try {
+            return parseToken(token);
+        } catch (ExpiredJwtException e) {
+            log.info(e.getMessage());
+            if (type.equals("accessToken")) {
+                return e.getClaims();
+            }
+            throw new BusinessException(TokenErrorCode.EXPIRED_REFRESH_TOKEN);
+        } catch (JwtException e) {
+            log.info(e.getMessage());
+            throw new BusinessException(TokenErrorCode.INVALID_TOKEN);
+        }
+    }
+
     public String extractAccessToken(String bearerToken){
 
         if (bearerToken == null || !bearerToken.startsWith("Bearer ")) {
@@ -93,7 +113,6 @@ public class JwtUtil {
         return bearerToken.substring(7);
     }
 
-    // authentication 추출
     public Authentication getAuthentication(String token) {
 
         String memberId = parseToken(token).getSubject();
@@ -106,11 +125,30 @@ public class JwtUtil {
         return (CustomUserDetails) authentication.getPrincipal();
     }
 
+    public void addBlackListExistingAccessToken(String accessToken, Date expirationDate) {
+
+        redisTemplate.opsForValue()
+            .set("pending-blacklist:access-token:"+accessToken, "pending",5, TimeUnit.MINUTES);
+
+        redisTemplate.opsForValue()
+            .set("blacklist:access-token:" + accessToken, expirationDate.toString(),
+                Duration.between(new Date().toInstant(), expirationDate.toInstant()).getSeconds(),
+                TimeUnit.SECONDS);
+    }
+
     public boolean checkBlacklist(String accessToken) {
         Boolean isInBlackList = redisTemplate.hasKey("blacklist:access-token:" + accessToken);
         Boolean isInPendingBlackList = redisTemplate.hasKey(("pending-blacklist:access-token:" + accessToken));
 
         return Boolean.TRUE.equals(isInBlackList)&& Boolean.FALSE.equals(isInPendingBlackList);
+    }
+
+    public void validateAccessTokenExpiration(Claims accessTokenClaims, String accessToken) {
+        Date accessTokenExpirationDate = accessTokenClaims.getExpiration();
+
+        if(accessTokenExpirationDate.after(new Date())) {
+            addBlackListExistingAccessToken(accessToken, accessTokenExpirationDate);
+        }
     }
 
     // 테스트용
