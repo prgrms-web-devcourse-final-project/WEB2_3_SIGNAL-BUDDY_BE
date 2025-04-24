@@ -27,7 +27,7 @@ public class JwtService {
     private final RedisTemplate<String, String> redisTemplate;
 
     public NewTokenResponse reissue(String accessToken, String refreshToken) {
-log.info("accessToken: {} refreshToken: {}", accessToken, refreshToken);
+        log.info("accessToken: {} refreshToken: {}", accessToken, refreshToken);
         String extractAccessToken = jwtUtil.extractAccessToken(accessToken);
 
         Claims claimsAccessToken = jwtUtil.extractClaimsOrThrow("accessToken", extractAccessToken);
@@ -40,14 +40,15 @@ log.info("accessToken: {} refreshToken: {}", accessToken, refreshToken);
             throw new BusinessException(GlobalErrorCode.BAD_REQUEST);
         }
 
-        if(jwtUtil.checkBlacklist(extractAccessToken)){
+        if (jwtUtil.checkBlacklist(extractAccessToken)) {
             logout(accessToken);
             throw new BusinessException(GlobalErrorCode.BAD_REQUEST);
         }
 
         jwtUtil.validateAccessTokenExpiration(claimsAccessToken, extractAccessToken);
 
-        String existingRefreshToken = refreshTokenRepository.findByMemberId(memberIdFromRefreshToken);
+        String existingRefreshToken = refreshTokenRepository.findByMemberId(
+            memberIdFromRefreshToken);
         if (existingRefreshToken == null) {
             throw new BusinessException(AuthErrorCode.UNAUTHORIZED);
         }
@@ -70,17 +71,18 @@ log.info("accessToken: {} refreshToken: {}", accessToken, refreshToken);
         Claims claimsAccessToken = jwtUtil.extractClaimsOrThrow("accessToken", extractAccessToken);
 
         // 액세스 토큰 블랙리스트 처리
-        jwtUtil.addBlackListExistingAccessToken(extractAccessToken, claimsAccessToken.getExpiration());
+        jwtUtil.addBlackListExistingAccessToken(extractAccessToken,
+            claimsAccessToken.getExpiration());
 
         // 리프레시 토큰 삭제
-        if(!refreshTokenRepository.findByMemberId(claimsAccessToken.getSubject()).isEmpty())
-        {refreshTokenRepository.delete(claimsAccessToken.getSubject());}
+        if (!refreshTokenRepository.findByMemberId(claimsAccessToken.getSubject()).isEmpty()) {
+            refreshTokenRepository.delete(claimsAccessToken.getSubject());
+        }
 
     }
 
     // 테스트용 코드
-    public ResponseEntity<ApiResponse<Object>> addBlackListExistingAccessTokenForTest(
-        String accessToken){
+    public ResponseEntity<ApiResponse<Object>> addBlackListExistingAccessTokenForTest(String accessToken) {
 
         String extractAccessToken = jwtUtil.extractAccessToken(accessToken);
         Claims claimsAccessToken = jwtUtil.parseToken(extractAccessToken);
@@ -88,14 +90,14 @@ log.info("accessToken: {} refreshToken: {}", accessToken, refreshToken);
         return ResponseEntity.ok(ApiResponse.createSuccessWithNoData());
     }
 
-    public ResponseEntity<ApiResponse<Object>> deleteBlackListExistingAccessTokenForTest(String accessToken){
+    public ResponseEntity<ApiResponse<Object>> deleteBlackListExistingAccessTokenForTest(String accessToken) {
 
         String extractAccessToken = jwtUtil.extractAccessToken(accessToken);
         redisTemplate.delete("blacklist:access-token:" + extractAccessToken);
         return ResponseEntity.ok(ApiResponse.createSuccessWithNoData());
     }
 
-    public ResponseEntity<ApiResponse<Object>> createShortTimeAccessToken(Long memberId){
+    public ResponseEntity<ApiResponse<Object>> createShortTimeAccessToken(Long memberId) {
         String accessToken = jwtUtil.generateAccessTokenWithShortExpiration(memberId);
         HttpHeaders headers = new HttpHeaders();
         headers.add("Authorization", "Bearer " + accessToken);
