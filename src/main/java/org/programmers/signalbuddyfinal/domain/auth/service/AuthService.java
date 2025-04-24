@@ -39,7 +39,6 @@ public class AuthService {
     private final MemberRepository memberRepository;
     private final FcmService fcmService;
 
-    // 토큰 재발행
     public ReissueResponse reissue(String refreshToken, String accessToken) {
         NewTokenResponse newTokenResponse = jwtService.reissue(refreshToken, accessToken);
         HttpHeaders headers = new HttpHeaders();
@@ -49,7 +48,6 @@ public class AuthService {
         return new ReissueResponse(headers);
     }
 
-    // 기본 로그인
     public LoginResponse login(
         String deviceTokenCookie,
         LoginRequest loginRequest
@@ -57,7 +55,6 @@ public class AuthService {
         return commonLogin(deviceTokenCookie, loginRequest.getId(), loginRequest.getPassword());
     }
 
-    // 소셜 로그인
     public LoginResponse socialLogin(
         String deviceToken,
         SocialLoginRequest socialLoginRequest) {
@@ -73,7 +70,6 @@ public class AuthService {
         return commonLogin(deviceToken, existMember.getEmail(), null);
     }
 
-    // 공통 로그인 로직
     private LoginResponse commonLogin(
         String deviceTokenCookie,
         String email, String password
@@ -111,18 +107,15 @@ public class AuthService {
         return new LogoutResponse(headers);
     }
 
-    // Authentication 객체 생성
     private Authentication createAuthentication(String email, String password) {
         return authenticationManager.authenticate(
             new UsernamePasswordAuthenticationToken(email, password));
     }
 
-    // AccessToken을 Authorization 헤더에 설정
     private void accessTokenSend2Client(HttpHeaders headers, String accessToken) {
         headers.set("Authorization", "Bearer " + accessToken);
     }
 
-    // RefreshToken을 Set-Cookie 헤더에 설정
     private void refreshTokenSend2Client(HttpHeaders headers, String refreshToken, long duration) {
         ResponseCookie refreshTokenCookie = ResponseCookie.from("refresh-token", refreshToken)
             .httpOnly(true)
@@ -135,7 +128,6 @@ public class AuthService {
         headers.add(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
     }
 
-    // Authentication 객체를 MemberResponse 객체로 변환
     private MemberResponse createResponseBody(Authentication authentication) {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         Member loginMember = Member.builder()

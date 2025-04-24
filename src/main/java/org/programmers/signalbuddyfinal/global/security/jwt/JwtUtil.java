@@ -49,7 +49,6 @@ public class JwtUtil {
         this.refreshTokenExpiration = refreshTokenExpiration;
     }
 
-    // 액세스 토큰 생성
     public String generateAccessToken(Authentication authentication) {
 
         CustomUserDetails nowMember = authentication2User(authentication);
@@ -64,7 +63,6 @@ public class JwtUtil {
             .compact();
     }
 
-    // 리프레시 토큰 생성
     @Transactional
     public String generateRefreshToken(Authentication authentication) {
 
@@ -77,13 +75,11 @@ public class JwtUtil {
             .signWith(key)
             .compact();
 
-        // 리프레시 토큰 저장
         refreshTokenRepository.save(nowMember.getMemberId(), refreshToken);
 
         return refreshToken;
     }
 
-    // 토큰에서 Claim 추출
     public Claims parseToken(String token) {
 
         return Jwts.parser()
@@ -93,7 +89,6 @@ public class JwtUtil {
                 .getPayload();
     }
 
-    // 토큰에서 Claim 추출
     public Claims extractClaimsOrThrow(String type, String token) {
 
         try {
@@ -110,7 +105,6 @@ public class JwtUtil {
         }
     }
 
-    // Bearer를 제거한 액세스 토큰 값 추출
     public String extractAccessToken(String bearerToken){
 
         if (bearerToken == null || !bearerToken.startsWith("Bearer ")) {
@@ -119,7 +113,6 @@ public class JwtUtil {
         return bearerToken.substring(7);
     }
 
-    // authentication 추출
     public Authentication getAuthentication(String token) {
 
         String memberId = parseToken(token).getSubject();
@@ -132,7 +125,6 @@ public class JwtUtil {
         return (CustomUserDetails) authentication.getPrincipal();
     }
 
-    // 액세스 토큰을 블랙리스트로 추가
     public void addBlackListExistingAccessToken(String accessToken, Date expirationDate) {
 
         redisTemplate.opsForValue()
@@ -144,7 +136,6 @@ public class JwtUtil {
                 TimeUnit.SECONDS);
     }
 
-    // 블랙리스트 체크
     public boolean checkBlacklist(String accessToken) {
         Boolean isInBlackList = redisTemplate.hasKey("blacklist:access-token:" + accessToken);
         Boolean isInPendingBlackList = redisTemplate.hasKey(("pending-blacklist:access-token:" + accessToken));
@@ -152,7 +143,6 @@ public class JwtUtil {
         return Boolean.TRUE.equals(isInBlackList)&& Boolean.FALSE.equals(isInPendingBlackList);
     }
 
-    // 액세스 토큰 유효기간 체크
     public void validateAccessTokenExpiration(Claims accessTokenClaims, String accessToken) {
         Date accessTokenExpirationDate = accessTokenClaims.getExpiration();
 

@@ -70,11 +70,9 @@ public class JwtService {
         String extractAccessToken = jwtUtil.extractAccessToken(accessToken);
         Claims claimsAccessToken = jwtUtil.extractClaimsOrThrow("accessToken", extractAccessToken);
 
-        // 액세스 토큰 블랙리스트 처리
         jwtUtil.addBlackListExistingAccessToken(extractAccessToken,
             claimsAccessToken.getExpiration());
 
-        // 리프레시 토큰 삭제
         if (!refreshTokenRepository.findByMemberId(claimsAccessToken.getSubject()).isEmpty()) {
             refreshTokenRepository.delete(claimsAccessToken.getSubject());
         }

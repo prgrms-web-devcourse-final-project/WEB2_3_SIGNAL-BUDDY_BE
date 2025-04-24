@@ -76,7 +76,6 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
             throw new BusinessException(TokenErrorCode.EXPIRED_ACCESS_TOKEN);
         }
 
-        // 블랙리스트에 있는지 확인
         if (jwtUtil.checkBlacklist(accessToken)) {
 
             request.setAttribute(EXCEPTION_ATTRIBUTE, "INVALID_TOKEN");
