@@ -27,7 +27,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
     private final Set<String> excludeGetPaths = Set.of(
         "/api/feedbacks/{feedbackId}/comments", "/api/crossroads/**", "/api/feedbacks",
         "/api/terms", "/api/crossroads/{crossroadId}/state", "/api/feedbacks/{feedbackId}",
-        "/sse/weather"
+        "/sse/weather", "/api/air-quality/**"
     );
     private final Set<String> excludeAllPaths = Set.of(
         "/", "/docs/**", "/actuator/health", "/webjars/**", "/api/auth/login",
