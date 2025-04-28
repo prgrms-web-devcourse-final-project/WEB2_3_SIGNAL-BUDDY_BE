@@ -62,10 +62,6 @@ public class Bookmark extends BaseTimeEntity {
         this.deletedAt = LocalDateTime.now();
     }
 
-    public boolean isDeleted() {
-        return deletedAt != null;
-    }
-
     public void update(Point coordinate, String address, String name) {
         if (coordinate != null) {
             this.coordinate = coordinate;

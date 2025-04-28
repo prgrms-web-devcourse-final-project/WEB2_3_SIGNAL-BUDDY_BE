@@ -7,7 +7,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.programmers.signalbuddyfinal.domain.bookmark.dto.BookmarkRequest;
@@ -24,6 +23,7 @@ import org.programmers.signalbuddyfinal.domain.recentpath.entity.RecentPath;
 import org.programmers.signalbuddyfinal.domain.recentpath.repository.RecentPathRepository;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
+import org.programmers.signalbuddyfinal.global.util.PointUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -49,7 +49,7 @@ public class BookmarkService {
     public BookmarkResponse createBookmark(BookmarkRequest request, Long memberId) {
         final Member member = getMember(memberId);
 
-        final Point point = toPoint(request.getLng(), request.getLat());
+        final Point point = PointUtils.toPoint(request.getLat(), request.getLng());
 
         bookmarkRepository.findByCoordinateAndMemberIdNotDeleted(point, memberId)
             .ifPresent(bookmark -> {
@@ -82,7 +82,7 @@ public class BookmarkService {
             throw new BusinessException(BookmarkErrorCode.UNAUTHORIZED_MEMBER_ACCESS);
         }
 
-        final Point point = toPoint(request.getLng(), request.getLat());
+        final Point point = PointUtils.toPoint(request.getLat(), request.getLng());
 
         bookmark.update(point, request.getAddress(), request.getName());
 
@@ -111,13 +111,6 @@ public class BookmarkService {
     private Member getMember(Long id) {
         return memberRepository.findById(id)
             .orElseThrow(() -> new BusinessException(MemberErrorCode.NOT_FOUND_MEMBER));
-    }
-
-    private Point toPoint(double lng, double lat) {
-        if (lng < -180 || lng > 180 || lat < -90 || lat > 90) {
-            throw new BusinessException(BookmarkErrorCode.INVALID_COORDINATES);
-        }
-        return geometryFactory.createPoint(new Coordinate(lng, lat));
     }
 
     @Transactional(readOnly = true)
