@@ -2,9 +2,7 @@ package org.programmers.signalbuddyfinal.domain.trafficSignal.repository;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.dto.TrafficResponse;
 import org.springframework.data.geo.Circle;
@@ -26,7 +24,7 @@ import java.time.Duration;
 public class TrafficRedisRepository {
 
     private final RedisTemplate<Object, Object> redisTemplate;
-    private final HashOperations<Object, Object, Map<String,String>> hashOperations;
+    private final HashOperations<Object, Object, TrafficResponse> hashOperations;
     private final GeoOperations<Object,Object> geoOperations;
 
     private static final String KEY_HASH = "traffic:info";
@@ -37,6 +35,10 @@ public class TrafficRedisRepository {
         this.redisTemplate = redisTemplate;
         this.hashOperations = redisTemplate.opsForHash();
         this.geoOperations = redisTemplate.opsForGeo();
+    }
+
+    public boolean isExist(){
+        return hashOperations.hasKey(KEY_HASH, KEY_GEO);
     }
 
     public void save(TrafficResponse trafficResponse) {
@@ -50,13 +52,7 @@ public class TrafficRedisRepository {
         );
 
         // HASH 데이터 저장
-        Map<String, String> trafficData = new HashMap<>();
-        trafficData.put("serialNumber", String.valueOf(trafficResponse.getSerialNumber()));
-        trafficData.put("district", trafficResponse.getDistrict());
-        trafficData.put("signalType", trafficResponse.getSignalType());
-        trafficData.put("address", trafficResponse.getAddress());
-
-        hashOperations.put(KEY_HASH, trafficId.toString(), trafficData);
+        hashOperations.put(KEY_HASH, trafficId.toString(), trafficResponse);
 
         // GEO와 HASH 모두에 TTL 설정
         redisTemplate.expire(KEY_GEO, TTL);
@@ -110,7 +106,7 @@ public class TrafficRedisRepository {
 
         String trafficId = String.valueOf(id);
 
-        Map<String, String> data = hashOperations.get(KEY_HASH, trafficId);
+        TrafficResponse data = hashOperations.get(KEY_HASH, trafficId);
 
         if (data == null) {
             log.info("redis에 데이터 없음");
@@ -131,10 +127,10 @@ public class TrafficRedisRepository {
 
         return TrafficResponse.builder()
             .trafficSignalId(id)
-            .serialNumber(Long.valueOf(data.get("serialNumber")))
-            .district(data.get("district"))
-            .signalType(data.get("signalType"))
-            .address(data.get("address"))
+            .serialNumber(data.getSerialNumber())
+            .district(data.getDistrict())
+            .signalType(data.getSignalType())
+            .address(data.getAddress())
             .lat(savedLat)
             .lng(savedLng)
             .build();

@@ -8,12 +8,10 @@ import org.programmers.signalbuddyfinal.domain.trafficSignal.exception.TrafficEr
 import org.programmers.signalbuddyfinal.domain.trafficSignal.repository.CustomTrafficRepositoryImpl;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.repository.TrafficRepository;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.repository.TrafficRedisRepository;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -27,32 +25,29 @@ public class TrafficService {
     private final CustomTrafficRepositoryImpl customTrafficRepository;
     private final TrafficRedisRepository trafficRedisRepository;
     private final TrafficRepository trafficRepository;
-    private final RedisTemplate<Object, Object> redisTemplate;
 
     public List<TrafficResponse> searchAndSaveTraffic(Double lat, Double lng, int radius){
 
         log.debug("주변 보행등 정보 - lat = {}, lng = {}, radius = {}", lat, lng, radius);
         List<TrafficResponse> responseDB;
 
-        boolean exists = Boolean.TRUE.equals(redisTemplate.hasKey(TRAFFIC_REDIS_KEY));
-
-        if (exists) {
+        if (trafficRedisRepository.isExist()) {
             double kiloRadius = (double) radius/1000;
             List<TrafficResponse> responseRedis = trafficRedisRepository.findNearbyTraffics(lat, lng, kiloRadius);
 
-            log.info("redis 주변 보행등 데이터 : redis data 갯수 = {} ", responseRedis.size());
+            log.debug("redis 주변 보행등 데이터 : redis data 갯수 = {} ", responseRedis.size());
             return responseRedis;
         }
 
         try {
             responseDB = customTrafficRepository.findNearestTraffics(lat, lng, radius);
 
-            log.info("주변 보행등 정보 캐싱 : DB data 갯수 = {} ", responseDB.size());
+            log.debug("주변 보행등 정보 캐싱 : DB data 갯수 = {} ", responseDB.size());
             for (TrafficResponse response : responseDB) {
                 trafficRedisRepository.save(response);
             }
 
-            log.info("DB 주변 보행등 데이터 캐싱 성공");
+            log.debug("DB 주변 보행등 데이터 캐싱 성공");
             return responseDB;
 
         } catch (Exception e) {

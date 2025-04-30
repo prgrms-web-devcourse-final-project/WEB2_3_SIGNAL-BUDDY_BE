@@ -61,7 +61,7 @@ public class TrafficServiceTest extends ServiceTest {
 
         // Given
         when(trafficRedisRepository.findNearbyTraffics(lat, lng, 1.0)).thenReturn(expected);
-        when(redisTemplate.hasKey(TRAFFIC_REDIS_KEY)).thenReturn(true);
+        when(trafficRedisRepository.isExist()).thenReturn(true);
 
         // When
         List<TrafficResponse> result = trafficService.searchAndSaveTraffic(lat, lng, 1000);

@@ -58,6 +58,7 @@ public class TrafficRedisRepositoryTest {
 
     @BeforeEach
     void setUp() {
+
         when(redisTemplate.opsForHash()).thenReturn(hashOperations);
         when(redisTemplate.opsForGeo()).thenReturn(geoOperations);
 
@@ -96,13 +97,7 @@ public class TrafficRedisRepositoryTest {
             eq( String.valueOf(id) )
         );
 
-        Map<String, String> expectedTrafficData = new HashMap<>();
-        expectedTrafficData.put("serialNumber", expected.get(0).getSerialNumber().toString());
-        expectedTrafficData.put("district", expected.get(0).getDistrict());
-        expectedTrafficData.put("signalType", expected.get(0).getSignalType());
-        expectedTrafficData.put("address", expected.get(0).getAddress());
-
-        verify(hashOperations).put(eq(KEY_HASH), eq(id.toString()), eq(expectedTrafficData));
+        verify(hashOperations).put(eq(KEY_HASH), eq(id.toString()), eq(expected.get(0)));
         verify(redisTemplate).expire(KEY_GEO, TTL);
         verify(redisTemplate).expire(KEY_HASH, TTL);
     }
@@ -132,13 +127,9 @@ public class TrafficRedisRepositoryTest {
 
         when(geoOperations.position(KEY_GEO, id.toString())).thenReturn(List.of(point));
 
-        Map<String, String> expectedTrafficData = new HashMap<>();
-        expectedTrafficData.put("serialNumber", expected.get(0).getSerialNumber().toString());
-        expectedTrafficData.put("district", expected.get(0).getDistrict());
-        expectedTrafficData.put("signalType", expected.get(0).getSignalType());
-        expectedTrafficData.put("address", expected.get(0).getAddress());
 
-        doReturn(expectedTrafficData).when(hashOperations).get(eq(KEY_HASH), eq(id.toString()));
+
+        doReturn(expected.get(0)).when(hashOperations).get(eq(KEY_HASH), eq(id.toString()));
 
         //When
         trafficRedisRepository.save(expected.get(0));

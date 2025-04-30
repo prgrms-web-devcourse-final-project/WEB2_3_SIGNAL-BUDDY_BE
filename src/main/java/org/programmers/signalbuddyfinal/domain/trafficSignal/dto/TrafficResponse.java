@@ -1,5 +1,6 @@
 package org.programmers.signalbuddyfinal.domain.trafficSignal.dto;
 
+import com.google.auto.value.extension.serializable.SerializableAutoValue;
 import lombok.*;
 import org.locationtech.jts.geom.Point;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.entity.TrafficSignal;
@@ -7,6 +8,7 @@ import org.programmers.signalbuddyfinal.global.util.PointUtils;
 
 @Getter
 @Builder
+@SerializableAutoValue
 @AllArgsConstructor
 @NoArgsConstructor
 public class TrafficResponse {
