@@ -62,7 +62,7 @@ public class AirQualityService {
     }
 
     private AirQualityResponse failBackOrThrow() {
-        CachedAirQuality previous = (CachedAirQuality) redisTemplate.opsForValue().get(key);
+        CachedAirQuality previous = getCache();
         if (previous != null) {
             saveToCache(previous.getData(), false);
             return previous.getData();
