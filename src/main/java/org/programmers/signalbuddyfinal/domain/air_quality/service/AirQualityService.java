@@ -32,15 +32,9 @@ public class AirQualityService {
     }
 
     public AirQualityResponse updateAriQuality() {
-        Optional<AirQuality> airQuality = requestAirQuality();
-
-        // 응답 성공
-        if (airQuality.isPresent()) {
-            return successfulResponse(airQuality.get());
-        } else {
-            // 응답 실패
-            return failBackOrThrow();
-        }
+        return requestAirQuality()
+                .map(this::successfulResponse)
+                .orElseGet(this::failBackOrThrow);
     }
 
     private AirQualityResponse createResponse(AirQuality airQuality) {
@@ -68,7 +62,6 @@ public class AirQualityService {
     }
 
     private AirQualityResponse failBackOrThrow() {
-        // 응답 실패
         CachedAirQuality previous = (CachedAirQuality) redisTemplate.opsForValue().get(key);
         if (previous != null) {
             saveToCache(previous.getData(), false);
