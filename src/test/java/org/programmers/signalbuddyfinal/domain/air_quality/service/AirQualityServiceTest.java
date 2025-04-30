@@ -95,7 +95,7 @@ public class AirQualityServiceTest extends ServiceTest implements RedisTestConta
         createMockWebServer(createResponse());
         redisTemplate.opsForValue().set(key, cachedAirQuality);
 
-        AirQualityResponse response = airQualityService.getAirQuality();
+       AirQualityResponse response = airQualityService.getAirQuality();
 
         assertThat(response).isNotNull();
         assertThat(response.getGrade()).isEqualTo("보통");

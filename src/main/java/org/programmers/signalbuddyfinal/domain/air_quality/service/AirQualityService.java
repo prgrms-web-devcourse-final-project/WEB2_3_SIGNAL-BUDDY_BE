@@ -2,6 +2,7 @@ package org.programmers.signalbuddyfinal.domain.air_quality.service;
 
 import java.time.Duration;
 import java.util.Optional;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.programmers.signalbuddyfinal.domain.air_quality.dto.AirQuality;
@@ -24,41 +25,53 @@ public class AirQualityService {
     private static final Duration TTL = Duration.ofHours(2);
 
     public AirQualityResponse getAirQuality() {
-        CachedAirQuality cached = (CachedAirQuality) redisTemplate.opsForValue().get(key);
-        if (cached != null && cached.isFresh()) {
-            return cached.getData();
-        }
-        return updateAriQuality();
+        return getCachedAirQuality().orElseGet(this::updateAriQuality);
     }
 
     public AirQualityResponse updateAriQuality() {
-        Optional<AirQuality> airQuality = airQualityProvider.getAirQuality();
-
-        // 응답 성공
-        if (airQuality.isPresent()) {
-            AirQualityResponse response = createResponse(airQuality);
-            saveToCache(response, true);
-            return response;
-        } else {
-            // 응답 실패
-            CachedAirQuality previous = (CachedAirQuality) redisTemplate.opsForValue().get(key);
-            if (previous != null) {
-                saveToCache(previous.getData(), false);
-                return previous.getData();
-            }
-            throw new BusinessException(AirQualityErrorCode.AIR_QUALITY_SERVICE_UNAVAILABLE);
-        }
+        return requestAirQuality()
+                .map(this::successfulResponse)
+                .orElseGet(this::failBackOrThrow);
     }
 
-    private AirQualityResponse createResponse(Optional<AirQuality> airQuality) {
-        return AirQualityResponse.builder()
-            .grade(airQuality.get().getRow().get(0).getGrade())
-            .pm25(airQuality.get().getRow().get(0).getPm25())
-            .pm10(airQuality.get().getRow().get(0).getPm10())
-            .build();
+    private Optional<AirQualityResponse> getCachedAirQuality() {
+        return Optional.ofNullable(getCache())
+                .filter(CachedAirQuality::isFresh)
+                .map(CachedAirQuality::getData);
+    }
+
+    private AirQualityResponse successfulResponse(AirQuality newAirQuality) {
+        AirQualityResponse response = createResponse(newAirQuality);
+        saveToCache(response, true);
+        return response;
+    }
+
+    private AirQualityResponse failBackOrThrow() {
+        return Optional.ofNullable(getCache())
+                .map(cache -> {
+                    saveToCache(cache.getData(), false);
+                    return cache.getData();
+                })
+                .orElseThrow(() -> new BusinessException(AirQualityErrorCode.AIR_QUALITY_SERVICE_UNAVAILABLE));
     }
 
     private void saveToCache(AirQualityResponse airQualityResponse, boolean fresh) {
         redisTemplate.opsForValue().set(key, new CachedAirQuality(airQualityResponse, fresh), TTL);
+    }
+
+    private CachedAirQuality getCache() {
+        return (CachedAirQuality) redisTemplate.opsForValue().get(key);
+    }
+
+    private Optional<AirQuality> requestAirQuality() {
+        return airQualityProvider.getAirQuality();
+    }
+
+    private AirQualityResponse createResponse(AirQuality airQuality) {
+        return AirQualityResponse.builder()
+                .grade(airQuality.getRow().get(0).getGrade())
+                .pm25(airQuality.getRow().get(0).getPm25())
+                .pm10(airQuality.getRow().get(0).getPm10())
+                .build();
     }
 }
