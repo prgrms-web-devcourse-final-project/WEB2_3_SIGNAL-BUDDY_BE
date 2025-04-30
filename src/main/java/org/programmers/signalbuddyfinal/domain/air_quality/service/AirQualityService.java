@@ -65,14 +65,12 @@ public class AirQualityService {
 
     private Optional<AirQualityResponse> getCachedAirQuality() {
         CachedAirQuality cache = getCache();
-        if (cache != null && cache.isFresh()) {
-            return Optional.ofNullable(cache.getData());
-        }
-        return Optional.empty();
+        return Optional.ofNullable(cache)
+                .filter(CachedAirQuality::isFresh)
+                .map(CachedAirQuality::getData);
     }
 
     private CachedAirQuality getCache(){
        return  (CachedAirQuality) redisTemplate.opsForValue().get(key);
     }
-
 }
