@@ -62,12 +62,12 @@ public class AirQualityService {
     }
 
     private AirQualityResponse failBackOrThrow() {
-        CachedAirQuality previous = getCache();
-        if (previous != null) {
-            saveToCache(previous.getData(), false);
-            return previous.getData();
-        }
-        throw new BusinessException(AirQualityErrorCode.AIR_QUALITY_SERVICE_UNAVAILABLE);
+        return Optional.ofNullable(getCache())
+                .map(cache -> {
+                    saveToCache(cache.getData(), false);
+                    return cache.getData();
+                })
+                .orElseThrow(() -> new BusinessException(AirQualityErrorCode.AIR_QUALITY_SERVICE_UNAVAILABLE));
     }
 
     private CachedAirQuality getCache() {
