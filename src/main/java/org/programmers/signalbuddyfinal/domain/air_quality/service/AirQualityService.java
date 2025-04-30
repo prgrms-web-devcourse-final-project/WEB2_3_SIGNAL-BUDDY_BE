@@ -36,9 +36,7 @@ public class AirQualityService {
 
         // 응답 성공
         if (airQuality.isPresent()) {
-            AirQualityResponse response = createResponse(airQuality);
-            saveToCache(response, true);
-            return response;
+            return successfulResponse(airQuality.get());
         } else {
             // 응답 실패
             CachedAirQuality previous = (CachedAirQuality) redisTemplate.opsForValue().get(key);
@@ -50,11 +48,11 @@ public class AirQualityService {
         }
     }
 
-    private AirQualityResponse createResponse(Optional<AirQuality> airQuality) {
+    private AirQualityResponse createResponse(AirQuality airQuality) {
         return AirQualityResponse.builder()
-                .grade(airQuality.get().getRow().get(0).getGrade())
-                .pm25(airQuality.get().getRow().get(0).getPm25())
-                .pm10(airQuality.get().getRow().get(0).getPm10())
+                .grade(airQuality.getRow().get(0).getGrade())
+                .pm25(airQuality.getRow().get(0).getPm25())
+                .pm10(airQuality.getRow().get(0).getPm10())
                 .build();
     }
 
@@ -67,6 +65,16 @@ public class AirQualityService {
                 .filter(CachedAirQuality::isFresh)
                 .map(CachedAirQuality::getData);
     }
+
+    private AirQualityResponse successfulResponse(AirQuality aAirQuality){
+        AirQualityResponse response = createResponse(aAirQuality);
+        saveToCache(response, true);
+        return response;
+    }
+
+//    private AirQualityResponse failBackOrThrow(){
+//
+//    }
 
     private CachedAirQuality getCache(){
        return  (CachedAirQuality) redisTemplate.opsForValue().get(key);
