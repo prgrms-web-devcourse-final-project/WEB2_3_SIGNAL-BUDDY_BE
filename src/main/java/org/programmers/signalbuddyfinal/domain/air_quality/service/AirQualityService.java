@@ -55,8 +55,8 @@ public class AirQualityService {
                 .map(CachedAirQuality::getData);
     }
 
-    private AirQualityResponse successfulResponse(AirQuality aAirQuality) {
-        AirQualityResponse response = createResponse(aAirQuality);
+    private AirQualityResponse successfulResponse(AirQuality newAirQuality) {
+        AirQualityResponse response = createResponse(newAirQuality);
         saveToCache(response, true);
         return response;
     }
