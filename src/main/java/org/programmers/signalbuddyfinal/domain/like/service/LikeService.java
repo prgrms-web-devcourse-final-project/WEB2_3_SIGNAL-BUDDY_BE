@@ -3,7 +3,6 @@ package org.programmers.signalbuddyfinal.domain.like.service;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.like.dto.LikeExistResponse;
 import org.programmers.signalbuddyfinal.domain.like.dto.LikeRequestType;
-import org.programmers.signalbuddyfinal.domain.like.dto.LikeUpdateRequest;
 import org.programmers.signalbuddyfinal.domain.like.exception.LikeErrorCode;
 import org.programmers.signalbuddyfinal.domain.like.repository.LikeRepository;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
@@ -73,10 +72,6 @@ public class LikeService {
         }
 
         likeCacheService.cancelLike(key);
-    }
-
-    public static String generateKey(LikeUpdateRequest request) {
-        return LIKE_KEY_PREFIX + request.getFeedbackId() + ":" + request.getMemberId();
     }
 
     public static String getLikeKeyPrefix() {
