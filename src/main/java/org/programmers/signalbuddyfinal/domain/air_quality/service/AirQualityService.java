@@ -29,9 +29,9 @@ public class AirQualityService {
 
     public Optional<AirQualityResponse> getAirQuality() {
 
-        Optional<AirQualityResponse> result = getCachedAirQuality();
+        Optional<AirQualityResponse> response = getCachedAirQuality();
 
-        return result.isPresent() ? result : updateAriQuality();
+        return response.isPresent() ? response : updateAriQuality();
 
     }
 
