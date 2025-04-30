@@ -115,8 +115,8 @@ class BookmarkServiceTest extends ServiceTest {
             new CustomUserDetails(member.getMemberId(), "", "", "", "", MemberRole.USER,
                 MemberStatus.ACTIVITY));
 
-        final BookmarkRequest request = BookmarkRequest.builder().lat(37.12345 + 0.001).lng(127.12345)
-            .address("Update Address").name("Update Name").build();
+        final BookmarkRequest request = BookmarkRequest.builder().lat(37.12345 + 0.001)
+            .lng(127.12345).address("Update Address").name("Update Name").build();
 
         final Optional<Bookmark> bookmark = bookmarkRepository.findById(1L);
         assertThat(bookmark).isPresent();
@@ -141,6 +141,34 @@ class BookmarkServiceTest extends ServiceTest {
         assertThat(found.get().getCoordinate().getY()).isEqualTo(response.getLat());
         assertThat(found.get().getSequence()).isEqualTo(response.getSequence());
         assertThat(found.get().getMember().getMemberId()).isEqualTo(member.getMemberId());
+    }
+
+    @Test
+    @DisplayName("즐겨찾기 수정 실패 : 사용자 인증 정보 다름")
+    void updateBookmarkFailure() {
+        final Member failure = Member.builder().email("bookmark2@bookmark.com").password("123456")
+            .role(MemberRole.USER).nickname("updateBookmarkFailure")
+            .memberStatus(MemberStatus.ACTIVITY)
+            .profileImageUrl("https://book-test-image.com/test-123131").build();
+        memberRepository.save(failure);
+
+        CustomUser2Member user = new CustomUser2Member(
+            new CustomUserDetails(failure.getMemberId(), "", "", "", "", MemberRole.USER,
+                MemberStatus.ACTIVITY));
+
+        final BookmarkRequest request = BookmarkRequest.builder().lat(37.12345 + 0.001)
+            .lng(127.12345).address("Update Address").name("Update Name").build();
+
+        final Optional<Bookmark> bookmark = bookmarkRepository.findById(1L);
+        assertThat(bookmark).isPresent();
+
+        final Long bookmarkId = bookmark.get().getBookmarkId();
+        final Long memberId = user.getMemberId();
+
+        assertThatThrownBy(
+            () -> bookmarkService.updateBookmark(request, bookmarkId, memberId)).isInstanceOf(
+                BusinessException.class)
+            .hasMessageContaining(BookmarkErrorCode.UNAUTHORIZED_MEMBER_ACCESS.getMessage());
     }
 
     @Test
