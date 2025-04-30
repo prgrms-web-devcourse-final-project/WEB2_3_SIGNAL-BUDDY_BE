@@ -28,11 +28,11 @@ public class AirQualityService {
     private static final Duration TTL = Duration.ofHours(2);
 
     public AirQualityResponse getAirQuality() {
-        return getCachedAirQuality().orElse(updateAriQuality());
+        return getCachedAirQuality().orElseGet(this::updateAriQuality);
     }
 
     public AirQualityResponse updateAriQuality() {
-        Optional<AirQuality> airQuality = airQualityProvider.getAirQuality();
+        Optional<AirQuality> airQuality = requestAirQuality();
 
         // 응답 성공
         if (airQuality.isPresent()) {
@@ -70,5 +70,9 @@ public class AirQualityService {
 
     private CachedAirQuality getCache(){
        return  (CachedAirQuality) redisTemplate.opsForValue().get(key);
+    }
+
+    private Optional<AirQuality> requestAirQuality(){
+        return  airQualityProvider.getAirQuality();
     }
 }
