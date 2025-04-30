@@ -1,6 +1,6 @@
 package org.programmers.signalbuddyfinal.domain.like.batch;
 
-import static org.programmers.signalbuddyfinal.domain.like.service.LikeService.getLikeKeyPrefix;
+import static org.programmers.signalbuddyfinal.domain.like.service.LikeCacheService.getLikeKeyPrefix;
 
 import java.nio.charset.StandardCharsets;
 import lombok.RequiredArgsConstructor;

@@ -18,8 +18,6 @@ public class LikeService {
     private final LikeRepository likeRepository;
     private final LikeCacheService likeCacheService;
 
-    private static final String LIKE_KEY_PREFIX = "like:";
-
     @Transactional
     public void addLike(Long feedbackId, CustomUser2Member user) {
         String key = LikeCacheService.generateKey(feedbackId, user.getMemberId());
@@ -72,9 +70,5 @@ public class LikeService {
         }
 
         likeCacheService.cancelLike(key);
-    }
-
-    public static String getLikeKeyPrefix() {
-        return LIKE_KEY_PREFIX;
     }
 }

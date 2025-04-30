@@ -39,4 +39,8 @@ public class LikeCacheService {
     public static String generateKey(Long feedbackId, Long memberId) {
         return LIKE_KEY_PREFIX + feedbackId + ":" + memberId;
     }
+
+    public static String getLikeKeyPrefix() {
+        return LIKE_KEY_PREFIX;
+    }
 }

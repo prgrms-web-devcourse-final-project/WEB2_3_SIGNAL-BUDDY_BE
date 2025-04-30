@@ -1,7 +1,7 @@
 package org.programmers.signalbuddyfinal.domain.like.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.programmers.signalbuddyfinal.domain.like.service.LikeService.getLikeKeyPrefix;
+import static org.programmers.signalbuddyfinal.domain.like.service.LikeCacheService.getLikeKeyPrefix;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
