@@ -1,6 +1,8 @@
 package org.programmers.signalbuddyfinal.domain.air_quality.dto;
 
 import java.io.Serializable;
+import java.util.Optional;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

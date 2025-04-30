@@ -28,8 +28,7 @@ public class AirQualityService {
     private static final Duration TTL = Duration.ofHours(2);
 
     public AirQualityResponse getAirQuality() {
-        Optional<AirQualityResponse> response = getCachedAirQuality();
-        return response.isPresent() ? response.get() : updateAriQuality();
+        return getCachedAirQuality().orElse(updateAriQuality());
     }
 
     public AirQualityResponse updateAriQuality() {
