@@ -64,8 +64,7 @@ public class AirQualityService {
     }
 
     private Optional<AirQualityResponse> getCachedAirQuality() {
-        CachedAirQuality cache = getCache();
-        return Optional.ofNullable(cache)
+        return Optional.ofNullable(getCache())
                 .filter(CachedAirQuality::isFresh)
                 .map(CachedAirQuality::getData);
     }
