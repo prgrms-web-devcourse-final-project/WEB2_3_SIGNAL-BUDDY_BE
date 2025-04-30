@@ -27,28 +27,25 @@ public class AirQualityService {
     private static final String key = "air-quality: ";
     private static final Duration TTL = Duration.ofHours(2);
 
-    public Optional<AirQualityResponse> getAirQuality() {
-
+    public AirQualityResponse getAirQuality() {
         Optional<AirQualityResponse> response = getCachedAirQuality();
-
-        return response.isPresent() ? response : updateAriQuality();
-
+        return response.isPresent() ? response.get() : updateAriQuality();
     }
 
-    public Optional<AirQualityResponse> updateAriQuality() {
+    public AirQualityResponse updateAriQuality() {
         Optional<AirQuality> airQuality = airQualityProvider.getAirQuality();
 
         // 응답 성공
         if (airQuality.isPresent()) {
             AirQualityResponse response = createResponse(airQuality);
             saveToCache(response, true);
-            return Optional.ofNullable(response);
+            return response;
         } else {
             // 응답 실패
             CachedAirQuality previous = (CachedAirQuality) redisTemplate.opsForValue().get(key);
             if (previous != null) {
                 saveToCache(previous.getData(), false);
-                return Optional.ofNullable(previous.getData());
+                return previous.getData();
             }
             throw new BusinessException(AirQualityErrorCode.AIR_QUALITY_SERVICE_UNAVAILABLE);
         }
@@ -73,5 +70,6 @@ public class AirQualityService {
         }
         return Optional.empty();
     }
+
 
 }

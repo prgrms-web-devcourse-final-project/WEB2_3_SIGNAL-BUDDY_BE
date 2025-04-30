@@ -26,6 +26,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 
 import java.io.IOException;
+import java.util.Optional;
 
 @SpringBootTest
 @Import(RedisConfig.class)
@@ -95,7 +96,7 @@ public class AirQualityServiceTest extends ServiceTest implements RedisTestConta
         createMockWebServer(createResponse());
         redisTemplate.opsForValue().set(key, cachedAirQuality);
 
-        AirQualityResponse response = airQualityService.getAirQuality();
+       AirQualityResponse response = airQualityService.getAirQuality();
 
         assertThat(response).isNotNull();
         assertThat(response.getGrade()).isEqualTo("보통");
