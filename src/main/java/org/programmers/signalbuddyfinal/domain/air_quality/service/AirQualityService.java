@@ -39,12 +39,7 @@ public class AirQualityService {
             return successfulResponse(airQuality.get());
         } else {
             // 응답 실패
-            CachedAirQuality previous = (CachedAirQuality) redisTemplate.opsForValue().get(key);
-            if (previous != null) {
-                saveToCache(previous.getData(), false);
-                return previous.getData();
-            }
-            throw new BusinessException(AirQualityErrorCode.AIR_QUALITY_SERVICE_UNAVAILABLE);
+            return failBackOrThrow();
         }
     }
 
@@ -66,21 +61,27 @@ public class AirQualityService {
                 .map(CachedAirQuality::getData);
     }
 
-    private AirQualityResponse successfulResponse(AirQuality aAirQuality){
+    private AirQualityResponse successfulResponse(AirQuality aAirQuality) {
         AirQualityResponse response = createResponse(aAirQuality);
         saveToCache(response, true);
         return response;
     }
 
-//    private AirQualityResponse failBackOrThrow(){
-//
-//    }
-
-    private CachedAirQuality getCache(){
-       return  (CachedAirQuality) redisTemplate.opsForValue().get(key);
+    private AirQualityResponse failBackOrThrow() {
+        // 응답 실패
+        CachedAirQuality previous = (CachedAirQuality) redisTemplate.opsForValue().get(key);
+        if (previous != null) {
+            saveToCache(previous.getData(), false);
+            return previous.getData();
+        }
+        throw new BusinessException(AirQualityErrorCode.AIR_QUALITY_SERVICE_UNAVAILABLE);
     }
 
-    private Optional<AirQuality> requestAirQuality(){
-        return  airQualityProvider.getAirQuality();
+    private CachedAirQuality getCache() {
+        return (CachedAirQuality) redisTemplate.opsForValue().get(key);
+    }
+
+    private Optional<AirQuality> requestAirQuality() {
+        return airQualityProvider.getAirQuality();
     }
 }
