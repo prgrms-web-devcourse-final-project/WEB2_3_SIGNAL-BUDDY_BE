@@ -1,5 +1,6 @@
 package org.programmers.signalbuddyfinal.domain.like.service;
 
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.like.dto.LikeExistResponse;
 import org.programmers.signalbuddyfinal.domain.like.dto.LikeRequestType;
@@ -39,26 +40,18 @@ public class LikeService {
     public LikeExistResponse existsLike(Long feedbackId, CustomUser2Member user) {
         String key = LikeCacheService.generateKey(feedbackId, user.getMemberId());
 
-        // Redis에 임시 저장되어 있는 경우
-        String cacheLike = likeCacheService.getLikeType(key);
-        if (cacheLike != null) {
-            // 좋아요 추가 요청일 때
-            if (LikeRequestType.ADD.name().equals(cacheLike)) {
-                return LikeExistResponse.createTrue();
-            }
-            // 좋아요 삭제 요청일 때
-            return LikeExistResponse.createFalse();
-        }
-
-        boolean isExisted = likeRepository.existsByMemberAndFeedback(user.getMemberId(), feedbackId);
-        return new LikeExistResponse(isExisted);
+        return Optional.ofNullable(likeCacheService.getLikeType(key))
+            .map(type -> new LikeExistResponse(LikeRequestType.ADD.name().equals(type)))
+            .orElseGet(() -> new LikeExistResponse(
+                likeRepository.existsByMemberAndFeedback(user.getMemberId(), feedbackId)
+            ));
     }
 
     @Transactional
     public void deleteLike(Long feedbackId, CustomUser2Member user) {
         String key = LikeCacheService.generateKey(feedbackId, user.getMemberId());
 
-        // 좋아요 데이터가 아직 DB에 저장되지 않은 경우 (Redis에만 있을 때)
+        // 좋아요 데이터가 아직 DB에 저장되지 않은 경우
         if (likeCacheService.exists(key)) {
             likeCacheService.delete(key);
             return;
