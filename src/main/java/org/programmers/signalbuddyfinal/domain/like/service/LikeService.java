@@ -1,5 +1,6 @@
 package org.programmers.signalbuddyfinal.domain.like.service;
 
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.like.dto.LikeExistResponse;
 import org.programmers.signalbuddyfinal.domain.like.dto.LikeRequestType;
@@ -9,11 +10,8 @@ import org.programmers.signalbuddyfinal.domain.like.repository.LikeRepository;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -30,8 +28,8 @@ public class LikeService {
         String key = generateKey(feedbackId, user.getMemberId());
 
         // 삭제 요청 데이터가 Redis에 있을 때
-        if (Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
-            redisTemplate.delete(key);
+        if (hasLike(key)) {
+            deleteKey(key);
             return;
         }
 
@@ -40,15 +38,14 @@ public class LikeService {
             throw new BusinessException(LikeErrorCode.ALREADY_ADDED_LIKE);
         }
 
-        ValueOperations<String, String> operations = redisTemplate.opsForValue();
-        operations.set(key, LikeRequestType.ADD.name(), 3L, TimeUnit.MINUTES);
+        putAddedLike(key);
     }
 
     public LikeExistResponse existsLike(Long feedbackId, CustomUser2Member user) {
         String key = generateKey(feedbackId, user.getMemberId());
 
         // Redis에 임시 저장되어 있는 경우
-        String cacheLike = redisTemplate.opsForValue().get(key);
+        String cacheLike = getValue(key);
         if (cacheLike != null) {
             // 좋아요 추가 요청일 때
             if (LikeRequestType.ADD.name().equals(cacheLike)) {
@@ -67,8 +64,8 @@ public class LikeService {
         String key = generateKey(feedbackId, user.getMemberId());
 
         // 좋아요 데이터가 아직 DB에 저장되지 않은 경우 (Redis에만 있을 때)
-        if (Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
-            redisTemplate.delete(key);
+        if (hasLike(key)) {
+            deleteKey(key);
             return;
         }
 
@@ -77,11 +74,10 @@ public class LikeService {
             throw new BusinessException(LikeErrorCode.NOT_FOUND_LIKE);
         }
 
-        ValueOperations<String, String> operations = redisTemplate.opsForValue();
-        operations.set(key, LikeRequestType.CANCEL.name(), 3L, TimeUnit.MINUTES);
+        putDeletedLike(key);
     }
 
-    String generateKey(Long feedbackId, Long memberId) {
+    public static String generateKey(Long feedbackId, Long memberId) {
         return LIKE_KEY_PREFIX + feedbackId + ":" + memberId;
     }
 
@@ -91,5 +87,27 @@ public class LikeService {
 
     public static String getLikeKeyPrefix() {
         return LIKE_KEY_PREFIX;
+    }
+
+    public void putAddedLike(String key) {
+        redisTemplate.opsForValue()
+            .set(key, LikeRequestType.ADD.name(), 3L, TimeUnit.MINUTES);
+    }
+
+    public void putDeletedLike(String key) {
+        redisTemplate.opsForValue()
+            .set(key, LikeRequestType.CANCEL.name(), 3L, TimeUnit.MINUTES);
+    }
+
+    public boolean hasLike(String key) {
+        return Boolean.TRUE.equals(redisTemplate.hasKey(key));
+    }
+
+    public void deleteKey(String key) {
+        redisTemplate.delete(key);
+    }
+
+    public String getValue(String key) {
+        return redisTemplate.opsForValue().get(key);
     }
 }
