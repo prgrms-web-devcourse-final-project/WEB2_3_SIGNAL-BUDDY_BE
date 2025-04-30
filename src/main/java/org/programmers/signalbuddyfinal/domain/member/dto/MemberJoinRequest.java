@@ -18,7 +18,7 @@ public class MemberJoinRequest {
 
     private Provider provider;
 
-    private String SocialUserId;
+    private String socialUserId;
 
     @Email(message = "이메일 형식에 맞지 않습니다.")
     private String email;

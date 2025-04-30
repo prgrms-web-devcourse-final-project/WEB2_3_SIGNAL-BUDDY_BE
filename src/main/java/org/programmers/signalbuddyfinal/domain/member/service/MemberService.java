@@ -99,7 +99,6 @@ public class MemberService {
     @Transactional
     public MemberResponse joinMember(MemberJoinRequest memberJoinRequest, MultipartFile image) {
 
-        // 프로필 이미지 설정
         String profileImageUrl = settingProfileImage(image);
 
         // 소셜 회원가입
@@ -183,7 +182,6 @@ public class MemberService {
         member.updateNotifyEnabled(request.getNotifyEnabled());
     }
 
-    // 사용자 정보 저장
     private Member saveMember(MemberJoinRequest memberJoinRequest, String profileImageUrl,
         String type) {
 
@@ -191,12 +189,6 @@ public class MemberService {
             memberJoinRequest.getEmail());
 
         if (existingMember.isPresent()) {
-
-            Member member = existingMember.get();
-
-            if(member.getMemberStatus() == MemberStatus.WITHDRAWAL) {
-                throw new BusinessException(MemberErrorCode.WITHDRAWN_MEMBER);
-            }
             if (type.equals("social")) {
                 return linkWithAlreadyMember(existingMember.get(), memberJoinRequest);
             }
