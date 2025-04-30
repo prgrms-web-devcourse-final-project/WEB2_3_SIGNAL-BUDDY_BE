@@ -26,7 +26,6 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 
 import java.io.IOException;
-import java.util.Optional;
 
 @SpringBootTest
 @Import(RedisConfig.class)
