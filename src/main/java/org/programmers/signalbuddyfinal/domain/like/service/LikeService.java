@@ -3,7 +3,6 @@ package org.programmers.signalbuddyfinal.domain.like.service;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.like.dto.LikeExistResponse;
-import org.programmers.signalbuddyfinal.domain.like.dto.LikeRequestType;
 import org.programmers.signalbuddyfinal.domain.like.exception.LikeErrorCode;
 import org.programmers.signalbuddyfinal.domain.like.repository.LikeRepository;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
@@ -39,9 +38,10 @@ public class LikeService {
 
     public LikeExistResponse existsLike(Long feedbackId, CustomUser2Member user) {
         String key = LikeCacheService.generateKey(feedbackId, user.getMemberId());
+        String cachedValue = likeCacheService.getLikeType(key);
 
-        return Optional.ofNullable(likeCacheService.getLikeType(key))
-            .map(type -> new LikeExistResponse(LikeRequestType.ADD.name().equals(type)))
+        return Optional.ofNullable(likeCacheService.resolveCachedLikeState(cachedValue))
+            .map(LikeExistResponse::new)
             .orElseGet(() -> new LikeExistResponse(
                 likeRepository.existsByMemberAndFeedback(user.getMemberId(), feedbackId)
             ));

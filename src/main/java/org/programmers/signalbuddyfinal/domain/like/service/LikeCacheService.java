@@ -4,6 +4,7 @@ import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.like.dto.LikeRequestType;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -42,5 +43,16 @@ public class LikeCacheService {
 
     public static String getLikeKeyPrefix() {
         return LIKE_KEY_PREFIX;
+    }
+
+    @Nullable
+    public Boolean resolveCachedLikeState(String value) {
+        if (LikeRequestType.ADD.name().equals(value)) {
+            return Boolean.TRUE;
+        }
+        if (LikeRequestType.CANCEL.name().equals(value)) {
+            return Boolean.FALSE;
+        }
+        return null;
     }
 }
