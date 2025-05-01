@@ -1,5 +1,7 @@
 package org.programmers.signalbuddyfinal.domain.like.service;
 
+import static org.programmers.signalbuddyfinal.domain.like.service.LikeCacheService.generateKey;
+
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.like.dto.LikeExistResponse;
@@ -20,7 +22,7 @@ public class LikeService {
 
     @Transactional
     public void addLike(Long feedbackId, CustomUser2Member user) {
-        String key = LikeCacheService.generateKey(feedbackId, user.getMemberId());
+        String key = generateKey(feedbackId, user.getMemberId());
 
         // 삭제 요청 데이터가 Redis에 있을 때
         if (likeCacheService.exists(key)) {
@@ -37,7 +39,7 @@ public class LikeService {
     }
 
     public LikeExistResponse existsLike(Long feedbackId, CustomUser2Member user) {
-        String key = LikeCacheService.generateKey(feedbackId, user.getMemberId());
+        String key = generateKey(feedbackId, user.getMemberId());
         String cachedValue = likeCacheService.getLikeType(key);
 
         return Optional.ofNullable(likeCacheService.resolveCachedLikeState(cachedValue))
@@ -49,7 +51,7 @@ public class LikeService {
 
     @Transactional
     public void deleteLike(Long feedbackId, CustomUser2Member user) {
-        String key = LikeCacheService.generateKey(feedbackId, user.getMemberId());
+        String key = generateKey(feedbackId, user.getMemberId());
 
         // 좋아요 데이터가 아직 DB에 저장되지 않은 경우
         if (likeCacheService.exists(key)) {
