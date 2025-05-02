@@ -16,8 +16,10 @@ import io.jsonwebtoken.Claims;
 import java.util.Date;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -69,92 +71,96 @@ class JwtServiceTest {
         refreshTokenClaims = mock(Claims.class);
     }
 
-    @DisplayName("토큰 재발행 성공")
-    @Test
-    void givenValidTokens_whenTokenReissue_thenReissueSuccess() {
-        // given
-        String reissueAccessToken = "reissueAccessToken";
-        String reissueRefreshToken = "reissueRefreshToken";
+    @Nested
+    @DisplayName("토큰 재발행 테스트")
+    class whenTokenReissue{
+        @Test
+        @DisplayName("토큰 재발행에 성공한다.")
+        void givenValidTokens_whenTokenReissue_thenReissueSuccess() {
+            // given
+            String reissueAccessToken = "reissueAccessToken";
+            String reissueRefreshToken = "reissueRefreshToken";
 
-        when(accessTokenClaims.getSubject()).thenReturn("1");
-        when(refreshTokenClaims.getSubject()).thenReturn("1");
+            when(accessTokenClaims.getSubject()).thenReturn("1");
+            when(refreshTokenClaims.getSubject()).thenReturn("1");
 
-        when(jwtUtil.extractAccessToken("Bearer " + originAccessToken)).thenReturn(originAccessToken);
-        when(jwtUtil.extractClaimsOrThrow(eq("accessToken"), anyString())).thenReturn(accessTokenClaims);
-        when(jwtUtil.extractClaimsOrThrow(eq("refreshToken"), anyString())).thenReturn(refreshTokenClaims);
-        when(jwtUtil.checkBlacklist(anyString())).thenReturn(false);
-        doNothing().when(jwtUtil).validateAccessTokenExpiration(any(Claims.class), anyString());
-        when(jwtUtil.getAuthentication(anyString())).thenReturn(authentication);
-        when(jwtUtil.generateAccessToken(any(Authentication.class))).thenReturn(reissueAccessToken);
-        when(jwtUtil.generateRefreshToken(any(Authentication.class))).thenReturn(reissueRefreshToken);
+            when(jwtUtil.extractAccessToken("Bearer " + originAccessToken)).thenReturn(originAccessToken);
+            when(jwtUtil.extractClaimsOrThrow(eq("accessToken"), anyString())).thenReturn(accessTokenClaims);
+            when(jwtUtil.extractClaimsOrThrow(eq("refreshToken"), anyString())).thenReturn(refreshTokenClaims);
+            when(jwtUtil.checkBlacklist(anyString())).thenReturn(false);
+            doNothing().when(jwtUtil).validateAccessTokenExpiration(any(Claims.class), anyString());
+            when(jwtUtil.getAuthentication(anyString())).thenReturn(authentication);
+            when(jwtUtil.generateAccessToken(any(Authentication.class))).thenReturn(reissueAccessToken);
+            when(jwtUtil.generateRefreshToken(any(Authentication.class))).thenReturn(reissueRefreshToken);
 
-        when(refreshTokenRepository.findByMemberId(any())).thenReturn(originRefreshToken);
+            when(refreshTokenRepository.findByMemberId(any())).thenReturn(originRefreshToken);
 
-        // when
-        NewTokenResponse response = jwtService.reissue("Bearer "+ originAccessToken, originRefreshToken);
+            // when
+            NewTokenResponse response = jwtService.reissue("Bearer "+ originAccessToken, originRefreshToken);
 
-        // then
-        assertNotNull(response);
-        assertEquals(response.getAccessToken(), reissueAccessToken);
-        assertEquals(response.getRefreshToken(), reissueRefreshToken);
-    }
+            // then
+            assertNotNull(response);
+            assertEquals(response.getAccessToken(), reissueAccessToken);
+            assertEquals(response.getRefreshToken(), reissueRefreshToken);
+        }
 
-    @DisplayName("토큰 재발행 실패: refreshToken과 accessToken에 존재하는 memberId가 불일치")
-    @Test
-    void givenDifferentMemberIdFromToken_whenTokenReissue_thenThrowsBadRequestError() {
-        // given
-        when(accessTokenClaims.getSubject()).thenReturn("1");
-        when(refreshTokenClaims.getSubject()).thenReturn("2");
+        @DisplayName("토큰 재발행 실패: refreshToken과 accessToken에 존재하는 memberId가 불일치")
+        @Test
+        void givenDifferentMemberIdFromToken_whenTokenReissue_thenThrowsBadRequestError() {
+            // given
+            when(accessTokenClaims.getSubject()).thenReturn("1");
+            when(refreshTokenClaims.getSubject()).thenReturn("2");
 
-        when(jwtUtil.extractAccessToken("Bearer " + originAccessToken)).thenReturn(originAccessToken);
-        when(jwtUtil.extractClaimsOrThrow(eq("accessToken"), anyString())).thenReturn(accessTokenClaims);
-        when(jwtUtil.extractClaimsOrThrow(eq("refreshToken"), anyString())).thenReturn(refreshTokenClaims);
+            when(jwtUtil.extractAccessToken("Bearer " + originAccessToken)).thenReturn(originAccessToken);
+            when(jwtUtil.extractClaimsOrThrow(eq("accessToken"), anyString())).thenReturn(accessTokenClaims);
+            when(jwtUtil.extractClaimsOrThrow(eq("refreshToken"), anyString())).thenReturn(refreshTokenClaims);
 
-        // when & then
-        assertThatThrownBy(() -> jwtService.reissue("Bearer " + originAccessToken, originRefreshToken))
-            .isInstanceOf(BusinessException.class)
-            .hasMessageContaining(GlobalErrorCode.BAD_REQUEST.getMessage());
-    }
+            // when & then
+            assertThatThrownBy(() -> jwtService.reissue("Bearer " + originAccessToken, originRefreshToken))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining(GlobalErrorCode.BAD_REQUEST.getMessage());
+        }
 
-    @DisplayName("토큰 재발행 실패: accessToken이 블랙리스트에 존재")
-    @Test
-    void givenBlackListAccessToken_whenTokenReissue_thenThrowsBadRequestError() {
-        // given
-        when(accessTokenClaims.getSubject()).thenReturn("1");
-        when(refreshTokenClaims.getSubject()).thenReturn("1");
+        @DisplayName("토큰 재발행 실패: accessToken이 블랙리스트에 존재")
+        @Test
+        void givenBlackListAccessToken_whenTokenReissue_thenThrowsBadRequestError() {
+            // given
+            when(accessTokenClaims.getSubject()).thenReturn("1");
+            when(refreshTokenClaims.getSubject()).thenReturn("1");
 
-        when(jwtUtil.extractAccessToken("Bearer " + originAccessToken)).thenReturn(originAccessToken);
-        when(jwtUtil.extractClaimsOrThrow(eq("accessToken"), anyString())).thenReturn(accessTokenClaims);
-        when(jwtUtil.extractClaimsOrThrow(eq("refreshToken"), anyString())).thenReturn(refreshTokenClaims);
-        when(jwtUtil.checkBlacklist(anyString())).thenReturn(true);
+            when(jwtUtil.extractAccessToken("Bearer " + originAccessToken)).thenReturn(originAccessToken);
+            when(jwtUtil.extractClaimsOrThrow(eq("accessToken"), anyString())).thenReturn(accessTokenClaims);
+            when(jwtUtil.extractClaimsOrThrow(eq("refreshToken"), anyString())).thenReturn(refreshTokenClaims);
+            when(jwtUtil.checkBlacklist(anyString())).thenReturn(true);
 
-        when(refreshTokenRepository.findByMemberId(any())).thenReturn(originRefreshToken);
+            when(refreshTokenRepository.findByMemberId(any())).thenReturn(originRefreshToken);
 
-        // when & then
-        assertThatThrownBy(() -> jwtService.reissue("Bearer " + originAccessToken, originRefreshToken))
-            .isInstanceOf(BusinessException.class)
-            .hasMessageContaining(GlobalErrorCode.BAD_REQUEST.getMessage());
-    }
+            // when & then
+            assertThatThrownBy(() -> jwtService.reissue("Bearer " + originAccessToken, originRefreshToken))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining(GlobalErrorCode.BAD_REQUEST.getMessage());
+        }
 
-    @DisplayName("토큰 재발행 실패: refreshToken이 없음")
-    @Test
-    void givenNonExistentRefreshToken_whenTokenReissue_thenThrowsUnauthorizedError() {
-        // given
-        when(accessTokenClaims.getSubject()).thenReturn("1");
-        when(refreshTokenClaims.getSubject()).thenReturn("1");
+        @DisplayName("토큰 재발행 실패: refreshToken이 없음")
+        @Test
+        void givenNonExistentRefreshToken_whenTokenReissue_thenThrowsUnauthorizedError() {
+            // given
+            when(accessTokenClaims.getSubject()).thenReturn("1");
+            when(refreshTokenClaims.getSubject()).thenReturn("1");
 
-        when(jwtUtil.extractAccessToken("Bearer " + originAccessToken)).thenReturn(originAccessToken);
-        when(jwtUtil.extractClaimsOrThrow(eq("accessToken"), anyString())).thenReturn(accessTokenClaims);
-        when(jwtUtil.extractClaimsOrThrow(eq("refreshToken"), anyString())).thenReturn(refreshTokenClaims);
-        when(jwtUtil.checkBlacklist(anyString())).thenReturn(false);
-        doNothing().when(jwtUtil).validateAccessTokenExpiration(any(Claims.class), anyString());
+            when(jwtUtil.extractAccessToken("Bearer " + originAccessToken)).thenReturn(originAccessToken);
+            when(jwtUtil.extractClaimsOrThrow(eq("accessToken"), anyString())).thenReturn(accessTokenClaims);
+            when(jwtUtil.extractClaimsOrThrow(eq("refreshToken"), anyString())).thenReturn(refreshTokenClaims);
+            when(jwtUtil.checkBlacklist(anyString())).thenReturn(false);
+            doNothing().when(jwtUtil).validateAccessTokenExpiration(any(Claims.class), anyString());
 
-        when(refreshTokenRepository.findByMemberId(any())).thenReturn(null);
+            when(refreshTokenRepository.findByMemberId(any())).thenReturn(null);
 
-        // when & then
-        assertThatThrownBy(() -> jwtService.reissue("Bearer " + originAccessToken, originRefreshToken))
-            .isInstanceOf(BusinessException.class)
-            .hasMessageContaining(AuthErrorCode.UNAUTHORIZED.getMessage());
+            // when & then
+            assertThatThrownBy(() -> jwtService.reissue("Bearer " + originAccessToken, originRefreshToken))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining(AuthErrorCode.UNAUTHORIZED.getMessage());
+        }
     }
 
     @DisplayName("로그아웃 성공")
