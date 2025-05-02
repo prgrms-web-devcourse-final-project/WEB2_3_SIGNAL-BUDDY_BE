@@ -1,6 +1,6 @@
 package org.programmers.signalbuddyfinal.domain.like.batch;
 
-import static org.programmers.signalbuddyfinal.domain.like.service.LikeService.generateKey;
+import static org.programmers.signalbuddyfinal.domain.like.service.LikeCacheService.generateKey;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +38,9 @@ public class RequestLikeWriter implements ItemWriter<LikeUpdateRequest> {
 
             Feedback feedback = feedbackRepository.findById(request.getFeedbackId()).orElse(null);
             if (feedback == null) {
-                redisTemplate.delete(generateKey(request));
+                redisTemplate.delete(
+                    generateKey(request.getFeedbackId(), request.getMemberId())
+                );
                 continue;
             }
 
@@ -51,7 +53,9 @@ public class RequestLikeWriter implements ItemWriter<LikeUpdateRequest> {
                 feedback.decreaseLike();
             }
 
-            likeKeyList.add(generateKey(request));
+            likeKeyList.add(
+                generateKey(request.getFeedbackId(), request.getMemberId())
+            );
         }
 
         likeJdbcRepository.saveAllInBatch(savedLikeList);
