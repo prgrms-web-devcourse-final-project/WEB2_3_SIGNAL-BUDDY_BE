@@ -20,8 +20,6 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class TrafficService {
 
-    private static final String TRAFFIC_REDIS_KEY = "traffic:info";
-
     private final CustomTrafficRepositoryImpl customTrafficRepository;
     private final TrafficRedisRepository trafficRedisRepository;
     private final TrafficRepository trafficRepository;

@@ -15,6 +15,7 @@ import org.springframework.data.redis.connection.RedisGeoCommands.GeoLocation;
 import org.springframework.data.redis.core.GeoOperations;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Repository;
 
 import java.time.Duration;
@@ -24,25 +25,26 @@ import java.time.Duration;
 public class TrafficRedisRepository {
 
     private final RedisTemplate<Object, Object> redisTemplate;
-    private final HashOperations<Object, Object, TrafficResponse> hashOperations;
+    private final ValueOperations<Object, Object> valueOperations;
     private final GeoOperations<Object,Object> geoOperations;
 
-    private static final String KEY_HASH = "traffic:info";
+    private static final String KEY_INFO = "traffic:info";
     private static final String KEY_GEO = "traffic:geo";
     private static final Duration TTL = Duration.ofMinutes(5);
 
     public TrafficRedisRepository(RedisTemplate<Object,Object> redisTemplate){
         this.redisTemplate = redisTemplate;
-        this.hashOperations = redisTemplate.opsForHash();
+        this.valueOperations = redisTemplate.opsForValue();
         this.geoOperations = redisTemplate.opsForGeo();
     }
 
     public boolean isExist(){
-        return hashOperations.hasKey(KEY_HASH, KEY_GEO);
+        return redisTemplate.hasKey(KEY_INFO);
     }
 
     public void save(TrafficResponse trafficResponse) {
         Long trafficId = trafficResponse.getTrafficSignalId();
+        String trafficKey = KEY_INFO + trafficId;
 
         // GEO 데이터 저장
         redisTemplate.opsForGeo().add(
@@ -51,13 +53,8 @@ public class TrafficRedisRepository {
             trafficId.toString()
         );
 
-        // HASH 데이터 저장
-        hashOperations.put(KEY_HASH, trafficId.toString(), trafficResponse);
-
-        // GEO와 HASH 모두에 TTL 설정
+        valueOperations.set(trafficKey, trafficResponse, TTL);
         redisTemplate.expire(KEY_GEO, TTL);
-        redisTemplate.expire(KEY_HASH, TTL);
-
     }
 
     public List<TrafficResponse> findNearbyTraffics(double lat, double lng, double kiloRadius) {
@@ -101,12 +98,12 @@ public class TrafficRedisRepository {
 
 
     public TrafficResponse findById(Long id) {
+        String trafficId = String.valueOf(id);
+        String trafficKey = KEY_INFO + trafficId;
 
         log.debug("redis 캐싱 데이터 id로 검색 - id = {}", id);
 
-        String trafficId = String.valueOf(id);
-
-        TrafficResponse data = hashOperations.get(KEY_HASH, trafficId);
+        TrafficResponse data = (TrafficResponse) valueOperations.get(trafficKey);
 
         if (data == null) {
             log.info("redis에 데이터 없음");

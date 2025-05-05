@@ -31,6 +31,7 @@ import org.springframework.data.redis.connection.RedisGeoCommands;
 import org.springframework.data.redis.core.GeoOperations;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 
 @ExtendWith(MockitoExtension.class)
 public class TrafficRedisRepositoryTest {
@@ -39,12 +40,12 @@ public class TrafficRedisRepositoryTest {
     private RedisTemplate<Object, Object> redisTemplate;
 
     @Mock
-    private HashOperations<Object, Object, Object> hashOperations;
+    private ValueOperations<Object, Object> valueOperations;
 
     @Mock
     private GeoOperations<Object, Object> geoOperations;
 
-    private static final String KEY_HASH = "traffic:info";
+    private static final String KEY_INFO = "traffic:info";
     private static final String KEY_GEO = "traffic:geo";
     private static final Duration TTL = Duration.ofMinutes(5);
 
@@ -59,7 +60,7 @@ public class TrafficRedisRepositoryTest {
     @BeforeEach
     void setUp() {
 
-        when(redisTemplate.opsForHash()).thenReturn(hashOperations);
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(redisTemplate.opsForGeo()).thenReturn(geoOperations);
 
         trafficRedisRepository = new TrafficRedisRepository(redisTemplate);
@@ -97,9 +98,8 @@ public class TrafficRedisRepositoryTest {
             eq( String.valueOf(id) )
         );
 
-        verify(hashOperations).put(eq(KEY_HASH), eq(id.toString()), eq(expected.get(0)));
+        verify(valueOperations).set(eq(KEY_INFO + id.toString()), eq(expected.get(0)), eq(TTL));
         verify(redisTemplate).expire(KEY_GEO, TTL);
-        verify(redisTemplate).expire(KEY_HASH, TTL);
     }
 
     @Test
@@ -129,7 +129,7 @@ public class TrafficRedisRepositoryTest {
 
 
 
-        doReturn(expected.get(0)).when(hashOperations).get(eq(KEY_HASH), eq(id.toString()));
+        doReturn(expected.get(0)).when(valueOperations).get(eq(KEY_INFO + id.toString()));
 
         //When
         trafficRedisRepository.save(expected.get(0));
