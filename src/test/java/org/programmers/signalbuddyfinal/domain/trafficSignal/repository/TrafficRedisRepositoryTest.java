@@ -10,9 +10,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -29,7 +27,6 @@ import org.springframework.data.geo.Metrics;
 import org.springframework.data.geo.Point;
 import org.springframework.data.redis.connection.RedisGeoCommands;
 import org.springframework.data.redis.core.GeoOperations;
-import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 
@@ -45,7 +42,7 @@ public class TrafficRedisRepositoryTest {
     @Mock
     private GeoOperations<Object, Object> geoOperations;
 
-    private static final String KEY_INFO = "traffic:info";
+    private static final String KEY_VALUE = "traffic:info";
     private static final String KEY_GEO = "traffic:geo";
     private static final Duration TTL = Duration.ofMinutes(5);
 
@@ -87,6 +84,7 @@ public class TrafficRedisRepositoryTest {
     @Test
     @DisplayName("보행등 저장 테스트")
     void trafficSaveTest(){
+        String trafficKey = KEY_VALUE + id;
 
         // When
         trafficRedisRepository.save(expected.get(0));
@@ -98,7 +96,7 @@ public class TrafficRedisRepositoryTest {
             eq( String.valueOf(id) )
         );
 
-        verify(valueOperations).set(eq(KEY_INFO + id.toString()), eq(expected.get(0)), eq(TTL));
+        verify(valueOperations).set(eq(trafficKey), eq(expected.get(0)), eq(TTL));
         verify(redisTemplate).expire(KEY_GEO, TTL);
     }
 
@@ -107,6 +105,8 @@ public class TrafficRedisRepositoryTest {
     void trafficNearByTestReturnTrafficList(){
 
         //Given
+        String trafficKey = KEY_VALUE + id;
+
         double radius = 1;
 
         // result set
@@ -129,7 +129,7 @@ public class TrafficRedisRepositoryTest {
 
 
 
-        doReturn(expected.get(0)).when(valueOperations).get(eq(KEY_INFO + id.toString()));
+        doReturn(expected.get(0)).when(valueOperations).get(eq(trafficKey));
 
         //When
         trafficRedisRepository.save(expected.get(0));

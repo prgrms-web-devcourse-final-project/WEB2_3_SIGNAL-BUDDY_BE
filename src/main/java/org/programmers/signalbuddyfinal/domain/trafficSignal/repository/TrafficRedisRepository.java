@@ -28,7 +28,7 @@ public class TrafficRedisRepository {
     private final ValueOperations<Object, Object> valueOperations;
     private final GeoOperations<Object,Object> geoOperations;
 
-    private static final String KEY_INFO = "traffic:info";
+    private static final String KEY_VALUE = "traffic:info";
     private static final String KEY_GEO = "traffic:geo";
     private static final Duration TTL = Duration.ofMinutes(5);
 
@@ -39,15 +39,15 @@ public class TrafficRedisRepository {
     }
 
     public boolean isExist(){
-        return redisTemplate.hasKey(KEY_INFO);
+        return redisTemplate.hasKey(KEY_VALUE);
     }
 
     public void save(TrafficResponse trafficResponse) {
         Long trafficId = trafficResponse.getTrafficSignalId();
-        String trafficKey = KEY_INFO + trafficId;
+        String trafficKey = KEY_VALUE + trafficId;
 
         // GEO 데이터 저장
-        redisTemplate.opsForGeo().add(
+        geoOperations.add(
             KEY_GEO,
             new Point(trafficResponse.getLng(),trafficResponse.getLat()),
             trafficId.toString()
@@ -99,7 +99,7 @@ public class TrafficRedisRepository {
 
     public TrafficResponse findById(Long id) {
         String trafficId = String.valueOf(id);
-        String trafficKey = KEY_INFO + trafficId;
+        String trafficKey = KEY_VALUE + trafficId;
 
         log.debug("redis 캐싱 데이터 id로 검색 - id = {}", id);
 
