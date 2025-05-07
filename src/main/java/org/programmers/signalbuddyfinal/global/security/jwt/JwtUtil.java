@@ -8,6 +8,7 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import java.security.Key;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 import javax.crypto.SecretKey;
@@ -52,13 +53,14 @@ public class JwtUtil {
     public String generateAccessToken(Authentication authentication) {
 
         CustomUserDetails nowMember = authentication2User(authentication);
+        Instant nowTime = Instant.now();
 
         return Jwts.builder()
             .subject(String.valueOf(nowMember.getMemberId()))
             .claim("status", nowMember.getStatus().name())
             .claim("auth", nowMember.getRole().name())
-            .issuedAt(new Date())
-            .expiration(new Date(new Date().getTime() + accessTokenExpiration))
+            .issuedAt(Date.from(nowTime))
+            .expiration(Date.from(nowTime.plus(Duration.ofMillis(accessTokenExpiration))))
             .signWith(key)
             .compact();
     }
@@ -67,16 +69,16 @@ public class JwtUtil {
     public String generateRefreshToken(Authentication authentication) {
 
         CustomUserDetails nowMember = authentication2User(authentication);
+        Instant nowTime = Instant.now();
 
         String refreshToken = Jwts.builder()
             .subject(String.valueOf(nowMember.getMemberId()))
-            .issuedAt(new Date())
-            .expiration(new Date(new Date().getTime() + refreshTokenExpiration))
+            .issuedAt(Date.from(nowTime))
+            .expiration(Date.from(nowTime.plus(Duration.ofMillis(refreshTokenExpiration))))
             .signWith(key)
             .compact();
 
         refreshTokenRepository.save(nowMember.getMemberId(), refreshToken);
-
         return refreshToken;
     }
 
