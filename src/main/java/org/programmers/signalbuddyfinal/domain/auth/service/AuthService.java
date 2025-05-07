@@ -1,6 +1,7 @@
 package org.programmers.signalbuddyfinal.domain.auth.service;
 
 import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.programmers.signalbuddyfinal.domain.auth.dto.EmailRequest;
@@ -10,6 +11,8 @@ import org.programmers.signalbuddyfinal.domain.auth.dto.LogoutResponse;
 import org.programmers.signalbuddyfinal.domain.auth.dto.NewTokenResponse;
 import org.programmers.signalbuddyfinal.domain.auth.dto.ReissueResponse;
 import org.programmers.signalbuddyfinal.domain.auth.dto.SocialLoginRequest;
+import org.programmers.signalbuddyfinal.domain.auth.dto.VerifyCodeRequest;
+import org.programmers.signalbuddyfinal.domain.auth.entity.Purpose;
 import org.programmers.signalbuddyfinal.domain.auth.exception.AuthErrorCode;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
@@ -22,6 +25,8 @@ import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
 import org.programmers.signalbuddyfinal.global.security.jwt.JwtService;
 import org.programmers.signalbuddyfinal.global.security.jwt.JwtUtil;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -40,6 +45,8 @@ public class AuthService {
     private final MemberRepository memberRepository;
     private final FcmService fcmService;
     private final EmailService emailService;
+    private final RedisTemplate<String, String> redisTemplate;
+    static final String PREFIX = "auth:email:";
 
     public ReissueResponse reissue(String refreshToken, String accessToken) {
         NewTokenResponse newTokenResponse = jwtService.reissue(refreshToken, accessToken);
@@ -115,6 +122,29 @@ public class AuthService {
             throw new BusinessException(MemberErrorCode.NOT_FOUND_MEMBER);
         }
         emailService.sendEmail(emailRequest.getEmail());
+    }
+
+    public void verifyCode(VerifyCodeRequest verifyCodeRequest) {
+
+        ValueOperations<String, String> valueOperations = redisTemplate.opsForValue();
+        Purpose purpose = verifyCodeRequest.getPurpose();
+        String email = verifyCodeRequest.getEmail();
+        String code = verifyCodeRequest.getCode();
+
+        String correctCode = valueOperations.get(PREFIX + email);
+
+        if (correctCode == null) {
+            throw new BusinessException(AuthErrorCode.INVALID_AUTH_CODE);
+        } else if (!correctCode.equals(code)) {
+            throw new BusinessException(AuthErrorCode.NOT_MATCH_AUTH_CODE);
+        } else {
+            redisTemplate.delete(PREFIX + email);
+
+            // 인증된 사용자 저장
+            String newPrefix = PREFIX + purpose.name().toLowerCase() + ":";
+            valueOperations.set(newPrefix + email, "authenticated", 10,
+                TimeUnit.MINUTES);
+        }
     }
 
     private Authentication createAuthentication(String email, String password) {

@@ -50,29 +50,6 @@ public class EmailService {
         }
     }
 
-    public void verifyCode(VerifyCodeRequest verifyCodeRequest) {
-
-        ValueOperations<String, String> valueOperations = redisTemplate.opsForValue();
-        Purpose purpose = verifyCodeRequest.getPurpose();
-        String email = verifyCodeRequest.getEmail();
-        String code = verifyCodeRequest.getCode();
-
-        String correctCode = valueOperations.get(PREFIX + email);
-
-        if (correctCode == null) {
-            throw new BusinessException(AuthErrorCode.INVALID_AUTH_CODE);
-        } else if (!correctCode.equals(code)) {
-            throw new BusinessException(AuthErrorCode.NOT_MATCH_AUTH_CODE);
-        } else {
-            redisTemplate.delete(PREFIX + email);
-
-            // 인증된 사용자 저장
-            String newPrefix = PREFIX + purpose.name().toLowerCase() + ":";
-            valueOperations.set(newPrefix + email, "authenticated", 10,
-                TimeUnit.MINUTES);
-        }
-    }
-
     private String createCode() {
 
         SecureRandom secureRandom = new SecureRandom();

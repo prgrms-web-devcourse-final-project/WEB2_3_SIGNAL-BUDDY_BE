@@ -214,7 +214,7 @@ class AuthControllerTest extends ControllerTest {
 
         ApiResponse<Object> apiResponse = ApiResponse.createSuccessWithNoData();
         ResponseEntity<ApiResponse<Object>> responseEntity = ResponseEntity.ok().body(apiResponse);
-        doNothing().when(emailService).verifyCode(any(VerifyCodeRequest.class));
+        doNothing().when(authService).verifyCode(any(VerifyCodeRequest.class));
 
         //when, then
         mockMvc.perform(post("/api/auth/verify-code")
