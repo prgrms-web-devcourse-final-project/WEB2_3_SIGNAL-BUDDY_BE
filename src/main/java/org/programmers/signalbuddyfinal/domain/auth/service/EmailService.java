@@ -12,6 +12,8 @@ import org.programmers.signalbuddyfinal.domain.auth.exception.AuthErrorCode;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.mail.MailParseException;
+import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -40,11 +42,12 @@ public class EmailService {
             helper.setTo(email);
             helper.setSubject("[signalBuddy] 인증코드가 발송되었습니다.");
             helper.setText(setContent(code), true);
-        } catch (MessagingException e) {
+            javaMailSender.send(message);
+            codeSave(email, code);
+        } catch (MailParseException | MessagingException e) {
             log.error("메세지가 전송되지 않았습니다.");
+            return;
         }
-        codeSave(email, code);
-        javaMailSender.send(message);
     }
 
     public void verifyCode(VerifyCodeRequest verifyCodeRequest) {
@@ -93,11 +96,6 @@ public class EmailService {
     }
 
     private void codeSave(String email, String code) {
-
-        // 이미 요청한 메일에 대한 인증코드가 존재하는 경우, 삭제한다.
-        if (Boolean.TRUE.equals(redisTemplate.hasKey(PREFIX + email))) {
-            redisTemplate.delete(PREFIX + email);
-        }
 
         ValueOperations<String, String> valueOperations = redisTemplate.opsForValue();
         valueOperations.set(PREFIX + email, code, 3, TimeUnit.MINUTES);
