@@ -13,6 +13,7 @@ import org.programmers.signalbuddyfinal.domain.auth.dto.SocialLoginRequest;
 import org.programmers.signalbuddyfinal.domain.auth.exception.AuthErrorCode;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
+import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.programmers.signalbuddyfinal.domain.member.exception.MemberErrorCode;
 import org.programmers.signalbuddyfinal.domain.member.mapper.MemberMapper;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
@@ -109,11 +110,11 @@ public class AuthService {
     }
 
     public void emailVerification(EmailRequest emailRequest) {
-        if(memberRepository.existsByEmail(emailRequest.getEmail())){
-            emailService.sendEmail(emailRequest.getEmail());
-        }else{
+        Member member = memberRepository.findByEmail(emailRequest.getEmail()).orElse(null);
+        if (member == null || member.getMemberStatus() == MemberStatus.WITHDRAWAL) {
             throw new BusinessException(MemberErrorCode.NOT_FOUND_MEMBER);
         }
+        emailService.sendEmail(emailRequest.getEmail());
     }
 
     private Authentication createAuthentication(String email, String password) {

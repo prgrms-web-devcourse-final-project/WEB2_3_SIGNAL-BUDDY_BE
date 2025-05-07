@@ -19,6 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.programmers.signalbuddyfinal.domain.auth.dto.EmailRequest;
 import org.programmers.signalbuddyfinal.domain.auth.dto.LoginRequest;
 import org.programmers.signalbuddyfinal.domain.auth.dto.LoginResponse;
 import org.programmers.signalbuddyfinal.domain.auth.dto.LogoutResponse;
@@ -62,6 +63,9 @@ class AuthServiceTest {
 
     @Mock
     private JwtUtil jwtUtil;
+
+    @Mock
+    EmailService emailService;
 
     private Member member;
     private String deviceTokenCookie = "deviceToken";
@@ -308,6 +312,54 @@ class AuthServiceTest {
             .getFirst("Set-Cookie");
 
         assertThat(afterLogoutSetCookieHeader).contains("Max-Age=0");
+    }
+
+    @Nested
+    @DisplayName("이메일 검증")
+    class whenVerifyEmail{
+
+        @Test
+        @DisplayName("이메일이 존재하는 경우, EmailService의 sendEmail을 호출한다.")
+        void givenExistedEmail_whenEmailVerification_thenCallEmailService() {
+            //given
+            when(memberRepository.findByEmail(member.getEmail())).thenReturn(Optional.of(member));
+            doNothing().when(emailService).sendEmail(member.getEmail());
+
+            //when
+            authService.emailVerification(new EmailRequest(member.getEmail()));
+
+            //then
+            verify(emailService, times(1)).sendEmail(member.getEmail());
+        }
+
+        @Test
+        @DisplayName("이메일이 존재하지 않는 경우, NotFoundMember를 던진다.")
+        void givenNotExistedMember_whenEmailVerification_thenThrowsNotFoundError() {
+            //given
+            when(memberRepository.findByEmail(member.getEmail())).thenReturn(Optional.empty());
+
+            //when
+            assertThatThrownBy(() -> authService.emailVerification(new EmailRequest(member.getEmail())))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining(MemberErrorCode.NOT_FOUND_MEMBER.getMessage());
+
+            verify(emailService, times(0)).sendEmail(member.getEmail());
+        }
+
+        @Test
+        @DisplayName("탈퇴한 회원인 경우, NotFoundMember를 던진다.")
+        void givenWithdrawalMember_whenEmailVerification_thenThrowsNotFoundError() {
+            //given
+            Member withdrawalMember = createMember(MemberStatus.WITHDRAWAL);
+            when(memberRepository.findByEmail(withdrawalMember.getEmail())).thenReturn(Optional.of(withdrawalMember));
+
+            //when
+            assertThatThrownBy(() -> authService.emailVerification(new EmailRequest(withdrawalMember.getEmail())))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining(MemberErrorCode.NOT_FOUND_MEMBER.getMessage());
+
+            verify(emailService, times(0)).sendEmail(member.getEmail());
+        }
     }
 
     private Member createMember(MemberStatus status){
