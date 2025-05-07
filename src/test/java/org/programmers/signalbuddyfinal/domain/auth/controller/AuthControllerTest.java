@@ -185,7 +185,7 @@ class AuthControllerTest extends ControllerTest {
     void sendAuthenticationCode() throws Exception {
         // given
         EmailRequest emailRequest = new EmailRequest(member.getEmail());
-        doNothing().when(emailService).sendEmail(any(EmailRequest.class));
+        doNothing().when(emailService).sendEmail(anyString());
 
         //when, then
         mockMvc.perform(post("/api/auth/auth-code")

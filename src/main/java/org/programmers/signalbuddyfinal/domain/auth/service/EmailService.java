@@ -3,11 +3,9 @@ package org.programmers.signalbuddyfinal.domain.auth.service;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import java.security.SecureRandom;
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.programmers.signalbuddyfinal.domain.auth.dto.EmailRequest;
 import org.programmers.signalbuddyfinal.domain.auth.dto.VerifyCodeRequest;
 import org.programmers.signalbuddyfinal.domain.auth.entity.Purpose;
 import org.programmers.signalbuddyfinal.domain.auth.exception.AuthErrorCode;
@@ -35,22 +33,19 @@ public class EmailService {
     static final String PREFIX = "auth:email:";
 
     @Async
-    public void sendEmail(EmailRequest emailRequest) {
+    public void sendEmail(String email) {
 
         MimeMessage message = javaMailSender.createMimeMessage();
         String code = createCode();
-
         try {
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
-            helper.setTo(emailRequest.getEmail());
+            helper.setTo(email);
             helper.setSubject("[signalBuddy] 인증코드가 발송되었습니다.");
             helper.setText(setContent(code), true);
         } catch (MessagingException e) {
-            throw new BusinessException(AuthErrorCode.SEND_EMAIL_FAILED);
+            log.error("메세지가 전송되지 않았습니다.");
         }
-
-        codeSave(emailRequest.getEmail(), code);
-
+        codeSave(email, code);
         javaMailSender.send(message);
     }
 

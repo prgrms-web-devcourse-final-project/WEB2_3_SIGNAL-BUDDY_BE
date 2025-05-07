@@ -3,12 +3,14 @@ package org.programmers.signalbuddyfinal.domain.auth.service;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.programmers.signalbuddyfinal.domain.auth.dto.EmailRequest;
 import org.programmers.signalbuddyfinal.domain.auth.dto.LoginRequest;
 import org.programmers.signalbuddyfinal.domain.auth.dto.LoginResponse;
 import org.programmers.signalbuddyfinal.domain.auth.dto.LogoutResponse;
 import org.programmers.signalbuddyfinal.domain.auth.dto.NewTokenResponse;
 import org.programmers.signalbuddyfinal.domain.auth.dto.ReissueResponse;
 import org.programmers.signalbuddyfinal.domain.auth.dto.SocialLoginRequest;
+import org.programmers.signalbuddyfinal.domain.auth.exception.AuthErrorCode;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.exception.MemberErrorCode;
@@ -36,6 +38,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final MemberRepository memberRepository;
     private final FcmService fcmService;
+    private final EmailService emailService;
 
     public ReissueResponse reissue(String refreshToken, String accessToken) {
         NewTokenResponse newTokenResponse = jwtService.reissue(refreshToken, accessToken);
@@ -103,6 +106,14 @@ public class AuthService {
         refreshTokenSend2Client(headers, refreshToken, 0);
 
         return new LogoutResponse(headers);
+    }
+
+    public void emailVerification(EmailRequest emailRequest) {
+        if(memberRepository.existsByEmail(emailRequest.getEmail())){
+            emailService.sendEmail(emailRequest.getEmail());
+        }else{
+            throw new BusinessException(MemberErrorCode.NOT_FOUND_MEMBER);
+        }
     }
 
     private Authentication createAuthentication(String email, String password) {
