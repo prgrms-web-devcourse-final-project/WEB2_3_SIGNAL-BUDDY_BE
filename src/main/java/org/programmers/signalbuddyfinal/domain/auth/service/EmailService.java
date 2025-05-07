@@ -10,10 +10,8 @@ import org.programmers.signalbuddyfinal.domain.auth.dto.VerifyCodeRequest;
 import org.programmers.signalbuddyfinal.domain.auth.entity.Purpose;
 import org.programmers.signalbuddyfinal.domain.auth.exception.AuthErrorCode;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
-import org.programmers.signalbuddyfinal.global.response.ApiResponse;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
-import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -49,7 +47,7 @@ public class EmailService {
         javaMailSender.send(message);
     }
 
-    public ResponseEntity<ApiResponse<Object>> verifyCode(VerifyCodeRequest verifyCodeRequest) {
+    public void verifyCode(VerifyCodeRequest verifyCodeRequest) {
 
         ValueOperations<String, String> valueOperations = redisTemplate.opsForValue();
         Purpose purpose = verifyCodeRequest.getPurpose();
@@ -69,7 +67,6 @@ public class EmailService {
             String newPrefix = PREFIX + purpose.name().toLowerCase() + ":";
             valueOperations.set(newPrefix + email, "authenticated", 10,
                 TimeUnit.MINUTES);
-            return ResponseEntity.ok().body(ApiResponse.createSuccessWithNoData());
         }
     }
 

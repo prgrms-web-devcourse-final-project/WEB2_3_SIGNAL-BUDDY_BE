@@ -67,7 +67,8 @@ public class AuthController {
     @PostMapping("/verify-code")
     public ResponseEntity<ApiResponse<Object>> verifyCode(
         @Valid @RequestBody VerifyCodeRequest verifyCodeRequest) {
-        return emailService.verifyCode(verifyCodeRequest);
+        emailService.verifyCode(verifyCodeRequest);
+        return ResponseEntity.ok().body(ApiResponse.createSuccessWithNoData());
     }
 
     @PostMapping("/social-login")
