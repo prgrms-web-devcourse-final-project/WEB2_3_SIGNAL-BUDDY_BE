@@ -34,13 +34,7 @@ class EmailServiceTest extends ServiceTest implements RedisTestContainer {
     @Autowired
     SpringTemplateEngine springTemplateEngine;
 
-    ValueOperations<String, String> valueOperations;
     final String PREFIX = "auth:email:";
-
-    @BeforeEach
-    void setUp() {
-        valueOperations = redisTemplate.opsForValue();
-    }
 
     @Test
     @DisplayName("이메일 전송에 성공한다.")
