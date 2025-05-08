@@ -205,8 +205,18 @@ class BookmarkServiceTest extends ServiceTest {
         final List<BookmarkResponse> responses = bookmarkService.updateBookmarkSequences(
             member.getMemberId(), requests);
 
+        final Map<Long, Integer> expectedMap = requests.stream()
+            .collect(Collectors.toMap(BookmarkSequenceUpdateRequest::id,
+                BookmarkSequenceUpdateRequest::targetSequence));
+
+        final Map<Long, Integer> actualMap = responses.stream()
+            .collect(Collectors.toMap(BookmarkResponse::getBookmarkId, BookmarkResponse::getSequence));
+
+        assertThat(actualMap).isEqualTo(expectedMap);
         assertThat(responses).isNotEmpty().allSatisfy(e -> {
             assertThat(map).doesNotContainEntry(e.getBookmarkId(), e.getSequence());
+            // 기대한 값과 완전히 일치하는지 검증
+            assertThat(expectedMap).containsEntry(e.getBookmarkId(), e.getSequence());
         });
     }
 }
