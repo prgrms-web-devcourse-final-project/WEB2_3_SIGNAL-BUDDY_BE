@@ -119,17 +119,22 @@ public class WeatherService {
             lng, RADIUS);
         final String key = gridResponse.getGridX() + "," + gridResponse.getGridY();
         final SseEmitter emitter = new SseEmitter(TIMEOUT);
-        emitters.put(key, emitter);
+        registerEmitter(key, emitter);
 
-        emitter.onCompletion(() -> emitters.remove(key));
-        emitter.onTimeout(() -> {
-            emitters.remove(key);
-            emitter.complete();
-        });
         // 구독 시 즉시 최신 날씨 정보 전송
         sendWeatherUpdate(emitter, gridResponse.getGridX(), gridResponse.getGridY());
 
         return emitter;
+    }
+
+    private void registerEmitter(String key, SseEmitter emitter) {
+        emitters.put(key, emitter);
+        emitter.onCompletion(() -> emitters.remove(key));
+        emitter.onTimeout(() -> {
+            log.info("SSE 타임아웃 발생: {}", key);
+            emitter.complete();
+            emitters.remove(key);
+        });
     }
 
     @Scheduled(fixedRate = 60000) // 1분마다 실행
@@ -148,9 +153,21 @@ public class WeatherService {
         try {
             emitter.send(SseEmitter.event().name(WEATHER_EVENT_NAME).data(weatherData));
         } catch (IOException e) {
-            log.error("날씨 데이터 전송 실패", e);
+            log.warn("SSE 연결 끊김: 좌표({},{})", nx, ny);
+            emitter.complete();
+            removeEmitter(nx, ny);
+        } catch (BusinessException e) {
+            log.error("날씨 데이터 응답 오류: {}", e.getMessage());
+        } catch (Exception e) {
+            log.error("알 수 없는 오류", e);
             emitter.completeWithError(e);
+            removeEmitter(nx, ny);
         }
+    }
+
+    private void removeEmitter(double nx, double ny) {
+        final String key = nx + "," + ny;
+        emitters.remove(key);
     }
 
     private String getStringCell(Cell cell) {
