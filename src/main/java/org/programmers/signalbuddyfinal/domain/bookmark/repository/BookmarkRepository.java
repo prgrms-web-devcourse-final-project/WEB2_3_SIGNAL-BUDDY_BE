@@ -1,5 +1,6 @@
 package org.programmers.signalbuddyfinal.domain.bookmark.repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.programmers.signalbuddyfinal.domain.bookmark.entity.Bookmark;
@@ -17,4 +18,5 @@ public interface BookmarkRepository extends JpaRepository<Bookmark, Long>,
 
     List<Bookmark> findAllBySequenceInAndMemberMemberId(List<Integer> targetSequences, Long id);
 
+    List<Bookmark> findAllByMemberMemberIdAndBookmarkIdInOrSequenceIn(Long memberMemberId, Collection<Long> bookmarkIds, Collection<Integer> sequences);
 }

@@ -7,7 +7,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.programmers.signalbuddyfinal.domain.bookmark.dto.BookmarkRequest;
 import org.programmers.signalbuddyfinal.domain.bookmark.dto.BookmarkResponse;
@@ -35,9 +34,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class BookmarkService {
 
     private final BookmarkRepository bookmarkRepository;
-    private final GeometryFactory geometryFactory;
     private final MemberRepository memberRepository;
     private final RecentPathRepository recentPathRepository;
+
 
     public PageResponse<BookmarkResponse> findPagedBookmarks(Pageable pageable, Long memberId) {
         final Page<BookmarkResponse> page = bookmarkRepository.findPagedByMember(pageable,
@@ -51,76 +50,43 @@ public class BookmarkService {
 
         final Point point = PointUtils.toPoint(request.getLat(), request.getLng());
 
-        bookmarkRepository.findByCoordinateAndMemberIdNotDeleted(point, memberId)
-            .ifPresent(bookmark -> {
-                throw new BusinessException(BookmarkErrorCode.ALREADY_EXIST_BOOKMARK);
-            });
+        validateDuplicate(memberId, point);
 
-        final int nextSequence =
-            bookmarkRepository.findTopByMemberOrderBySequenceDesc(member).map(Bookmark::getSequence)
-                .orElse(0) + 1;
+        final Bookmark bookmark = createBookmarkEntity(request, member, point);
 
-        final Bookmark bookmark = BookmarkMapper.INSTANCE.toEntity(request, point, member);
-        bookmark.updateSequence(nextSequence);
+        linkRecentPathIfExists(memberId, point, bookmark);
 
-        // 북마크 저장하는 좌표가 최근경로에 있다면 연관관계 생성
-        recentPathRepository.findByEndPointAndMemberMemberId(point, memberId)
-            .ifPresent(recentPath -> recentPath.linkBookmark(bookmark));
-
-        final Bookmark save = bookmarkRepository.save(bookmark);
-        return BookmarkMapper.INSTANCE.toDto(save);
+        return BookmarkMapper.INSTANCE.toDto(bookmarkRepository.save(bookmark));
     }
 
     @Transactional
-    public BookmarkResponse updateBookmark(BookmarkRequest request, Long id, Long memberId) {
+    public BookmarkResponse updateBookmark(BookmarkRequest request, Long bookmarkId,
+        Long memberId) {
         final Member member = getMember(memberId);
+        final Bookmark bookmark = getAuthorizedBookmark(bookmarkId, member);
 
-        final Bookmark bookmark = bookmarkRepository.findById(id)
-            .orElseThrow(() -> new BusinessException(BookmarkErrorCode.NOT_FOUND_BOOKMARK));
+        final Point updatedPoint = PointUtils.toPoint(request.getLat(), request.getLng());
+        bookmark.update(updatedPoint, request.getAddress(), request.getName());
 
-        if (bookmark.isNotOwnedBy(member)) {
-            throw new BusinessException(BookmarkErrorCode.UNAUTHORIZED_MEMBER_ACCESS);
-        }
-
-        final Point point = PointUtils.toPoint(request.getLat(), request.getLng());
-
-        bookmark.update(point, request.getAddress(), request.getName());
-
-        // 최근경로 <-> 북마크 연관관계 맺어진게 있다면 수정 진행.
-        recentPathRepository.findByEndPointAndMemberMemberId(point, memberId).ifPresent(
-            recentPath -> recentPath.updateNameAndAddress(request.getName(), request.getAddress()));
+        updateLinkedRecentPath(updatedPoint, memberId, request);
 
         return BookmarkMapper.INSTANCE.toDto(bookmark);
     }
 
+
     @Transactional
     public void deleteBookmark(List<Long> bookmarkIds, Long memberId) {
-        final List<Bookmark> bookmarkList = bookmarkRepository.findAllByBookmarkIdInAndMemberMemberId(
-            bookmarkIds, memberId);
+        final List<Bookmark> bookmarks = findMemberBookmarks(bookmarkIds, memberId);
+        bookmarks.forEach(Bookmark::delete);
 
-        final List<RecentPath> recentPaths = recentPathRepository.findAllByBookmarkIn(bookmarkList);
-
-        bookmarkList.forEach(Bookmark::delete);
-
-        // 북마크 삭제 시 최근경로에서 북마크 연관관계 해제
-        recentPaths.forEach(RecentPath::unlinkBookmark);
-
+        unlinkBookmarksFromRecentPaths(bookmarks);
         log.info("Bookmark deleted: {}", bookmarkIds);
     }
 
-    private Member getMember(Long id) {
-        return memberRepository.findById(id)
-            .orElseThrow(() -> new BusinessException(MemberErrorCode.NOT_FOUND_MEMBER));
-    }
-
     @Transactional(readOnly = true)
-    public BookmarkResponse getBookmark(Long id, Long bookmarkId) {
-        final Member member = getMember(id);
-        final Bookmark bookmark = bookmarkRepository.findById(bookmarkId)
-            .orElseThrow(() -> new BusinessException(BookmarkErrorCode.NOT_FOUND_BOOKMARK));
-        if (bookmark.isNotOwnedBy(member)) {
-            throw new BusinessException(BookmarkErrorCode.UNAUTHORIZED_MEMBER_ACCESS);
-        }
+    public BookmarkResponse getBookmark(Long memberId, Long bookmarkId) {
+        final Member member = getMember(memberId);
+        final Bookmark bookmark = getAuthorizedBookmark(bookmarkId, member);
         return BookmarkMapper.INSTANCE.toDto(bookmark);
     }
 
@@ -129,24 +95,82 @@ public class BookmarkService {
         @Valid List<BookmarkSequenceUpdateRequest> requests) {
         final List<Long> bookmarkIds = requests.stream().map(BookmarkSequenceUpdateRequest::id)
             .toList();
+
         final List<Integer> targetSequences = requests.stream()
             .map(BookmarkSequenceUpdateRequest::targetSequence).toList();
 
-        // 북마크 ID로 목록 조회
-        final List<Bookmark> bookmarks = bookmarkRepository.findAllByBookmarkIdInAndMemberMemberId(
-            bookmarkIds, id);
+        final List<Bookmark> all = bookmarkRepository.findAllByMemberMemberIdAndBookmarkIdInOrSequenceIn(
+            id, bookmarkIds, targetSequences);
 
-        // Target Sequence 로 목록 조회
-        final List<Bookmark> targetBookmarks = bookmarkRepository.findAllBySequenceInAndMemberMemberId(
-            targetSequences, id);
-
-        // id -> Bookmark 매핑
-        final Map<Long, Bookmark> bookmarkMap = bookmarks.stream()
+        final Map<Long, Bookmark> bookmarkMap = all.stream()
+            .filter(b -> bookmarkIds.contains(b.getBookmarkId()))
             .collect(Collectors.toMap(Bookmark::getBookmarkId, Function.identity()));
-        // sequence -> bookmark 매핑
-        final Map<Integer, Bookmark> sequenceMap = targetBookmarks.stream()
+
+        final Map<Integer, Bookmark> sequenceMap = all.stream()
+            .filter(b -> targetSequences.contains(b.getSequence()))
             .collect(Collectors.toMap(Bookmark::getSequence, Function.identity()));
 
+        swapSequence(requests, bookmarkMap, sequenceMap);
+
+        return all.stream().filter(b -> bookmarkIds.contains(b.getBookmarkId()))
+            .map(BookmarkMapper.INSTANCE::toDto).toList();
+    }
+
+
+    private void linkRecentPathIfExists(Long memberId, Point point, Bookmark bookmark) {
+        // 북마크 저장하는 좌표가 최근경로에 있다면 연관관계 생성
+        recentPathRepository.findByEndPointAndMemberMemberId(point, memberId)
+            .ifPresent(recentPath -> recentPath.linkBookmark(bookmark));
+    }
+
+    private Bookmark createBookmarkEntity(BookmarkRequest request, Member member, Point point) {
+        final int nextSequence =
+            bookmarkRepository.findTopByMemberOrderBySequenceDesc(member).map(Bookmark::getSequence)
+                .orElse(0) + 1;
+
+        final Bookmark bookmark = BookmarkMapper.INSTANCE.toEntity(request, point, member);
+        bookmark.updateSequence(nextSequence);
+        return bookmark;
+    }
+
+    private void validateDuplicate(Long memberId, Point point) {
+        bookmarkRepository.findByCoordinateAndMemberIdNotDeleted(point, memberId)
+            .ifPresent(bookmark -> {
+                throw new BusinessException(BookmarkErrorCode.ALREADY_EXIST_BOOKMARK);
+            });
+    }
+
+    private Bookmark getAuthorizedBookmark(Long bookmarkId, Member member) {
+        Bookmark bookmark = bookmarkRepository.findById(bookmarkId)
+            .orElseThrow(() -> new BusinessException(BookmarkErrorCode.NOT_FOUND_BOOKMARK));
+
+        if (bookmark.isNotOwnedBy(member)) {
+            throw new BusinessException(BookmarkErrorCode.UNAUTHORIZED_MEMBER_ACCESS);
+        }
+        return bookmark;
+    }
+
+    private void updateLinkedRecentPath(Point point, Long memberId, BookmarkRequest request) {
+        recentPathRepository.findByEndPointAndMemberMemberId(point, memberId)
+            .ifPresent(path -> path.updateNameAndAddress(request.getName(), request.getAddress()));
+    }
+
+    private List<Bookmark> findMemberBookmarks(List<Long> bookmarkIds, Long memberId) {
+        return bookmarkRepository.findAllByBookmarkIdInAndMemberMemberId(bookmarkIds, memberId);
+    }
+
+    private void unlinkBookmarksFromRecentPaths(List<Bookmark> bookmarks) {
+        final List<RecentPath> recentPaths = recentPathRepository.findAllByBookmarkIn(bookmarks);
+        recentPaths.forEach(RecentPath::unlinkBookmark);
+    }
+
+    private Member getMember(Long id) {
+        return memberRepository.findById(id)
+            .orElseThrow(() -> new BusinessException(MemberErrorCode.NOT_FOUND_MEMBER));
+    }
+
+    private void swapSequence(List<BookmarkSequenceUpdateRequest> requests,
+        Map<Long, Bookmark> bookmarkMap, Map<Integer, Bookmark> sequenceMap) {
         for (BookmarkSequenceUpdateRequest request : requests) {
             final Bookmark bookmark = bookmarkMap.get(request.id());
             final Bookmark targetBookmark = sequenceMap.get(request.targetSequence());
@@ -165,9 +189,6 @@ public class BookmarkService {
             // sequenceMap 업데이트
             sequenceMap.put(targetSequence, bookmark);
             sequenceMap.put(originalSequence, targetBookmark);
-
         }
-
-        return bookmarks.stream().map(BookmarkMapper.INSTANCE::toDto).toList();
     }
 }
