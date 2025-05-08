@@ -41,7 +41,6 @@ public class EmailService {
             codeSave(email, code);
         } catch (MailParseException | MessagingException e) {
             log.error("메세지가 전송되지 않았습니다.");
-            return;
         }
     }
 
