@@ -185,7 +185,7 @@ class AuthControllerTest extends ControllerTest {
     void sendAuthenticationCode() throws Exception {
         // given
         EmailRequest emailRequest = new EmailRequest(member.getEmail());
-        doNothing().when(emailService).sendEmail(any(EmailRequest.class));
+        doNothing().when(emailService).sendEmail(anyString());
 
         //when, then
         mockMvc.perform(post("/api/auth/auth-code")
@@ -214,7 +214,7 @@ class AuthControllerTest extends ControllerTest {
 
         ApiResponse<Object> apiResponse = ApiResponse.createSuccessWithNoData();
         ResponseEntity<ApiResponse<Object>> responseEntity = ResponseEntity.ok().body(apiResponse);
-        when(emailService.verifyCode(any(VerifyCodeRequest.class))).thenReturn(responseEntity);
+        doNothing().when(authService).verifyCode(any(VerifyCodeRequest.class));
 
         //when, then
         mockMvc.perform(post("/api/auth/verify-code")

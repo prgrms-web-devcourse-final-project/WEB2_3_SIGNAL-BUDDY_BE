@@ -4,7 +4,9 @@ package org.programmers.signalbuddyfinal.domain.auth.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -19,12 +21,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.programmers.signalbuddyfinal.domain.auth.dto.EmailRequest;
 import org.programmers.signalbuddyfinal.domain.auth.dto.LoginRequest;
 import org.programmers.signalbuddyfinal.domain.auth.dto.LoginResponse;
 import org.programmers.signalbuddyfinal.domain.auth.dto.LogoutResponse;
 import org.programmers.signalbuddyfinal.domain.auth.dto.NewTokenResponse;
 import org.programmers.signalbuddyfinal.domain.auth.dto.ReissueResponse;
 import org.programmers.signalbuddyfinal.domain.auth.dto.SocialLoginRequest;
+import org.programmers.signalbuddyfinal.domain.auth.dto.VerifyCodeRequest;
+import org.programmers.signalbuddyfinal.domain.auth.entity.Purpose;
 import org.programmers.signalbuddyfinal.domain.auth.exception.AuthErrorCode;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
@@ -38,6 +43,8 @@ import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
 import org.programmers.signalbuddyfinal.global.security.jwt.JwtService;
 import org.programmers.signalbuddyfinal.global.security.jwt.JwtUtil;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -62,6 +69,15 @@ class AuthServiceTest {
 
     @Mock
     private JwtUtil jwtUtil;
+
+    @Mock
+    EmailService emailService;
+
+    @Mock
+    RedisTemplate<String, String> redisTemplate;
+
+    @Mock
+    ValueOperations<String, String> valueOperations;
 
     private Member member;
     private String deviceTokenCookie = "deviceToken";
@@ -106,7 +122,8 @@ class AuthServiceTest {
             // given
             Member withdrawalMember = createMember(MemberStatus.WITHDRAWAL);
 
-            LoginRequest loginRequest = new LoginRequest(withdrawalMember.getEmail(), withdrawalMember.getPassword());
+            LoginRequest loginRequest = new LoginRequest(withdrawalMember.getEmail(),
+                withdrawalMember.getPassword());
             when(authenticationManager.authenticate(any())).thenThrow(
                 new BusinessException(MemberErrorCode.WITHDRAWN_MEMBER));
 
@@ -310,7 +327,111 @@ class AuthServiceTest {
         assertThat(afterLogoutSetCookieHeader).contains("Max-Age=0");
     }
 
-    private Member createMember(MemberStatus status){
+    @Nested
+    @DisplayName("이메일 검증")
+    class whenVerifyEmail {
+
+        @Test
+        @DisplayName("이메일이 존재하는 경우, EmailService의 sendEmail을 호출한다.")
+        void givenExistedEmail_whenEmailVerification_thenCallEmailService() {
+            //given
+            when(memberRepository.findByEmail(member.getEmail())).thenReturn(Optional.of(member));
+            doNothing().when(emailService).sendEmail(member.getEmail());
+
+            //when
+            authService.emailVerification(new EmailRequest(member.getEmail()));
+
+            //then
+            verify(emailService, times(1)).sendEmail(member.getEmail());
+        }
+
+        @Test
+        @DisplayName("이메일이 존재하지 않는 경우, NotFoundMember를 던진다.")
+        void givenNotExistedMember_whenEmailVerification_thenThrowsNotFoundError() {
+            //given
+            when(memberRepository.findByEmail(member.getEmail())).thenReturn(Optional.empty());
+
+            //when
+            assertThatThrownBy(
+                () -> authService.emailVerification(new EmailRequest(member.getEmail())))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining(MemberErrorCode.NOT_FOUND_MEMBER.getMessage());
+
+            verify(emailService, times(0)).sendEmail(member.getEmail());
+        }
+
+        @Test
+        @DisplayName("탈퇴한 회원인 경우, NotFoundMember를 던진다.")
+        void givenWithdrawalMember_whenEmailVerification_thenThrowsNotFoundError() {
+            //given
+            Member withdrawalMember = createMember(MemberStatus.WITHDRAWAL);
+            when(memberRepository.findByEmail(withdrawalMember.getEmail())).thenReturn(
+                Optional.of(withdrawalMember));
+
+            //when
+            assertThatThrownBy(
+                () -> authService.emailVerification(new EmailRequest(withdrawalMember.getEmail())))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining(MemberErrorCode.NOT_FOUND_MEMBER.getMessage());
+
+            verify(emailService, times(0)).sendEmail(member.getEmail());
+        }
+    }
+
+    @Nested
+    @DisplayName("인증 코드 검증")
+    class whenVerifyCode {
+
+        VerifyCodeRequest verifyCodeRequest = new VerifyCodeRequest(Purpose.NEW_PASSWORD,
+            "test@test.com", "123456");
+
+        @BeforeEach
+        void verifyCodeSetup() {
+            given(redisTemplate.opsForValue()).willReturn(valueOperations);
+        }
+
+        @Test
+        @DisplayName("인증에 성공한다.")
+        void givenValidCode_whenVerifyCode_thenReturnVoid() {
+            // given
+            when(valueOperations.get(any())).thenReturn(verifyCodeRequest.getCode());
+            when(redisTemplate.delete(anyString())).thenReturn(true);
+            doNothing().when(valueOperations).set(any(), any(), any(Long.class), any());
+
+            // when
+            authService.verifyCode(verifyCodeRequest);
+
+            // then
+            verify(redisTemplate, times(1)).delete(anyString());
+            verify(valueOperations, times(1)).set(anyString(), anyString(), anyLong(), any());
+        }
+
+        @Test
+        @DisplayName("인증 유효 시간이 끝나서 INVALID_AUTH_CODE 에러를 반환한다.")
+        void givenAuthExpirationTimeIsEnd_whenVerifyCode_thenThrowsInvalidAuthCodeError() {
+            // given
+            when(valueOperations.get(any())).thenReturn(null);
+
+            // when & then
+            assertThatThrownBy(() -> authService.verifyCode(verifyCodeRequest))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining(AuthErrorCode.INVALID_AUTH_CODE.getMessage());
+        }
+
+        @Test
+        @DisplayName("인증코드가 일치하지 않아 NOT_MATCH_AUTH_CODE 에러를 반환한다.")
+        void givenNotMatchedAuthCode_whenVerifyCode_thenThrowsNotMatchAuthCodeError() {
+            // given
+            when(valueOperations.get(any())).thenReturn("wrong");
+
+            // when & then
+            assertThatThrownBy(() -> authService.verifyCode(verifyCodeRequest))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining(AuthErrorCode.NOT_MATCH_AUTH_CODE.getMessage());
+        }
+    }
+
+    private Member createMember(MemberStatus status) {
         return Member.builder()
             .email("test@test.com")
             .nickname("테스트")
