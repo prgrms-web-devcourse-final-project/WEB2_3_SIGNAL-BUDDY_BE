@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -34,11 +36,18 @@ public class WeatherProvider {
     private String apiKey;
 
     public List<Weather> requestWeatherApi(int nx, int ny) {
-        final String currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        final String localDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        final String localTime = LocalTime.now().minusMinutes(6)
+            .format(DateTimeFormatter.ofPattern("HHmm"));
+
+        log.info("Local Date: {}, Local Time: {}", localDate, localTime);
+        final String currentDate = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         // 정시에 맞춰서 요청하면 아직 데이터가 존재하지 않아서 6분전 데이터 요청
         // 15:05 인데 15:00 데이터 존재하지 않음.
-        final String currentTime = LocalTime.now().minusMinutes(6)
+        final String currentTime = ZonedDateTime.now(ZoneId.of("Asia/Seoul")).minusMinutes(6)
             .format(DateTimeFormatter.ofPattern("HHmm"));
+        log.info("Zoned Date: {}, Zoned Time: {}", currentDate, currentTime);
+
         final String responseJson = webClient.get().uri(ultraSrtNcst,
                 uriBuilder -> uriBuilder.queryParam("serviceKey", apiKey).queryParam("pageNo", 1)
                     .queryParam("numOfRows", 1000).queryParam("dataType", "JSON")

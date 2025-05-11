@@ -149,6 +149,7 @@ public class WeatherService {
     }
 
     private void sendWeatherUpdate(SseEmitter emitter, double nx, double ny) {
+        log.info("날씨 데이터 요청: 좌표({},{})", nx, ny);
         final WeatherResponse weatherData = getWeatherData(nx, ny);
         try {
             emitter.send(SseEmitter.event().name(WEATHER_EVENT_NAME).data(weatherData));
