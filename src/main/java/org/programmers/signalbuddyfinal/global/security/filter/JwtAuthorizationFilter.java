@@ -27,7 +27,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
     private final Set<String> excludeGetPaths = Set.of(
         "/api/feedbacks/{feedbackId}/comments", "/api/crossroads/**", "/api/feedbacks",
         "/api/terms", "/api/crossroads/{crossroadId}/state", "/api/feedbacks/{feedbackId}",
-        "/sse/weather", "/api/air-quality/**"
+        "/sse/weather/**", "/api/air-quality/**"
     );
     private final Set<String> excludeAllPaths = Set.of(
         "/", "/docs/**", "/actuator/health", "/webjars/**", "/api/auth/login",
@@ -59,7 +59,8 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
             jwtUtil.parseToken(accessToken);
         } catch (BusinessException e) {
             if (e.getErrorCode() == TokenErrorCode.ACCESS_TOKEN_NOT_EXIST) {
-                if (antPathMatcher.match("/ws/**", request.getRequestURI())) {
+                if (antPathMatcher.match("/ws/**", request.getRequestURI())||
+                    antPathMatcher.match("/sse/weather/**", request.getRequestURI())) {
                     filterChain.doFilter(request, response);
                     return;
                 }
