@@ -36,12 +36,7 @@ public class WeatherProvider {
     private String apiKey;
 
     public List<Weather> requestWeatherApi(int nx, int ny) {
-        final String localDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        final String localTime = LocalTime.now().minusMinutes(6)
-            .format(DateTimeFormatter.ofPattern("HHmm"));
-
-        log.info("Local Date: {}, Local Time: {}", localDate, localTime);
-        final String currentDate = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        final String currentDate = ZonedDateTime.now(ZoneId.of("Asia/Seoul")).format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         // 정시에 맞춰서 요청하면 아직 데이터가 존재하지 않아서 6분전 데이터 요청
         // 15:05 인데 15:00 데이터 존재하지 않음.
         final String currentTime = ZonedDateTime.now(ZoneId.of("Asia/Seoul")).minusMinutes(6)
