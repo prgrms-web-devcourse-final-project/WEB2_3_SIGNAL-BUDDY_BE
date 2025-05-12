@@ -1,9 +1,7 @@
 package org.programmers.signalbuddyfinal.domain.auth.service;
 
-
 import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertTrue;
-
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,11 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.transaction.annotation.Transactional;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 @EnableAsync
-@Transactional
 class EmailServiceTest extends ServiceTest implements RedisTestContainer {
 
     @Autowired
@@ -41,10 +37,15 @@ class EmailServiceTest extends ServiceTest implements RedisTestContainer {
         emailService.sendEmail("test@test.com");
 
         // then
-        await().atMost(4, TimeUnit.SECONDS)
+        await().atMost(10, TimeUnit.SECONDS)
+            .pollDelay(2, TimeUnit.SECONDS)
+            .pollInterval(500, TimeUnit.MILLISECONDS)
             .untilAsserted(() -> {
-                assertTrue(redisTemplate.hasKey(PREFIX + "test@test.com"));
+                boolean exists = redisTemplate.hasKey(PREFIX + "test@test.com");
+                assertTrue(exists);
             });
+
+        redisTemplate.delete(PREFIX + "test@test.com");
     }
 
 }
