@@ -61,7 +61,7 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
         Pageable pageable, Long crossroadId,
         FeedbackSearchCondition condition
     ) {
-        BooleanExpression searchCondition = makeCondition(condition);
+        BooleanExpression searchCondition = searchCondition(condition);
         BooleanExpression activityMember = member.memberStatus.eq(MemberStatus.ACTIVITY);
         BooleanExpression crossroadIdCondition = crossroadIdCondition(crossroadId);
 
@@ -115,7 +115,7 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
         Pageable pageable,
         FeedbackSearchCondition condition
     ) {
-        BooleanExpression searchCondition = makeCondition(condition);
+        BooleanExpression searchCondition = searchCondition(condition);
 
         List<FeedbackResponse> results = jpaQueryFactory
             .select(feedbackResponseDto)
@@ -149,9 +149,9 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
         ).orElseThrow(() -> new BusinessException(FeedbackErrorCode.NOT_FOUND_FEEDBACK));
     }
 
-    private BooleanExpression makeCondition(FeedbackSearchCondition condition) {
+    private BooleanExpression searchCondition(FeedbackSearchCondition condition) {
         return Expressions.allOf(
-            searchCondition(condition.getTarget(), condition.getKeyword()),
+            searchKeyword(condition.getTarget(), condition.getKeyword()),
             answerStatusCondition(condition.getAnswerStatus()),
             categoriesCondition(condition.getCategories()),
             condition.getAdminSearchCondition()
@@ -196,7 +196,7 @@ public class CustomFeedbackRepositoryImpl implements CustomFeedbackRepository {
         return expression;
     }
 
-    private BooleanExpression searchCondition(SearchTarget target, String keyword) {
+    private BooleanExpression searchKeyword(SearchTarget target, String keyword) {
         BooleanExpression fulltextSearch = Expressions.TRUE;
         if (SearchTarget.WRITER.equals(target)) {
             fulltextSearch = fulltextSearch(keyword, member.nickname);
