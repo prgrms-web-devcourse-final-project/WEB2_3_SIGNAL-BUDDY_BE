@@ -10,9 +10,11 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.programmers.signalbuddyfinal.domain.admin.dto.AdminSearchCondition;
 import org.programmers.signalbuddyfinal.domain.crossroad.entity.Crossroad;
 import org.programmers.signalbuddyfinal.domain.crossroad.repository.CrossroadRepository;
 import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackResponse;
+import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackSearchCondition;
 import org.programmers.signalbuddyfinal.domain.feedback.entity.Feedback;
 import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.AnswerStatus;
 import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.FeedbackCategory;
@@ -67,9 +69,12 @@ class FeedbackRepositoryImplTest extends RepositoryTest {
     @DisplayName("활동 중인 회원들의 피드백 목록을 조회한다.")
     @Test
     void getFeedbacks() {
+        FeedbackSearchCondition searchCondition = FeedbackSearchCondition.builder()
+            .target(SearchTarget.SUBJECT_OR_CONTENT).answerStatus(AnswerStatus.BEFORE)
+            .build();
+
         Page<FeedbackResponse> allByActiveMembers = feedbackRepository.findAllByActiveMembers(
-            Pageable.ofSize(10), SearchTarget.SUBJECT_OR_CONTENT, AnswerStatus.BEFORE,
-            null, null , null);
+            Pageable.ofSize(10), null, searchCondition);
 
         assertThat(allByActiveMembers).isNotNull();
         assertThat(allByActiveMembers.getTotalElements()).isEqualTo(3);
@@ -94,10 +99,13 @@ class FeedbackRepositoryImplTest extends RepositoryTest {
 
         createFulltextIndexOnFeedback();
 
+        FeedbackSearchCondition searchCondition = FeedbackSearchCondition.builder()
+            .target(SearchTarget.SUBJECT_OR_CONTENT).answerStatus(AnswerStatus.BEFORE)
+            .build();
+
         // When
         Page<FeedbackResponse> actual = feedbackRepository.findAllByActiveMembers(
-            Pageable.ofSize(10), SearchTarget.SUBJECT_OR_CONTENT, AnswerStatus.BEFORE,
-            null, crossroad.getCrossroadId(), null
+            Pageable.ofSize(10), crossroad.getCrossroadId(), searchCondition
         );
 
         // Then
@@ -127,10 +135,13 @@ class FeedbackRepositoryImplTest extends RepositoryTest {
 
         createFulltextIndexOnFeedback();
 
+        FeedbackSearchCondition searchCondition = FeedbackSearchCondition.builder()
+            .target(SearchTarget.SUBJECT_OR_CONTENT).categories(categories)
+            .build();
+
         // When
         Page<FeedbackResponse> actual = feedbackRepository.findAllByActiveMembers(
-            Pageable.ofSize(10), SearchTarget.SUBJECT_OR_CONTENT, null,
-            categories, null, null
+            Pageable.ofSize(10), null, searchCondition
         );
 
         // Then
@@ -164,10 +175,13 @@ class FeedbackRepositoryImplTest extends RepositoryTest {
 
         createFulltextIndexOnFeedback();
 
+        FeedbackSearchCondition searchCondition = FeedbackSearchCondition.builder()
+            .target(SearchTarget.SUBJECT_OR_CONTENT).keyword(keyword).categories(categories)
+            .build();
+
         // When
         Page<FeedbackResponse> actual = feedbackRepository.findAllByActiveMembers(
-            Pageable.ofSize(10), SearchTarget.SUBJECT_OR_CONTENT, null,
-            categories, null, keyword
+            Pageable.ofSize(10), null, searchCondition
         );
 
         // Then
@@ -193,10 +207,13 @@ class FeedbackRepositoryImplTest extends RepositoryTest {
         // Given
         String keyword = member.getNickname();
 
+        FeedbackSearchCondition searchCondition = FeedbackSearchCondition.builder()
+            .target(SearchTarget.WRITER).keyword(keyword)
+            .build();
+
         // When
         Page<FeedbackResponse> actual = feedbackRepository.findAllByActiveMembers(
-            Pageable.ofSize(10), SearchTarget.WRITER, null,
-            null, null, keyword
+            Pageable.ofSize(10), null, searchCondition
         );
 
         // Then
@@ -227,21 +244,24 @@ class FeedbackRepositoryImplTest extends RepositoryTest {
         LocalDate startDate = LocalDate.of(2024, 11, 12);
         LocalDate endDate = LocalDate.of(2025, 2, 12);
 
+        AdminSearchCondition adminSearchCondition = AdminSearchCondition.builder()
+            .startDate(startDate).endDate(endDate).deleted(Boolean.FALSE)
+            .build();
+        FeedbackSearchCondition searchCondition = FeedbackSearchCondition.builder()
+            .target(SearchTarget.SUBJECT_OR_CONTENT).keyword(keyword).categories(categories)
+            .answerStatus(AnswerStatus.BEFORE)
+            .adminSearchCondition(adminSearchCondition)
+            .build();
+
         // When
         feedbackRepository.findAllByFilter(
-            pageable, SearchTarget.SUBJECT_OR_CONTENT, keyword,
-            AnswerStatus.BEFORE, categories,
-            startDate, endDate,
-            Boolean.FALSE
+            pageable, searchCondition
         );
 
         // Then
         verify(feedbackRepository, times(1))
             .findAllByFilter(
-                pageable, SearchTarget.SUBJECT_OR_CONTENT, keyword,
-                AnswerStatus.BEFORE, categories,
-                startDate, endDate,
-                Boolean.FALSE
+                pageable, searchCondition
             );
     }
 
@@ -254,12 +274,16 @@ class FeedbackRepositoryImplTest extends RepositoryTest {
         feedbackRepository.deleteById(1L);
         feedbackRepository.deleteById(2L);
 
+        AdminSearchCondition adminSearchCondition = AdminSearchCondition.builder()
+            .deleted(Boolean.TRUE)
+            .build();
+        FeedbackSearchCondition searchCondition = FeedbackSearchCondition.builder()
+            .target(SearchTarget.SUBJECT_OR_CONTENT).adminSearchCondition(adminSearchCondition)
+            .build();
+
         // When
         Page<FeedbackResponse> actual = feedbackRepository.findAllByFilter(
-            pageable, SearchTarget.SUBJECT_OR_CONTENT, null,
-            null, null,
-            null, null,
-            Boolean.TRUE
+            pageable, searchCondition
         );
 
         // Then
