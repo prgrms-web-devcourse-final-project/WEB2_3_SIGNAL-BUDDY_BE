@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @Builder
-@Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class AirQualityResponse implements Serializable {

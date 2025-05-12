@@ -26,6 +26,12 @@ public class WebClientConfig {
     @Value("${air-quality.base-url}")
     private String airQualityApiBaseUrl;
 
+    @Value("${region-air-quality.base-url}")
+    private String allAirQualityApiBaseUrl;
+
+    @Value("${observatory.base-url}")
+    private String observatoryApiBaseUrl;
+
     private final int processors = Runtime.getRuntime().availableProcessors();    // PC의 Processor 개수
     private final HttpClient httpClient = HttpClient.create(
             ConnectionProvider.builder("ApiConnections")
@@ -61,6 +67,26 @@ public class WebClientConfig {
     public WebClient airQualityApiWebClient() {
         return WebClient.builder()
             .baseUrl(airQualityApiBaseUrl)
+            .clientConnector(new ReactorClientHttpConnector(httpClient))
+            .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+            .build();
+    }
+
+    // 미세먼지 측정소 API WebClient
+    @Bean
+    public WebClient observatoryApiWebClient() {
+        return WebClient.builder()
+            .baseUrl(observatoryApiBaseUrl)
+            .clientConnector(new ReactorClientHttpConnector(httpClient))
+            .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+            .build();
+    }
+
+    // 전국 미세먼지 API WebClient
+    @Bean
+    public WebClient allAirQualityApiWebClient() {
+        return WebClient.builder()
+            .baseUrl(allAirQualityApiBaseUrl)
             .clientConnector(new ReactorClientHttpConnector(httpClient))
             .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
             .build();
