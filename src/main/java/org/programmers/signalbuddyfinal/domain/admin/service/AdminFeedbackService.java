@@ -2,7 +2,9 @@ package org.programmers.signalbuddyfinal.domain.admin.service;
 
 import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
+import org.programmers.signalbuddyfinal.domain.admin.dto.AdminSearchCondition;
 import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackResponse;
+import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackSearchCondition;
 import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackSearchRequest;
 import org.programmers.signalbuddyfinal.domain.feedback.repository.FeedbackRepository;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
@@ -31,10 +33,19 @@ public class AdminFeedbackService {
             throw new BusinessException(GlobalErrorCode.ADMIN_ONLY);
         }
 
+        AdminSearchCondition adminSearchCondition = AdminSearchCondition.builder()
+            .startDate(startDate).endDate(endDate).deleted(deleted)
+            .build();
+
+        FeedbackSearchCondition condition = FeedbackSearchCondition.builder()
+            .target(target).keyword(request.getKeyword())
+            .answerStatus(request.getStatus()).categories(request.getCategory())
+            .adminSearchCondition(adminSearchCondition)
+            .build();
+
         return new PageResponse<>(
             feedbackRepository.findAllByFilter(
-                pageable, target, request.getKeyword(), request.getStatus(),
-                request.getCategory(), startDate, endDate, deleted
+                pageable, condition
             )
         );
     }

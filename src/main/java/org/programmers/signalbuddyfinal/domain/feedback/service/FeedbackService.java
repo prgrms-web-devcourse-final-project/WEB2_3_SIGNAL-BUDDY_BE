@@ -6,6 +6,7 @@ import org.programmers.signalbuddyfinal.domain.crossroad.entity.Crossroad;
 import org.programmers.signalbuddyfinal.domain.crossroad.repository.CrossroadRepository;
 import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackRequest;
 import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackResponse;
+import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackSearchCondition;
 import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackSearchRequest;
 import org.programmers.signalbuddyfinal.domain.feedback.entity.Feedback;
 import org.programmers.signalbuddyfinal.domain.feedback.exception.FeedbackErrorCode;
@@ -50,10 +51,14 @@ public class FeedbackService {
         FeedbackSearchRequest request,
         Long crossroadId
     ) {
+        FeedbackSearchCondition condition = FeedbackSearchCondition.builder()
+            .target(target).keyword(request.getKeyword())
+            .answerStatus(request.getStatus()).categories(request.getCategory())
+            .build();
+
         return new PageResponse<>(
             feedbackRepository.findAllByActiveMembers(
-                pageable, target, request.getStatus(), request.getCategory(),
-                crossroadId, request.getKeyword()
+                pageable, crossroadId, condition
             )
         );
     }

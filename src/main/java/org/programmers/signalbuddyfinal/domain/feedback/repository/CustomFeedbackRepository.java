@@ -1,32 +1,23 @@
 package org.programmers.signalbuddyfinal.domain.feedback.repository;
 
-import java.time.LocalDate;
-import java.util.Set;
 import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackResponse;
+import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackSearchCondition;
 import org.programmers.signalbuddyfinal.domain.feedback.entity.Feedback;
-import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.AnswerStatus;
-import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.FeedbackCategory;
-import org.programmers.signalbuddyfinal.global.constant.SearchTarget;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface CustomFeedbackRepository {
 
     Page<FeedbackResponse> findAllByActiveMembers(
-        Pageable pageable,
-        SearchTarget target,
-        AnswerStatus answerStatus, Set<FeedbackCategory> categories,
-        Long crossroadId, String keyword
+        Pageable pageable, Long crossroadId,
+        FeedbackSearchCondition condition
     );
 
     Page<FeedbackResponse> findPagedExcludingMember(Long memberId, Pageable pageable);
 
     Page<FeedbackResponse> findAllByFilter(
-        Pageable pageable, SearchTarget target,
-        String keyword, AnswerStatus answerStatus,
-        Set<FeedbackCategory> categories,
-        LocalDate startDate, LocalDate endDate,
-        Boolean deleted
+        Pageable pageable,
+        FeedbackSearchCondition condition
     );
 
     Feedback findByIdOrThrow(Long id);

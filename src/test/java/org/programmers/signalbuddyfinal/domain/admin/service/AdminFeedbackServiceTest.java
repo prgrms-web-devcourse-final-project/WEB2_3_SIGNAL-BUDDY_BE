@@ -1,6 +1,7 @@
 package org.programmers.signalbuddyfinal.domain.admin.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
@@ -12,6 +13,7 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackResponse;
+import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackSearchCondition;
 import org.programmers.signalbuddyfinal.domain.feedback.dto.FeedbackSearchRequest;
 import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.AnswerStatus;
 import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.FeedbackCategory;
@@ -73,10 +75,7 @@ class AdminFeedbackServiceTest extends ServiceTest {
 
         when(
             feedbackRepository.findAllByFilter(
-                pageable, target,
-                request.getKeyword(), request.getStatus(), request.getCategory(),
-                startDate, endDate,
-                deleted
+                any(Pageable.class), any(FeedbackSearchCondition.class)
             )
         ).thenReturn(new PageImpl<>(contents, pageable, 123));
 
@@ -108,7 +107,8 @@ class AdminFeedbackServiceTest extends ServiceTest {
         // When & Then
         try {
             adminFeedbackService.searchFeedbackList(
-                null, SearchTarget.SUBJECT_OR_CONTENT, null, null, null, null, user
+                null, SearchTarget.SUBJECT_OR_CONTENT,
+                null, null, null, null, user
             );
         } catch (BusinessException e) {
             assertThat(e.getErrorCode()).isEqualTo(GlobalErrorCode.ADMIN_ONLY);
