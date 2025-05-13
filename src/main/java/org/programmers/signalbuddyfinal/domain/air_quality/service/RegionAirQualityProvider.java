@@ -56,7 +56,6 @@ public class RegionAirQualityProvider {
             }
         }catch (Exception e) {
             try {
-                XmlMapper xmlMapper = new XmlMapper();
                 JsonNode rootNode = xmlMapper.readTree(body);
 
                 String code = rootNode.at("/cmmMsgHeader/returnReasonCode").asText();

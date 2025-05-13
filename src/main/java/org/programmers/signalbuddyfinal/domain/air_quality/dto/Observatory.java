@@ -5,7 +5,6 @@ import java.util.List;
 
 
 public class Observatory {
-    private Response response;
 
     @Data
     public static class Response {
