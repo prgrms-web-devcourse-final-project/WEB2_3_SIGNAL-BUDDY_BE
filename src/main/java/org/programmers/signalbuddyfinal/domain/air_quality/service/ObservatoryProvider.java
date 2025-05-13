@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.air_quality.dto.ObservatoryResponse;
@@ -31,7 +32,7 @@ public class ObservatoryProvider {
       .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
 
-  public ObservatoryResponse getObservatory(double lat, double lng) {
+  public Optional<ObservatoryResponse> getObservatory(double lat, double lng) {
 
     String body = webClient.get()
         .uri(uriBuilder -> uriBuilder
@@ -44,9 +45,9 @@ public class ObservatoryProvider {
 
     ObservatoryResponse response = parserObservatory(body);
     if (response != null) {
-      return response;
+      return Optional.of(response);
     }
-    return null;
+    return Optional.empty();
   }
 
   private ObservatoryResponse parserObservatory(String body) {
@@ -66,7 +67,6 @@ public class ObservatoryProvider {
       }
     } catch (Exception e) {
       try {
-        XmlMapper xmlMapper = new XmlMapper();
         JsonNode rootNode = xmlMapper.readTree(body);
 
         String code = rootNode.at("/cmmMsgHeader/returnReasonCode").asText();
