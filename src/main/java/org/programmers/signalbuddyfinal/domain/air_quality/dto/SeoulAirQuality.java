@@ -5,14 +5,14 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import java.util.List;
 import lombok.Builder;
-import lombok.Data;
 import lombok.Getter;
 
 @Getter
 @Builder
 public class SeoulAirQuality {
 
-    private int list_total_count;
+    @JsonProperty("list_total_count")
+    private int totalCount;
 
     @JsonProperty("RESULT")
     private Result result;
