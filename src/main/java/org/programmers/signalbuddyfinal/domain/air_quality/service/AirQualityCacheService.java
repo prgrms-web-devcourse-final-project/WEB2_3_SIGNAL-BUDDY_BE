@@ -8,46 +8,40 @@ import org.programmers.signalbuddyfinal.domain.air_quality.dto.CachedAirQuality;
 import org.programmers.signalbuddyfinal.domain.air_quality.exception.AirQualityErrorCode;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-@Component
 public class AirQualityCacheService implements AirQualityCache {
 
     private final RedisTemplate<Object, Object> redisTemplate;
 
-    private static final String key = "air-quality:";
+    private static final String PREFIX = "air-quality:";
     private static final Duration TTL = Duration.ofHours(2);
 
     @Override
-    public CachedAirQuality get(String code) {
-        return (CachedAirQuality) redisTemplate.opsForValue().get(convertKey(code));
+    public CachedAirQuality get(String regionCode) {
+        return (CachedAirQuality) redisTemplate.opsForValue().get(formatKey(regionCode));
     }
 
     @Override
     public void save(String regionCode, AirQualityResponse airQualityResponse, boolean fresh) {
         redisTemplate.opsForValue()
-            .set(convertKey(regionCode), new CachedAirQuality(airQualityResponse, fresh), TTL);
+            .set(formatKey(regionCode), new CachedAirQuality(airQualityResponse, fresh), TTL);
     }
 
     @Override
     public AirQualityResponse failBackOrThrow(String regionCode) {
         return Optional.ofNullable(get(regionCode))
             .map(cache -> {
-                save(regionCode, getCachedDate(cache), false);
+                save(regionCode, cache.getData(), false);
                 return cache.getData();
             })
             .orElseThrow(
                 () -> new BusinessException(AirQualityErrorCode.AIR_QUALITY_SERVICE_UNAVAILABLE));
     }
 
-    private String convertKey(String code) {
-        return key + code;
-    }
-
-    private AirQualityResponse getCachedDate(CachedAirQuality cache) {
-        return cache.getData();
+    private String formatKey(String regionCode) {
+        return PREFIX + regionCode;
     }
 }
