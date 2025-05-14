@@ -3,7 +3,6 @@ package org.programmers.signalbuddyfinal.domain.air_quality.controller;
 import lombok.RequiredArgsConstructor;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.programmers.signalbuddyfinal.domain.air_quality.dto.ObservatoryResponse;
-import org.programmers.signalbuddyfinal.domain.air_quality.service.AirQualityService;
 import org.programmers.signalbuddyfinal.domain.air_quality.service.SeoulAirQualityService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
