@@ -2,14 +2,17 @@ package org.programmers.signalbuddyfinal.domain.air_quality.controller;
 
 import lombok.RequiredArgsConstructor;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
+import org.programmers.signalbuddyfinal.domain.air_quality.dto.ObservatoryResponse;
 import org.programmers.signalbuddyfinal.domain.air_quality.service.AirQualityService;
+import org.programmers.signalbuddyfinal.domain.air_quality.service.SeoulAirQualityService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 public class AirQualityScheduler {
-    private final AirQualityService airQualityService;
+    private final SeoulAirQualityService seoulAirQualityService;
+    private ObservatoryResponse observatoryResponse;
 
     @Scheduled(cron = "${schedule.air-quality-api.cron:0 0/1 * * * ?}")
     @SchedulerLock(
@@ -18,6 +21,6 @@ public class AirQualityScheduler {
         lockAtLeastFor = "${schedule.air-quality-api.lockAtLeastFor:50m}"
     )
     public void updateAirQuality(){
-        airQualityService.updateAriQuality();
+        seoulAirQualityService.update();
     }
 }
