@@ -53,7 +53,7 @@ public class AirQualityService {
 
 
     private Optional<AirQualityResponse> getCachedAirQuality(String code) {
-        return Optional.ofNullable(getCache(convertKey(code)))
+        return Optional.ofNullable(getCache(code))
             .filter(CachedAirQuality::isFresh)
             .map(CachedAirQuality::getData);
     }
@@ -70,25 +70,27 @@ public class AirQualityService {
         return response;
     }
 
-    private AirQualityResponse failBackOrThrow(String value) {
-        String newKey = convertKey(value);
-        return Optional.ofNullable(getCache(newKey))
+    private AirQualityResponse failBackOrThrow(String code) {
+        return Optional.ofNullable(getCache(code))
             .map(cache -> {
-                saveToCache(cache.getData(), false, value);
+                saveToCache(cache.getData(), false, code);
                 return cache.getData();
             })
             .orElseThrow(
                 () -> new BusinessException(AirQualityErrorCode.AIR_QUALITY_SERVICE_UNAVAILABLE));
     }
 
-    private void saveToCache(AirQualityResponse airQualityResponse, boolean fresh, String value) {
-        String newKey = convertKey(value);
-        redisTemplate.opsForValue()
-            .set(newKey, new CachedAirQuality(airQualityResponse, fresh), TTL);
+    private String convertKey(String code) {
+        return key + code;
     }
 
-    private CachedAirQuality getCache(String newKey) {
-        return (CachedAirQuality) redisTemplate.opsForValue().get(newKey);
+    private void saveToCache(AirQualityResponse airQualityResponse, boolean fresh, String code) {
+        redisTemplate.opsForValue()
+            .set(convertKey(code), new CachedAirQuality(airQualityResponse, fresh), TTL);
+    }
+
+    private CachedAirQuality getCache(String code) {
+        return (CachedAirQuality) redisTemplate.opsForValue().get(convertKey(code));
     }
 
     private Optional<SeoulAirQuality> requestAirQuality() {
@@ -141,9 +143,5 @@ public class AirQualityService {
             default:
                 return "-";
         }
-    }
-
-    private String convertKey(String value){
-        return key + value;
     }
 }
