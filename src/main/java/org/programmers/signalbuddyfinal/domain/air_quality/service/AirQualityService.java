@@ -53,7 +53,7 @@ public class AirQualityService {
 
 
     private Optional<AirQualityResponse> getCachedAirQuality(String code) {
-        return Optional.ofNullable(getCache(key + code))
+        return Optional.ofNullable(getCache(convertKey(code)))
             .filter(CachedAirQuality::isFresh)
             .map(CachedAirQuality::getData);
     }
@@ -71,7 +71,7 @@ public class AirQualityService {
     }
 
     private AirQualityResponse failBackOrThrow(String value) {
-        String newKey = key + value;
+        String newKey = convertKey(value);
         return Optional.ofNullable(getCache(newKey))
             .map(cache -> {
                 saveToCache(cache.getData(), false, value);
@@ -82,7 +82,7 @@ public class AirQualityService {
     }
 
     private void saveToCache(AirQualityResponse airQualityResponse, boolean fresh, String value) {
-        String newKey = key + value;
+        String newKey = convertKey(value);
         redisTemplate.opsForValue()
             .set(newKey, new CachedAirQuality(airQualityResponse, fresh), TTL);
     }
@@ -141,5 +141,9 @@ public class AirQualityService {
             default:
                 return "-";
         }
+    }
+
+    private String convertKey(String value){
+        return key + value;
     }
 }
