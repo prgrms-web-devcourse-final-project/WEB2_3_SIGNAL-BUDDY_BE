@@ -51,6 +51,12 @@ public class AirQualityServiceTest extends ServiceTest implements RedisTestConta
     private AirQualityService airQualityService;
 
     @Autowired
+    private SeoulAirQualityService seoulAirQualityService;
+
+    @Autowired
+    private RegionAirQualityService regionAirQualityService;
+
+    @Autowired
     private RedisTemplate<Object, Object> redisTemplate;
 
     @MockitoBean
@@ -61,6 +67,8 @@ public class AirQualityServiceTest extends ServiceTest implements RedisTestConta
 
     @MockitoBean
     private SeoulAirQualityProvider seoulAirQualityProvider;
+
+
 
     private static MockWebServer mockWebServer;
 
@@ -144,7 +152,7 @@ public class AirQualityServiceTest extends ServiceTest implements RedisTestConta
         when(observatoryProvider.getObservatory(anyDouble(), anyDouble()))
             .thenReturn(createObservatoryResponse("서울역", "서울 XXX OOO"));
 
-        airQualityService.updateAriQuality();
+        seoulAirQualityService.update();
         CachedAirQuality after = getCache("seoul");
 
         assertThat(after.isFresh()).isFalse();
@@ -207,7 +215,7 @@ public class AirQualityServiceTest extends ServiceTest implements RedisTestConta
         when(observatoryProvider.getObservatory(anyDouble(), anyDouble()))
             .thenReturn(createObservatoryResponse("설성면", "경기 이천시 설성면"));
 
-        airQualityService.updateRegionAriQuality(
+        regionAirQualityService.update(
             createObservatoryResponse("설성면", "경기 이천시 설성면").get());
         CachedAirQuality after = getCache("111123");
 
