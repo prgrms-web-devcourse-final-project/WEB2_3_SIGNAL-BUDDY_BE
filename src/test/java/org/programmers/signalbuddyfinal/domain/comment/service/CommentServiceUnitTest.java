@@ -62,14 +62,10 @@ class CommentServiceUnitTest extends ServiceTest {
 
     @BeforeEach
     void setup() {
-        member = createMember("test@test.com", "tester");
-        admin = createAdmin("admin@test.com", "admin");
-
-        Crossroad crossroad = createCrossroad("13214", "00사거리", 37.12222, 127.12132);
-
-        feedback = createFeedback("test subject", "test content", member, crossroad);
-
-        comment = createComment("test comment content", member, feedback);
+        member = createMember("test@test.com", "tester", MemberRole.USER);
+        admin = createMember("admin@test.com", "admin", MemberRole.ADMIN);
+        feedback = createFeedback(member);
+        comment = createComment(member, feedback);
     }
 
     @DisplayName("일반 사용자가 자신의 피드백이 아닌 글에 댓글을 작성한다.")
@@ -77,7 +73,10 @@ class CommentServiceUnitTest extends ServiceTest {
     void writeComment() {
         // given
         Long feedbackId = feedback.getFeedbackId();
-        Member otherMember = createMember("other@test.com", "other tester");
+        Member otherMember = createMember(
+            "other@test.com", "other tester",
+            MemberRole.USER
+        );
         String content = "test comment content";
         CommentRequest request = new CommentRequest(content);
         CustomUser2Member user = createCurrentMember(otherMember.getMemberId(), MemberRole.USER);
@@ -136,7 +135,10 @@ class CommentServiceUnitTest extends ServiceTest {
     void writeComment_NotiDisabled() {
         // given
         Long feedbackId = feedback.getFeedbackId();
-        Member otherMember = createMember("other@test.com", "other tester");
+        Member otherMember = createMember(
+            "other@test.com", "other tester",
+            MemberRole.USER
+        );
         String content = "test comment content";
         CommentRequest request = new CommentRequest(content);
         CustomUser2Member user = createCurrentMember(otherMember.getMemberId(), MemberRole.USER);
@@ -294,39 +296,32 @@ class CommentServiceUnitTest extends ServiceTest {
         });
     }
 
-    private Member createMember(String email, String nickname) {
+    private Member createMember(String email, String nickname, MemberRole role) {
         return Member.builder()
-            .email(email).password("123456").role(MemberRole.USER)
+            .email(email).password("123456").role(role)
             .nickname(nickname).memberStatus(MemberStatus.ACTIVITY)
             .profileImageUrl("https://test-image.com/test-123131")
             .build();
     }
 
-    private Member createAdmin(String email, String nickname) {
-        return Member.builder()
-            .email(email).password("123456").role(MemberRole.ADMIN)
-            .nickname(nickname).memberStatus(MemberStatus.ACTIVITY)
-            .profileImageUrl("https://test-image.com/test-123131")
-            .build();
-    }
-
-    private Crossroad createCrossroad(String apiId, String name, double lat, double lng) {
+    private Crossroad createCrossroad() {
         return Crossroad.create()
-            .crossroadApiId(apiId).name(name)
-            .lat(lat).lng(lng)
+            .crossroadApiId("13214").name("00사거리")
+            .lat(37.12222).lng(127.12132)
             .build();
     }
 
-    private Feedback createFeedback(String subject, String content, Member member, Crossroad crossroad) {
+    private Feedback createFeedback(Member member) {
         return Feedback.create()
-            .subject(subject).content(content).secret(Boolean.FALSE)
-            .category(FeedbackCategory.ETC).member(member).crossroad(crossroad)
+            .subject("test subject").content("test content").secret(Boolean.FALSE)
+            .category(FeedbackCategory.ETC).member(member)
+            .crossroad(createCrossroad())
             .build();
     }
 
-    private Comment createComment(String content, Member member, Feedback feedback) {
+    private Comment createComment(Member member, Feedback feedback) {
         return Comment.create()
-            .content(content).feedback(feedback).member(member)
+            .content("test comment content").feedback(feedback).member(member)
             .build();
     }
 
