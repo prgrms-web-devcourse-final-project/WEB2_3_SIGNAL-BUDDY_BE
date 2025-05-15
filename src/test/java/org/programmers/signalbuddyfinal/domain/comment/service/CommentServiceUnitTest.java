@@ -295,37 +295,39 @@ class CommentServiceUnitTest extends ServiceTest {
     }
 
     private Member saveMember(String email, String nickname) {
-        return memberRepository.save(
-            Member.builder().email(email).password("123456").role(MemberRole.USER)
-                .nickname(nickname).memberStatus(MemberStatus.ACTIVITY)
-                .profileImageUrl("https://test-image.com/test-123131").build());
+        return Member.builder()
+            .email(email).password("123456").role(MemberRole.USER)
+            .nickname(nickname).memberStatus(MemberStatus.ACTIVITY)
+            .profileImageUrl("https://test-image.com/test-123131")
+            .build();
     }
 
     private Member saveAdmin(String email, String nickname) {
-        return memberRepository.save(
-            Member.builder().email(email).password("123456").role(MemberRole.ADMIN)
-                .nickname(nickname).memberStatus(MemberStatus.ACTIVITY)
-                .profileImageUrl("https://test-image.com/test-123131").build());
+        return Member.builder()
+            .email(email).password("123456").role(MemberRole.ADMIN)
+            .nickname(nickname).memberStatus(MemberStatus.ACTIVITY)
+            .profileImageUrl("https://test-image.com/test-123131")
+            .build();
     }
 
     private Crossroad saveCrossroad(String apiId, String name, double lat, double lng) {
-        return crossroadRepository.save(
-            Crossroad.create()
-                .crossroadApiId(apiId).name(name)
-                .lat(lat).lng(lng)
-                .build()
-        );
+        return Crossroad.create()
+            .crossroadApiId(apiId).name(name)
+            .lat(lat).lng(lng)
+            .build();
     }
 
     private Feedback saveFeedback(String subject, String content, Member member, Crossroad crossroad) {
-        return feedbackRepository.save(
-            Feedback.create().subject(subject).content(content).secret(Boolean.FALSE)
-                .category(FeedbackCategory.ETC).member(member).crossroad(crossroad).build());
+        return Feedback.create()
+            .subject(subject).content(content).secret(Boolean.FALSE)
+            .category(FeedbackCategory.ETC).member(member).crossroad(crossroad)
+            .build();
     }
 
     private Comment saveComment(String content, Member member, Feedback feedback) {
-        return commentRepository.save(
-            Comment.create().content(content).feedback(feedback).member(member).build());
+        return Comment.create()
+            .content(content).feedback(feedback).member(member)
+            .build();
     }
 
     private CustomUser2Member getCurrentMember(Long id, MemberRole role) {
