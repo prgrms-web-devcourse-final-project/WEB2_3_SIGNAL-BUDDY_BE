@@ -16,7 +16,7 @@ public class SeoulAirQualityService implements AirQualityStrategy {
 
     private final AirQualityCacheService airQualityCacheService;
     private final SeoulAirQualityProvider airQualityProvider;
-    private final String SEOUL_CODE = "seoul";
+    private final String REGION_CODE = "seoul";
 
     @Override
     public boolean supports(String addr) {
@@ -25,9 +25,15 @@ public class SeoulAirQualityService implements AirQualityStrategy {
 
     @Override
     public Optional<AirQualityResponse> getCache(String code) {
-        return Optional.ofNullable(airQualityCacheService.get(SEOUL_CODE))
+        return Optional.ofNullable(airQualityCacheService.get(REGION_CODE))
             .filter(CachedAirQuality::isFresh)
             .map(CachedAirQuality::getData);
+    }
+
+    public AirQualityResponse update() {
+        return requestAirQuality()
+            .map(this::successfulResponse)
+            .orElseGet(() -> airQualityCacheService.failBackOrThrow(REGION_CODE));
     }
 
     @Override
@@ -35,15 +41,9 @@ public class SeoulAirQualityService implements AirQualityStrategy {
         return update();
     }
 
-    public AirQualityResponse update() {
-        return requestAirQuality()
-            .map(this::successfulResponse)
-            .orElseGet(() -> airQualityCacheService.failBackOrThrow(SEOUL_CODE));
-    }
-
     private AirQualityResponse successfulResponse(SeoulAirQuality newSeoulAirQuality) {
         AirQualityResponse response = createResponse(newSeoulAirQuality);
-        airQualityCacheService.save(SEOUL_CODE, response, true);
+        airQualityCacheService.save(REGION_CODE, response, true);
         return response;
     }
 
