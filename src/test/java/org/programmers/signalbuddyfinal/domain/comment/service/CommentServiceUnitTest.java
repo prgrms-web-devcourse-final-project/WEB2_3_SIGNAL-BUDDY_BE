@@ -62,14 +62,14 @@ class CommentServiceUnitTest extends ServiceTest {
 
     @BeforeEach
     void setup() {
-        member = saveMember("test@test.com", "tester");
-        admin = saveAdmin("admin@test.com", "admin");
+        member = createMember("test@test.com", "tester");
+        admin = createAdmin("admin@test.com", "admin");
 
-        Crossroad crossroad = saveCrossroad("13214", "00사거리", 37.12222, 127.12132);
+        Crossroad crossroad = createCrossroad("13214", "00사거리", 37.12222, 127.12132);
 
-        feedback = saveFeedback("test subject", "test content", member, crossroad);
+        feedback = createFeedback("test subject", "test content", member, crossroad);
 
-        comment = saveComment("test comment content", member, feedback);
+        comment = createComment("test comment content", member, feedback);
     }
 
     @DisplayName("일반 사용자가 자신의 피드백이 아닌 글에 댓글을 작성한다.")
@@ -77,10 +77,10 @@ class CommentServiceUnitTest extends ServiceTest {
     void writeComment() {
         // given
         Long feedbackId = feedback.getFeedbackId();
-        Member otherMember = saveMember("other@test.com", "other tester");
+        Member otherMember = createMember("other@test.com", "other tester");
         String content = "test comment content";
         CommentRequest request = new CommentRequest(content);
-        CustomUser2Member user = getCurrentMember(otherMember.getMemberId(), MemberRole.USER);
+        CustomUser2Member user = createCurrentMember(otherMember.getMemberId(), MemberRole.USER);
 
         doNothing().when(fcmService).sendMessage(any(FcmMessage.class), anyLong());
 
@@ -109,7 +109,7 @@ class CommentServiceUnitTest extends ServiceTest {
         Long feedbackId = feedback.getFeedbackId();
         String content = "test comment content";
         CommentRequest request = new CommentRequest(content);
-        CustomUser2Member user = getCurrentMember(member.getMemberId(), MemberRole.USER);
+        CustomUser2Member user = createCurrentMember(member.getMemberId(), MemberRole.USER);
 
         doNothing().when(fcmService).sendMessage(any(FcmMessage.class), anyLong());
 
@@ -136,10 +136,10 @@ class CommentServiceUnitTest extends ServiceTest {
     void writeComment_NotiDisabled() {
         // given
         Long feedbackId = feedback.getFeedbackId();
-        Member otherMember = saveMember("other@test.com", "other tester");
+        Member otherMember = createMember("other@test.com", "other tester");
         String content = "test comment content";
         CommentRequest request = new CommentRequest(content);
-        CustomUser2Member user = getCurrentMember(otherMember.getMemberId(), MemberRole.USER);
+        CustomUser2Member user = createCurrentMember(otherMember.getMemberId(), MemberRole.USER);
         member.updateNotifyEnabled(Boolean.FALSE);
 
         doNothing().when(fcmService).sendMessage(any(FcmMessage.class), anyLong());
@@ -169,7 +169,7 @@ class CommentServiceUnitTest extends ServiceTest {
         Long feedbackId = feedback.getFeedbackId();
         String content = "test admin comment content";
         CommentRequest request = new CommentRequest(content);
-        CustomUser2Member user = getCurrentMember(admin.getMemberId(), MemberRole.ADMIN);
+        CustomUser2Member user = createCurrentMember(admin.getMemberId(), MemberRole.ADMIN);
 
         doNothing().when(fcmService).sendMessage(any(FcmMessage.class), anyLong());
 
@@ -199,7 +199,7 @@ class CommentServiceUnitTest extends ServiceTest {
         // given
         String updatedContent = "update comment content";
         CommentRequest request = new CommentRequest(updatedContent);
-        CustomUser2Member user = getCurrentMember(member.getMemberId(), MemberRole.USER);
+        CustomUser2Member user = createCurrentMember(member.getMemberId(), MemberRole.USER);
 
         // when
         commentService.updateComment(comment.getCommentId(), request, user);
@@ -220,7 +220,7 @@ class CommentServiceUnitTest extends ServiceTest {
         // given
         String updatedContent = "update comment content";
         CommentRequest request = new CommentRequest(updatedContent);
-        CustomUser2Member user = getCurrentMember(999999L, MemberRole.USER);
+        CustomUser2Member user = createCurrentMember(999999L, MemberRole.USER);
 
         // when & then
         try {
@@ -235,7 +235,7 @@ class CommentServiceUnitTest extends ServiceTest {
     @Test
     void deleteComment() {
         // given
-        CustomUser2Member user = getCurrentMember(member.getMemberId(), MemberRole.USER);
+        CustomUser2Member user = createCurrentMember(member.getMemberId(), MemberRole.USER);
 
         // when
         commentService.deleteComment(comment.getCommentId(), user);
@@ -248,7 +248,7 @@ class CommentServiceUnitTest extends ServiceTest {
     @Test
     void deleteCommentByAdmin() {
         // given
-        CustomUser2Member user = getCurrentMember(admin.getMemberId(), MemberRole.ADMIN);
+        CustomUser2Member user = createCurrentMember(admin.getMemberId(), MemberRole.ADMIN);
 
         // when
         commentService.deleteComment(comment.getCommentId(), user);
@@ -261,7 +261,7 @@ class CommentServiceUnitTest extends ServiceTest {
     @Test
     void deleteCommentFailure() {
         // given
-        CustomUser2Member user = getCurrentMember(999999L, MemberRole.USER);
+        CustomUser2Member user = createCurrentMember(999999L, MemberRole.USER);
 
         // when & then
         try {
@@ -279,7 +279,7 @@ class CommentServiceUnitTest extends ServiceTest {
         Long feedbackId = feedback.getFeedbackId();
         String content = "test admin comment content";
         CommentRequest request = new CommentRequest(content);
-        CustomUser2Member user = getCurrentMember(admin.getMemberId(), MemberRole.ADMIN);
+        CustomUser2Member user = createCurrentMember(admin.getMemberId(), MemberRole.ADMIN);
 
         // when
         commentService.writeComment(feedbackId, request, user);
@@ -294,7 +294,7 @@ class CommentServiceUnitTest extends ServiceTest {
         });
     }
 
-    private Member saveMember(String email, String nickname) {
+    private Member createMember(String email, String nickname) {
         return Member.builder()
             .email(email).password("123456").role(MemberRole.USER)
             .nickname(nickname).memberStatus(MemberStatus.ACTIVITY)
@@ -302,7 +302,7 @@ class CommentServiceUnitTest extends ServiceTest {
             .build();
     }
 
-    private Member saveAdmin(String email, String nickname) {
+    private Member createAdmin(String email, String nickname) {
         return Member.builder()
             .email(email).password("123456").role(MemberRole.ADMIN)
             .nickname(nickname).memberStatus(MemberStatus.ACTIVITY)
@@ -310,27 +310,27 @@ class CommentServiceUnitTest extends ServiceTest {
             .build();
     }
 
-    private Crossroad saveCrossroad(String apiId, String name, double lat, double lng) {
+    private Crossroad createCrossroad(String apiId, String name, double lat, double lng) {
         return Crossroad.create()
             .crossroadApiId(apiId).name(name)
             .lat(lat).lng(lng)
             .build();
     }
 
-    private Feedback saveFeedback(String subject, String content, Member member, Crossroad crossroad) {
+    private Feedback createFeedback(String subject, String content, Member member, Crossroad crossroad) {
         return Feedback.create()
             .subject(subject).content(content).secret(Boolean.FALSE)
             .category(FeedbackCategory.ETC).member(member).crossroad(crossroad)
             .build();
     }
 
-    private Comment saveComment(String content, Member member, Feedback feedback) {
+    private Comment createComment(String content, Member member, Feedback feedback) {
         return Comment.create()
             .content(content).feedback(feedback).member(member)
             .build();
     }
 
-    private CustomUser2Member getCurrentMember(Long id, MemberRole role) {
+    private CustomUser2Member createCurrentMember(Long id, MemberRole role) {
         return new CustomUser2Member(
             new CustomUserDetails(id, "", "",
                 "", "", role, MemberStatus.ACTIVITY));
