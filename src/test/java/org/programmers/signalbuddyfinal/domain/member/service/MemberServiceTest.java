@@ -13,13 +13,10 @@ import java.net.URL;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberJoinRequest;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberNotiAllowRequest;
 import org.programmers.signalbuddyfinal.domain.member.dto.MemberResponse;
@@ -36,11 +33,11 @@ import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
 import org.programmers.signalbuddyfinal.global.service.AwsFileService;
+import org.programmers.signalbuddyfinal.global.support.ServiceTest;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 
-@ExtendWith(MockitoExtension.class)
-class MemberServiceTest {
+class MemberServiceTest extends ServiceTest {
 
     private final Long id = 1L;
     @Mock
@@ -184,7 +181,7 @@ class MemberServiceTest {
                     () -> memberService.joinMember(memberBasicJoinRequest, profileImage))
                     .isInstanceOf(BusinessException.class)
                     .hasMessageContaining(
-                        MemberErrorCode.ALREADY_EXIST_EMAIL.getMessage().toString());
+                        MemberErrorCode.ALREADY_EXIST_EMAIL.getMessage());
             }
 
             @Test
@@ -198,7 +195,7 @@ class MemberServiceTest {
                     () -> memberService.joinMember(memberBasicJoinRequest, profileImage))
                     .isInstanceOf(BusinessException.class)
                     .hasMessageContaining(
-                        MemberErrorCode.ALREADY_EXIST_NICKNAME.getMessage().toString());
+                        MemberErrorCode.ALREADY_EXIST_NICKNAME.getMessage());
             }
         }
 

@@ -11,7 +11,6 @@ import static org.mockito.Mockito.verify;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.programmers.signalbuddyfinal.domain.comment.dto.CommentRequest;
@@ -33,11 +32,10 @@ import org.programmers.signalbuddyfinal.domain.notification.service.FcmService;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.programmers.signalbuddyfinal.global.support.ServiceTest;
 import org.springframework.test.util.ReflectionTestUtils;
 
-@ExtendWith(SpringExtension.class)
-class CommentServiceUnitTest {
+class CommentServiceUnitTest extends ServiceTest {
 
     @InjectMocks
     private CommentService commentService;
