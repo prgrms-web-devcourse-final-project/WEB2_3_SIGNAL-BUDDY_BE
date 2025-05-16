@@ -3,6 +3,7 @@ package org.programmers.signalbuddyfinal.domain.comment.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -34,6 +35,7 @@ import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
 import org.programmers.signalbuddyfinal.global.support.ServiceTest;
+import org.springframework.test.util.ReflectionTestUtils;
 
 class CommentServiceUnitTest extends ServiceTest {
 
@@ -62,10 +64,10 @@ class CommentServiceUnitTest extends ServiceTest {
 
     @BeforeEach
     void setup() {
-        member = createMember("test@test.com", "tester", MemberRole.USER);
-        admin = createMember("admin@test.com", "admin", MemberRole.ADMIN);
+        member = createMember(1L, "test@test.com", "tester", MemberRole.USER);
+        admin = createMember(7777L, "admin@test.com", "admin", MemberRole.ADMIN);
         feedback = createFeedback(member);
-        comment = createComment(member, feedback);
+        comment = createComment(1L, "test comment content", member, feedback);
     }
 
     @DisplayName("일반 사용자가 자신의 피드백이 아닌 글에 댓글을 작성한다.")
@@ -74,29 +76,28 @@ class CommentServiceUnitTest extends ServiceTest {
         // given
         Long feedbackId = feedback.getFeedbackId();
         Member otherMember = createMember(
-            "other@test.com", "other tester",
+            2L, "other@test.com", "other tester",
             MemberRole.USER
         );
-        String content = "test comment content";
-        CommentRequest request = new CommentRequest(content);
-        CustomUser2Member user = createCurrentMember(otherMember.getMemberId(), MemberRole.USER);
+        CommentRequest request = new CommentRequest("test comment content");
+        CustomUser2Member requestUser = createCurrentMember(
+            otherMember.getMemberId(), MemberRole.USER
+        );
 
+        given(memberRepository.findByIdOrThrow(requestUser.getMemberId()))
+            .willReturn(otherMember);
+        given(feedbackRepository.findByIdOrThrow(feedbackId))
+            .willReturn(feedback);
+        given(commentRepository.save(any(Comment.class)))
+            .willReturn(createComment(2L, request.getContent(), otherMember,feedback));
         doNothing().when(fcmService).sendMessage(any(FcmMessage.class), anyLong());
 
         // when
-        commentService.writeComment(feedbackId, request, user);
+        commentService.writeComment(feedbackId, request, requestUser);
 
         // then
-        Optional<Comment> actual = commentRepository.findById(2L);
-        SoftAssertions.assertSoftly(softAssertions -> {
-            softAssertions.assertThat(actual).get().isNotNull();
-            softAssertions.assertThat(actual.get().getCommentId()).isNotNull();
-            softAssertions.assertThat(actual.get().getContent()).isEqualTo(content);
-            softAssertions.assertThat(actual.get().getMember().getMemberId())
-                .isEqualTo(user.getMemberId());
-            softAssertions.assertThat(actual.get().getFeedback().getFeedbackId())
-                .isEqualTo(feedbackId);
-        });
+        verify(commentRepository, times(1))
+            .save(any(Comment.class));
         verify(fcmService, times(1))
             .sendMessage(any(FcmMessage.class), anyLong());
     }
@@ -136,7 +137,7 @@ class CommentServiceUnitTest extends ServiceTest {
         // given
         Long feedbackId = feedback.getFeedbackId();
         Member otherMember = createMember(
-            "other@test.com", "other tester",
+            2L, "other@test.com", "other tester",
             MemberRole.USER
         );
         String content = "test comment content";
@@ -296,33 +297,42 @@ class CommentServiceUnitTest extends ServiceTest {
         });
     }
 
-    private Member createMember(String email, String nickname, MemberRole role) {
+    private Member createMember(Long id, String email, String nickname, MemberRole role) {
         return Member.builder()
-            .email(email).password("123456").role(role)
+            .memberId(id).email(email).password("123456").role(role)
             .nickname(nickname).memberStatus(MemberStatus.ACTIVITY)
             .profileImageUrl("https://test-image.com/test-123131")
             .build();
     }
 
     private Crossroad createCrossroad() {
-        return Crossroad.create()
+        Crossroad entity = Crossroad.create()
             .crossroadApiId("13214").name("00사거리")
             .lat(37.12222).lng(127.12132)
             .build();
+        ReflectionTestUtils.setField(entity, "crossroadId", 1L);
+
+        return entity;
     }
 
     private Feedback createFeedback(Member member) {
-        return Feedback.create()
+        Feedback entity = Feedback.create()
             .subject("test subject").content("test content").secret(Boolean.FALSE)
             .category(FeedbackCategory.ETC).member(member)
             .crossroad(createCrossroad())
             .build();
+        ReflectionTestUtils.setField(entity, "feedbackId", 1L);
+
+        return entity;
     }
 
-    private Comment createComment(Member member, Feedback feedback) {
-        return Comment.create()
-            .content("test comment content").feedback(feedback).member(member)
+    private Comment createComment(Long id, String content, Member member, Feedback feedback) {
+        Comment entity = Comment.create()
+            .content(content).feedback(feedback).member(member)
             .build();
+        ReflectionTestUtils.setField(entity, "commentId", id);
+
+        return entity;
     }
 
     private CustomUser2Member createCurrentMember(Long id, MemberRole role) {
