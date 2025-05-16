@@ -18,7 +18,6 @@ import org.programmers.signalbuddyfinal.domain.comment.entity.Comment;
 import org.programmers.signalbuddyfinal.domain.comment.exception.CommentErrorCode;
 import org.programmers.signalbuddyfinal.domain.comment.repository.CommentRepository;
 import org.programmers.signalbuddyfinal.domain.crossroad.entity.Crossroad;
-import org.programmers.signalbuddyfinal.domain.crossroad.repository.CrossroadRepository;
 import org.programmers.signalbuddyfinal.domain.feedback.entity.Feedback;
 import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.AnswerStatus;
 import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.FeedbackCategory;
@@ -48,9 +47,6 @@ class CommentServiceTest extends ServiceTest {
 
     @Mock
     private FeedbackRepository feedbackRepository;
-
-    @Mock
-    private CrossroadRepository crossroadRepository;
 
     @Mock
     private FcmService fcmService;
