@@ -8,11 +8,10 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import java.util.Optional;
-import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.programmers.signalbuddyfinal.domain.comment.dto.CommentRequest;
@@ -34,10 +33,11 @@ import org.programmers.signalbuddyfinal.domain.notification.service.FcmService;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
-import org.programmers.signalbuddyfinal.global.support.ServiceTest;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-class CommentServiceUnitTest extends ServiceTest {
+@ExtendWith(SpringExtension.class)
+class CommentServiceUnitTest {
 
     @InjectMocks
     private CommentService commentService;
@@ -75,11 +75,11 @@ class CommentServiceUnitTest extends ServiceTest {
     void writeComment() {
         // given
         Long feedbackId = feedback.getFeedbackId();
+        CommentRequest request = new CommentRequest("test comment content");
         Member otherMember = createMember(
             2L, "other@test.com", "other tester",
             MemberRole.USER
         );
-        CommentRequest request = new CommentRequest("test comment content");
         CustomUser2Member requestUser = createCurrentMember(
             otherMember.getMemberId(), MemberRole.USER
         );
@@ -89,7 +89,7 @@ class CommentServiceUnitTest extends ServiceTest {
         given(feedbackRepository.findByIdOrThrow(feedbackId))
             .willReturn(feedback);
         given(commentRepository.save(any(Comment.class)))
-            .willReturn(createComment(2L, request.getContent(), otherMember,feedback));
+            .willReturn(createComment(2L, request.getContent(), otherMember, feedback));
         doNothing().when(fcmService).sendMessage(any(FcmMessage.class), anyLong());
 
         // when
@@ -109,24 +109,22 @@ class CommentServiceUnitTest extends ServiceTest {
         Long feedbackId = feedback.getFeedbackId();
         String content = "test comment content";
         CommentRequest request = new CommentRequest(content);
-        CustomUser2Member user = createCurrentMember(member.getMemberId(), MemberRole.USER);
+        CustomUser2Member requestUser = createCurrentMember(member.getMemberId(), MemberRole.USER);
 
+        given(memberRepository.findByIdOrThrow(requestUser.getMemberId()))
+            .willReturn(member);
+        given(feedbackRepository.findByIdOrThrow(feedbackId))
+            .willReturn(feedback);
+        given(commentRepository.save(any(Comment.class)))
+            .willReturn(createComment(2L, request.getContent(), member, feedback));
         doNothing().when(fcmService).sendMessage(any(FcmMessage.class), anyLong());
 
         // when
-        commentService.writeComment(feedbackId, request, user);
+        commentService.writeComment(feedbackId, request, requestUser);
 
         // then
-        Optional<Comment> actual = commentRepository.findById(2L);
-        SoftAssertions.assertSoftly(softAssertions -> {
-            softAssertions.assertThat(actual).get().isNotNull();
-            softAssertions.assertThat(actual.get().getCommentId()).isNotNull();
-            softAssertions.assertThat(actual.get().getContent()).isEqualTo(content);
-            softAssertions.assertThat(actual.get().getMember().getMemberId())
-                .isEqualTo(user.getMemberId());
-            softAssertions.assertThat(actual.get().getFeedback().getFeedbackId())
-                .isEqualTo(feedbackId);
-        });
+        verify(commentRepository, times(1))
+            .save(any(Comment.class));
         verify(fcmService, times(0))
             .sendMessage(any(FcmMessage.class), anyLong());
     }
@@ -136,31 +134,31 @@ class CommentServiceUnitTest extends ServiceTest {
     void writeComment_NotiDisabled() {
         // given
         Long feedbackId = feedback.getFeedbackId();
+        String content = "test comment content";
+        CommentRequest request = new CommentRequest(content);
         Member otherMember = createMember(
             2L, "other@test.com", "other tester",
             MemberRole.USER
         );
-        String content = "test comment content";
-        CommentRequest request = new CommentRequest(content);
-        CustomUser2Member user = createCurrentMember(otherMember.getMemberId(), MemberRole.USER);
         member.updateNotifyEnabled(Boolean.FALSE);
+        CustomUser2Member requestUser = createCurrentMember(
+            otherMember.getMemberId(), MemberRole.USER
+        );
 
+        given(memberRepository.findByIdOrThrow(requestUser.getMemberId()))
+            .willReturn(otherMember);
+        given(feedbackRepository.findByIdOrThrow(feedbackId))
+            .willReturn(feedback);
+        given(commentRepository.save(any(Comment.class)))
+            .willReturn(createComment(2L, request.getContent(), otherMember, feedback));
         doNothing().when(fcmService).sendMessage(any(FcmMessage.class), anyLong());
 
         // when
-        commentService.writeComment(feedbackId, request, user);
+        commentService.writeComment(feedbackId, request, requestUser);
 
         // then
-        Optional<Comment> actual = commentRepository.findById(2L);
-        SoftAssertions.assertSoftly(softAssertions -> {
-            softAssertions.assertThat(actual).get().isNotNull();
-            softAssertions.assertThat(actual.get().getCommentId()).isNotNull();
-            softAssertions.assertThat(actual.get().getContent()).isEqualTo(content);
-            softAssertions.assertThat(actual.get().getMember().getMemberId())
-                .isEqualTo(user.getMemberId());
-            softAssertions.assertThat(actual.get().getFeedback().getFeedbackId())
-                .isEqualTo(feedbackId);
-        });
+        verify(commentRepository, times(1))
+            .save(any(Comment.class));
         verify(fcmService, times(0))
             .sendMessage(any(FcmMessage.class), anyLong());
     }
@@ -172,28 +170,25 @@ class CommentServiceUnitTest extends ServiceTest {
         Long feedbackId = feedback.getFeedbackId();
         String content = "test admin comment content";
         CommentRequest request = new CommentRequest(content);
-        CustomUser2Member user = createCurrentMember(admin.getMemberId(), MemberRole.ADMIN);
+        CustomUser2Member requestAdmin = createCurrentMember(admin.getMemberId(), MemberRole.ADMIN);
 
+        given(memberRepository.findByIdOrThrow(requestAdmin.getMemberId()))
+            .willReturn(admin);
+        given(feedbackRepository.findByIdOrThrow(feedbackId))
+            .willReturn(feedback);
+        given(commentRepository.save(any(Comment.class)))
+            .willReturn(createComment(2L, request.getContent(), admin, feedback));
         doNothing().when(fcmService).sendMessage(any(FcmMessage.class), anyLong());
 
         // when
-        commentService.writeComment(feedbackId, request, user);
+        commentService.writeComment(feedbackId, request, requestAdmin);
 
         // then
-        Optional<Comment> actual = commentRepository.findById(2L);
-        SoftAssertions.assertSoftly(softAssertions -> {
-            softAssertions.assertThat(actual).get().isNotNull();
-            softAssertions.assertThat(actual.get().getCommentId()).isNotNull();
-            softAssertions.assertThat(actual.get().getContent()).isEqualTo(content);
-            softAssertions.assertThat(actual.get().getMember().getMemberId())
-                .isEqualTo(user.getMemberId());
-            softAssertions.assertThat(actual.get().getFeedback().getFeedbackId())
-                .isEqualTo(feedbackId);
-            softAssertions.assertThat(actual.get().getFeedback().getAnswerStatus())
-                .isEqualTo(AnswerStatus.COMPLETION);
-        });
+        verify(commentRepository, times(1))
+            .save(any(Comment.class));
         verify(fcmService, times(1))
             .sendMessage(any(FcmMessage.class), anyLong());
+        assertThat(feedback.getAnswerStatus()).isEqualTo(AnswerStatus.COMPLETION);
     }
 
     @DisplayName("본인의 댓글을 수정한다.")
@@ -202,19 +197,16 @@ class CommentServiceUnitTest extends ServiceTest {
         // given
         String updatedContent = "update comment content";
         CommentRequest request = new CommentRequest(updatedContent);
-        CustomUser2Member user = createCurrentMember(member.getMemberId(), MemberRole.USER);
+        CustomUser2Member requestUser = createCurrentMember(member.getMemberId(), MemberRole.USER);
+
+        given(commentRepository.findByIdOrThrow(requestUser.getMemberId()))
+            .willReturn(comment);
 
         // when
-        commentService.updateComment(comment.getCommentId(), request, user);
+        commentService.updateComment(comment.getCommentId(), request, requestUser);
 
         // then
-        Optional<Comment> actual = commentRepository.findById(comment.getCommentId());
-        SoftAssertions.assertSoftly(softAssertions -> {
-            softAssertions.assertThat(actual.get().getCommentId()).isNotNull();
-            softAssertions.assertThat(actual.get().getContent()).isEqualTo(updatedContent);
-            softAssertions.assertThat(actual.get().getMember().getMemberId())
-                .isEqualTo(user.getMemberId());
-        });
+        assertThat(comment.getContent()).isEqualTo(updatedContent);
     }
 
     @DisplayName("댓글 작성자와 다른 사람이 수정 시, 실패한다.")
@@ -223,11 +215,20 @@ class CommentServiceUnitTest extends ServiceTest {
         // given
         String updatedContent = "update comment content";
         CommentRequest request = new CommentRequest(updatedContent);
-        CustomUser2Member user = createCurrentMember(999999L, MemberRole.USER);
+        Member otherMember = createMember(
+            2L, "other@test.com", "other tester",
+            MemberRole.USER
+        );
+        CustomUser2Member requestUser = createCurrentMember(
+            otherMember.getMemberId(), MemberRole.USER
+        );
+
+        given(commentRepository.findByIdOrThrow(comment.getCommentId()))
+            .willReturn(comment);
 
         // when & then
         try {
-            commentService.updateComment(comment.getCommentId(), request, user);
+            commentService.updateComment(comment.getCommentId(), request, requestUser);
         } catch (BusinessException e) {
             assertThat(e.getErrorCode())
                 .isEqualTo(CommentErrorCode.COMMENT_MODIFIER_NOT_AUTHORIZED);
@@ -238,37 +239,51 @@ class CommentServiceUnitTest extends ServiceTest {
     @Test
     void deleteComment() {
         // given
-        CustomUser2Member user = createCurrentMember(member.getMemberId(), MemberRole.USER);
+        Long commentId = comment.getCommentId();
+        CustomUser2Member requestUser = createCurrentMember(member.getMemberId(), MemberRole.USER);
+
+        given(commentRepository.findByIdOrThrow(commentId))
+            .willReturn(comment);
 
         // when
-        commentService.deleteComment(comment.getCommentId(), user);
+        commentService.deleteComment(commentId, requestUser);
 
         // then
-        assertThat(commentRepository.existsById(comment.getCommentId())).isFalse();
+        verify(commentRepository, times(1))
+            .deleteById(commentId);
     }
 
     @DisplayName("관리자가 일반 사용자의 댓글을 삭제한다.")
     @Test
     void deleteCommentByAdmin() {
         // given
-        CustomUser2Member user = createCurrentMember(admin.getMemberId(), MemberRole.ADMIN);
+        Long commentId = comment.getCommentId();
+        CustomUser2Member requestAdmin = createCurrentMember(admin.getMemberId(), MemberRole.ADMIN);
+
+        given(commentRepository.findByIdOrThrow(commentId))
+            .willReturn(comment);
 
         // when
-        commentService.deleteComment(comment.getCommentId(), user);
+        commentService.deleteComment(commentId, requestAdmin);
 
         // then
-        assertThat(commentRepository.existsById(comment.getCommentId())).isFalse();
+        verify(commentRepository, times(1))
+            .deleteById(commentId);
     }
 
     @DisplayName("댓글 작성자와 다른 사람이 삭제 시, 실패한다.")
     @Test
     void deleteCommentFailure() {
         // given
-        CustomUser2Member user = createCurrentMember(999999L, MemberRole.USER);
+        Long commentId = comment.getCommentId();
+        CustomUser2Member requestUser = createCurrentMember(999999L, MemberRole.USER);
+
+        given(commentRepository.findByIdOrThrow(commentId))
+            .willReturn(comment);
 
         // when & then
         try {
-            commentService.deleteComment(comment.getCommentId(), user);
+            commentService.deleteComment(commentId, requestUser);
         } catch (BusinessException e) {
             assertThat(e.getErrorCode())
                 .isEqualTo(CommentErrorCode.COMMENT_ELIMINATOR_NOT_AUTHORIZED);
@@ -279,22 +294,22 @@ class CommentServiceUnitTest extends ServiceTest {
     @Test
     void deleteAdminComment() {
         // given
-        Long feedbackId = feedback.getFeedbackId();
-        String content = "test admin comment content";
-        CommentRequest request = new CommentRequest(content);
-        CustomUser2Member user = createCurrentMember(admin.getMemberId(), MemberRole.ADMIN);
+        feedback.updateFeedbackStatus();    // AnswerStatus : BEFORE -> COMPLETION
+        Comment commentByAdmin = createComment(2L, "by admin", admin, feedback);
+        Long commentId = commentByAdmin.getCommentId();
+        CustomUser2Member requestAdmin = createCurrentMember(admin.getMemberId(), MemberRole.ADMIN);
+
+        given(commentRepository.findByIdOrThrow(commentId))
+            .willReturn(commentByAdmin);
 
         // when
-        commentService.writeComment(feedbackId, request, user);
-        commentService.deleteComment(2L, user);
+        commentService.deleteComment(commentId, requestAdmin);
 
         // then
-        SoftAssertions.assertSoftly(softAssertions -> {
-            softAssertions.assertThat(commentRepository.existsById(10L)).isFalse();
-            softAssertions.assertThat(
-                    feedbackRepository.findById(feedback.getFeedbackId()).get().getAnswerStatus())
-                .isEqualTo(AnswerStatus.BEFORE);
-        });
+        verify(commentRepository, times(1))
+            .deleteById(commentId);
+        assertThat(feedback.getAnswerStatus())
+            .isEqualTo(AnswerStatus.BEFORE);
     }
 
     private Member createMember(Long id, String email, String nickname, MemberRole role) {
