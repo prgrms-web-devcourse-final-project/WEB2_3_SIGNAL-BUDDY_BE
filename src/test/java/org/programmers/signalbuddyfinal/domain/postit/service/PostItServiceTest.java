@@ -24,11 +24,11 @@ import org.programmers.signalbuddyfinal.domain.postitsolve.repository.PostitSolv
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
-import org.programmers.signalbuddyfinal.global.support.ServiceTest;
+import org.programmers.signalbuddyfinal.global.support.IntegrationTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockMultipartFile;
 
-class PostItServiceTest extends ServiceTest {
+class PostItServiceTest extends IntegrationTest {
 
     @Autowired
     private PostItRepository postItRepository;

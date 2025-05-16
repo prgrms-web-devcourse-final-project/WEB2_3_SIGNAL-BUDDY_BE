@@ -14,11 +14,11 @@ import org.programmers.signalbuddyfinal.domain.feedback_summary.entity.Crossroad
 import org.programmers.signalbuddyfinal.domain.feedback_summary.entity.FeedbackCategoryCount;
 import org.programmers.signalbuddyfinal.domain.feedback_summary.entity.FeedbackSummary;
 import org.programmers.signalbuddyfinal.domain.feedback_summary.repository.FeedbackSummaryRepository;
-import org.programmers.signalbuddyfinal.global.support.ServiceTest;
+import org.programmers.signalbuddyfinal.global.support.IntegrationTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-class FeedbackSummaryServiceTest extends ServiceTest {
+class FeedbackSummaryServiceTest extends IntegrationTest {
 
     @Autowired
     private FeedbackSummaryService feedbackSummaryService;

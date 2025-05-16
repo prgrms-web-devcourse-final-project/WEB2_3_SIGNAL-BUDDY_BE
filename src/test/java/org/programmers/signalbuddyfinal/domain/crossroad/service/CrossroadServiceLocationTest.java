@@ -10,10 +10,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadResponse;
 import org.programmers.signalbuddyfinal.domain.crossroad.repository.CrossroadRedisRepository;
-import org.programmers.signalbuddyfinal.global.support.ServiceTest;
+import org.programmers.signalbuddyfinal.global.support.IntegrationTest;
 import org.springframework.data.redis.core.RedisTemplate;
 
-class CrossroadServiceLocationTest extends ServiceTest {
+class CrossroadServiceLocationTest extends IntegrationTest {
 
     @InjectMocks
     private CrossroadService crossroadService;

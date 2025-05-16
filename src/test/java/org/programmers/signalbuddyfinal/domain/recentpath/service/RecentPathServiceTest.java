@@ -23,12 +23,12 @@ import org.programmers.signalbuddyfinal.domain.recentpath.dto.RecentPathRequest;
 import org.programmers.signalbuddyfinal.domain.recentpath.dto.RecentPathResponse;
 import org.programmers.signalbuddyfinal.domain.recentpath.entity.RecentPath;
 import org.programmers.signalbuddyfinal.domain.recentpath.repository.RecentPathRepository;
-import org.programmers.signalbuddyfinal.global.support.ServiceTest;
+import org.programmers.signalbuddyfinal.global.support.IntegrationTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 @Transactional
-class RecentPathServiceTest extends ServiceTest {
+class RecentPathServiceTest extends IntegrationTest {
 
     private final GeometryFactory geometryFactory = new GeometryFactory();
 

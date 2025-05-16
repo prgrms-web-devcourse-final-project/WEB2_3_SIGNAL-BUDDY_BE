@@ -12,7 +12,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @SpringBootTest
 @Import(DataInitializer.class)
 @ExtendWith(SpringExtension.class)
-public abstract class ServiceTest implements MariaDBTestContainer {
+public abstract class IntegrationTest implements MariaDBTestContainer {
 
     @Autowired
     private DataInitializer dataInitializer;

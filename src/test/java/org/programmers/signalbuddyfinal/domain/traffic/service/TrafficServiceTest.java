@@ -12,10 +12,10 @@ import org.mockito.Mock;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.dto.TrafficResponse;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.repository.TrafficRedisRepository;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.service.TrafficService;
-import org.programmers.signalbuddyfinal.global.support.ServiceTest;
+import org.programmers.signalbuddyfinal.global.support.IntegrationTest;
 import org.springframework.data.redis.core.RedisTemplate;
 
-public class TrafficServiceTest extends ServiceTest {
+public class TrafficServiceTest extends IntegrationTest {
 
     @InjectMocks
     private TrafficService trafficService;

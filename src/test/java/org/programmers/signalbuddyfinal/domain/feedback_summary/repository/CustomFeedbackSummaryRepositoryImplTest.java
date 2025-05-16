@@ -19,12 +19,12 @@ import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
-import org.programmers.signalbuddyfinal.global.support.ServiceTest;
+import org.programmers.signalbuddyfinal.global.support.IntegrationTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 @Transactional
-class CustomFeedbackSummaryRepositoryImplTest extends ServiceTest {
+class CustomFeedbackSummaryRepositoryImplTest extends IntegrationTest {
 
     @Autowired
     private FeedbackSummaryRepository feedbackSummaryRepository;
