@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -64,246 +65,261 @@ class CommentServiceTest extends ServiceTest {
         comment = createComment(1L, "test comment content", member, feedback);
     }
 
-    @DisplayName("일반 사용자가 자신의 피드백이 아닌 글에 댓글을 작성한다.")
-    @Test
-    void writeComment() {
-        // given
-        Long feedbackId = feedback.getFeedbackId();
-        CommentRequest request = new CommentRequest("test comment content");
-        Member otherMember = createMember(
-            2L, "other@test.com", "other tester",
-            MemberRole.USER
-        );
-        CustomUser2Member requestUser = createCurrentMember(
-            otherMember.getMemberId(), MemberRole.USER
-        );
+    @DisplayName("댓글 작성")
+    @Nested
+    class whenWriteComment {
 
-        given(memberRepository.findByIdOrThrow(requestUser.getMemberId()))
-            .willReturn(otherMember);
-        given(feedbackRepository.findByIdOrThrow(feedbackId))
-            .willReturn(feedback);
-        given(commentRepository.save(any(Comment.class)))
-            .willReturn(createComment(2L, request.getContent(), otherMember, feedback));
-        doNothing().when(fcmService).sendMessage(any(FcmMessage.class), anyLong());
+        @DisplayName("일반 사용자가 자신의 피드백이 아닌 글에 댓글을 작성한다.")
+        @Test
+        void writeComment() {
+            // given
+            Long feedbackId = feedback.getFeedbackId();
+            CommentRequest request = new CommentRequest("test comment content");
+            Member otherMember = createMember(
+                2L, "other@test.com", "other tester",
+                MemberRole.USER
+            );
+            CustomUser2Member requestUser = createCurrentMember(
+                otherMember.getMemberId(), MemberRole.USER
+            );
 
-        // when
-        commentService.writeComment(feedbackId, request, requestUser);
+            given(memberRepository.findByIdOrThrow(requestUser.getMemberId()))
+                .willReturn(otherMember);
+            given(feedbackRepository.findByIdOrThrow(feedbackId))
+                .willReturn(feedback);
+            given(commentRepository.save(any(Comment.class)))
+                .willReturn(createComment(2L, request.getContent(), otherMember, feedback));
+            doNothing().when(fcmService).sendMessage(any(FcmMessage.class), anyLong());
 
-        // then
-        verify(commentRepository, times(1))
-            .save(any(Comment.class));
-        verify(fcmService, times(1))
-            .sendMessage(any(FcmMessage.class), anyLong());
+            // when
+            commentService.writeComment(feedbackId, request, requestUser);
+
+            // then
+            verify(commentRepository, times(1))
+                .save(any(Comment.class));
+            verify(fcmService, times(1))
+                .sendMessage(any(FcmMessage.class), anyLong());
+        }
+
+        @DisplayName("사용자가 자신의 피드백에 댓글을 남긴다.")
+        @Test
+        void writeComment_SameWriter() {
+            // given
+            Long feedbackId = feedback.getFeedbackId();
+            String content = "test comment content";
+            CommentRequest request = new CommentRequest(content);
+            CustomUser2Member requestUser = createCurrentMember(member.getMemberId(), MemberRole.USER);
+
+            given(memberRepository.findByIdOrThrow(requestUser.getMemberId()))
+                .willReturn(member);
+            given(feedbackRepository.findByIdOrThrow(feedbackId))
+                .willReturn(feedback);
+            given(commentRepository.save(any(Comment.class)))
+                .willReturn(createComment(2L, request.getContent(), member, feedback));
+            doNothing().when(fcmService).sendMessage(any(FcmMessage.class), anyLong());
+
+            // when
+            commentService.writeComment(feedbackId, request, requestUser);
+
+            // then
+            verify(commentRepository, times(1))
+                .save(any(Comment.class));
+            verify(fcmService, times(0))
+                .sendMessage(any(FcmMessage.class), anyLong());
+        }
+
+        @DisplayName("피드백 작성자가 알림 설정을 허용하지 않아, 알림이 전송되지 않는다.")
+        @Test
+        void writeComment_NotiDisabled() {
+            // given
+            Long feedbackId = feedback.getFeedbackId();
+            String content = "test comment content";
+            CommentRequest request = new CommentRequest(content);
+            Member otherMember = createMember(
+                2L, "other@test.com", "other tester",
+                MemberRole.USER
+            );
+            member.updateNotifyEnabled(Boolean.FALSE);
+            CustomUser2Member requestUser = createCurrentMember(
+                otherMember.getMemberId(), MemberRole.USER
+            );
+
+            given(memberRepository.findByIdOrThrow(requestUser.getMemberId()))
+                .willReturn(otherMember);
+            given(feedbackRepository.findByIdOrThrow(feedbackId))
+                .willReturn(feedback);
+            given(commentRepository.save(any(Comment.class)))
+                .willReturn(createComment(2L, request.getContent(), otherMember, feedback));
+            doNothing().when(fcmService).sendMessage(any(FcmMessage.class), anyLong());
+
+            // when
+            commentService.writeComment(feedbackId, request, requestUser);
+
+            // then
+            verify(commentRepository, times(1))
+                .save(any(Comment.class));
+            verify(fcmService, times(0))
+                .sendMessage(any(FcmMessage.class), anyLong());
+        }
+
+        @DisplayName("관리자가 댓글(답변)을 작성한다.")
+        @Test
+        void writeCommentByAdmin() {
+            // given
+            Long feedbackId = feedback.getFeedbackId();
+            String content = "test admin comment content";
+            CommentRequest request = new CommentRequest(content);
+            CustomUser2Member requestAdmin = createCurrentMember(admin.getMemberId(), MemberRole.ADMIN);
+
+            given(memberRepository.findByIdOrThrow(requestAdmin.getMemberId()))
+                .willReturn(admin);
+            given(feedbackRepository.findByIdOrThrow(feedbackId))
+                .willReturn(feedback);
+            given(commentRepository.save(any(Comment.class)))
+                .willReturn(createComment(2L, request.getContent(), admin, feedback));
+            doNothing().when(fcmService).sendMessage(any(FcmMessage.class), anyLong());
+
+            // when
+            commentService.writeComment(feedbackId, request, requestAdmin);
+
+            // then
+            verify(commentRepository, times(1))
+                .save(any(Comment.class));
+            verify(fcmService, times(1))
+                .sendMessage(any(FcmMessage.class), anyLong());
+            assertThat(feedback.getAnswerStatus()).isEqualTo(AnswerStatus.COMPLETION);
+        }
     }
 
-    @DisplayName("사용자가 자신의 피드백에 댓글을 남긴다.")
-    @Test
-    void writeComment_SameWriter() {
-        // given
-        Long feedbackId = feedback.getFeedbackId();
-        String content = "test comment content";
-        CommentRequest request = new CommentRequest(content);
-        CustomUser2Member requestUser = createCurrentMember(member.getMemberId(), MemberRole.USER);
+    @DisplayName("댓글 수정")
+    @Nested
+    class whenUpdateComment {
 
-        given(memberRepository.findByIdOrThrow(requestUser.getMemberId()))
-            .willReturn(member);
-        given(feedbackRepository.findByIdOrThrow(feedbackId))
-            .willReturn(feedback);
-        given(commentRepository.save(any(Comment.class)))
-            .willReturn(createComment(2L, request.getContent(), member, feedback));
-        doNothing().when(fcmService).sendMessage(any(FcmMessage.class), anyLong());
+        @DisplayName("본인의 댓글을 수정한다.")
+        @Test
+        void updateComment() {
+            // given
+            String updatedContent = "update comment content";
+            CommentRequest request = new CommentRequest(updatedContent);
+            CustomUser2Member requestUser = createCurrentMember(member.getMemberId(), MemberRole.USER);
 
-        // when
-        commentService.writeComment(feedbackId, request, requestUser);
+            given(commentRepository.findByIdOrThrow(requestUser.getMemberId()))
+                .willReturn(comment);
 
-        // then
-        verify(commentRepository, times(1))
-            .save(any(Comment.class));
-        verify(fcmService, times(0))
-            .sendMessage(any(FcmMessage.class), anyLong());
-    }
-
-    @DisplayName("피드백 작성자가 알림 설정을 허용하지 않아, 알림이 전송되지 않는다.")
-    @Test
-    void writeComment_NotiDisabled() {
-        // given
-        Long feedbackId = feedback.getFeedbackId();
-        String content = "test comment content";
-        CommentRequest request = new CommentRequest(content);
-        Member otherMember = createMember(
-            2L, "other@test.com", "other tester",
-            MemberRole.USER
-        );
-        member.updateNotifyEnabled(Boolean.FALSE);
-        CustomUser2Member requestUser = createCurrentMember(
-            otherMember.getMemberId(), MemberRole.USER
-        );
-
-        given(memberRepository.findByIdOrThrow(requestUser.getMemberId()))
-            .willReturn(otherMember);
-        given(feedbackRepository.findByIdOrThrow(feedbackId))
-            .willReturn(feedback);
-        given(commentRepository.save(any(Comment.class)))
-            .willReturn(createComment(2L, request.getContent(), otherMember, feedback));
-        doNothing().when(fcmService).sendMessage(any(FcmMessage.class), anyLong());
-
-        // when
-        commentService.writeComment(feedbackId, request, requestUser);
-
-        // then
-        verify(commentRepository, times(1))
-            .save(any(Comment.class));
-        verify(fcmService, times(0))
-            .sendMessage(any(FcmMessage.class), anyLong());
-    }
-
-    @DisplayName("관리자가 댓글(답변)을 작성한다.")
-    @Test
-    void writeCommentByAdmin() {
-        // given
-        Long feedbackId = feedback.getFeedbackId();
-        String content = "test admin comment content";
-        CommentRequest request = new CommentRequest(content);
-        CustomUser2Member requestAdmin = createCurrentMember(admin.getMemberId(), MemberRole.ADMIN);
-
-        given(memberRepository.findByIdOrThrow(requestAdmin.getMemberId()))
-            .willReturn(admin);
-        given(feedbackRepository.findByIdOrThrow(feedbackId))
-            .willReturn(feedback);
-        given(commentRepository.save(any(Comment.class)))
-            .willReturn(createComment(2L, request.getContent(), admin, feedback));
-        doNothing().when(fcmService).sendMessage(any(FcmMessage.class), anyLong());
-
-        // when
-        commentService.writeComment(feedbackId, request, requestAdmin);
-
-        // then
-        verify(commentRepository, times(1))
-            .save(any(Comment.class));
-        verify(fcmService, times(1))
-            .sendMessage(any(FcmMessage.class), anyLong());
-        assertThat(feedback.getAnswerStatus()).isEqualTo(AnswerStatus.COMPLETION);
-    }
-
-    @DisplayName("본인의 댓글을 수정한다.")
-    @Test
-    void updateComment() {
-        // given
-        String updatedContent = "update comment content";
-        CommentRequest request = new CommentRequest(updatedContent);
-        CustomUser2Member requestUser = createCurrentMember(member.getMemberId(), MemberRole.USER);
-
-        given(commentRepository.findByIdOrThrow(requestUser.getMemberId()))
-            .willReturn(comment);
-
-        // when
-        commentService.updateComment(comment.getCommentId(), request, requestUser);
-
-        // then
-        assertThat(comment.getContent()).isEqualTo(updatedContent);
-    }
-
-    @DisplayName("댓글 작성자와 다른 사람이 수정 시, 실패한다.")
-    @Test
-    void updateCommentFailure() {
-        // given
-        String updatedContent = "update comment content";
-        CommentRequest request = new CommentRequest(updatedContent);
-        Member otherMember = createMember(
-            2L, "other@test.com", "other tester",
-            MemberRole.USER
-        );
-        CustomUser2Member requestUser = createCurrentMember(
-            otherMember.getMemberId(), MemberRole.USER
-        );
-
-        given(commentRepository.findByIdOrThrow(comment.getCommentId()))
-            .willReturn(comment);
-
-        // when & then
-        try {
+            // when
             commentService.updateComment(comment.getCommentId(), request, requestUser);
-        } catch (BusinessException e) {
-            assertThat(e.getErrorCode())
-                .isEqualTo(CommentErrorCode.COMMENT_MODIFIER_NOT_AUTHORIZED);
+
+            // then
+            assertThat(comment.getContent()).isEqualTo(updatedContent);
+        }
+
+        @DisplayName("댓글 작성자와 다른 사람이 수정 시, 실패한다.")
+        @Test
+        void updateCommentFailure() {
+            // given
+            String updatedContent = "update comment content";
+            CommentRequest request = new CommentRequest(updatedContent);
+            Member otherMember = createMember(
+                2L, "other@test.com", "other tester",
+                MemberRole.USER
+            );
+            CustomUser2Member requestUser = createCurrentMember(
+                otherMember.getMemberId(), MemberRole.USER
+            );
+
+            given(commentRepository.findByIdOrThrow(comment.getCommentId()))
+                .willReturn(comment);
+
+            // when & then
+            try {
+                commentService.updateComment(comment.getCommentId(), request, requestUser);
+            } catch (BusinessException e) {
+                assertThat(e.getErrorCode())
+                    .isEqualTo(CommentErrorCode.COMMENT_MODIFIER_NOT_AUTHORIZED);
+            }
         }
     }
 
-    @DisplayName("일반 사용자가 본인 댓글을 삭제한다.")
-    @Test
-    void deleteComment() {
-        // given
-        Long commentId = comment.getCommentId();
-        CustomUser2Member requestUser = createCurrentMember(member.getMemberId(), MemberRole.USER);
+    @DisplayName("댓글 삭제")
+    @Nested
+    class whenDeleteComment {
 
-        given(commentRepository.findByIdOrThrow(commentId))
-            .willReturn(comment);
+        @DisplayName("일반 사용자가 본인 댓글을 삭제한다.")
+        @Test
+        void deleteComment() {
+            // given
+            Long commentId = comment.getCommentId();
+            CustomUser2Member requestUser = createCurrentMember(member.getMemberId(), MemberRole.USER);
 
-        // when
-        commentService.deleteComment(commentId, requestUser);
+            given(commentRepository.findByIdOrThrow(commentId))
+                .willReturn(comment);
 
-        // then
-        verify(commentRepository, times(1))
-            .deleteById(commentId);
-    }
-
-    @DisplayName("관리자가 일반 사용자의 댓글을 삭제한다.")
-    @Test
-    void deleteCommentByAdmin() {
-        // given
-        Long commentId = comment.getCommentId();
-        CustomUser2Member requestAdmin = createCurrentMember(admin.getMemberId(), MemberRole.ADMIN);
-
-        given(commentRepository.findByIdOrThrow(commentId))
-            .willReturn(comment);
-
-        // when
-        commentService.deleteComment(commentId, requestAdmin);
-
-        // then
-        verify(commentRepository, times(1))
-            .deleteById(commentId);
-    }
-
-    @DisplayName("댓글 작성자와 다른 사람이 삭제 시, 실패한다.")
-    @Test
-    void deleteCommentFailure() {
-        // given
-        Long commentId = comment.getCommentId();
-        CustomUser2Member requestUser = createCurrentMember(999999L, MemberRole.USER);
-
-        given(commentRepository.findByIdOrThrow(commentId))
-            .willReturn(comment);
-
-        // when & then
-        try {
+            // when
             commentService.deleteComment(commentId, requestUser);
-        } catch (BusinessException e) {
-            assertThat(e.getErrorCode())
-                .isEqualTo(CommentErrorCode.COMMENT_ELIMINATOR_NOT_AUTHORIZED);
+
+            // then
+            verify(commentRepository, times(1))
+                .deleteById(commentId);
         }
-    }
 
-    @DisplayName("관리자 본인의 댓글(답변)을 삭제한다.")
-    @Test
-    void deleteAdminComment() {
-        // given
-        feedback.updateFeedbackStatus();    // AnswerStatus : BEFORE -> COMPLETION
-        Comment commentByAdmin = createComment(2L, "by admin", admin, feedback);
-        Long commentId = commentByAdmin.getCommentId();
-        CustomUser2Member requestAdmin = createCurrentMember(admin.getMemberId(), MemberRole.ADMIN);
+        @DisplayName("관리자가 일반 사용자의 댓글을 삭제한다.")
+        @Test
+        void deleteCommentByAdmin() {
+            // given
+            Long commentId = comment.getCommentId();
+            CustomUser2Member requestAdmin = createCurrentMember(admin.getMemberId(), MemberRole.ADMIN);
 
-        given(commentRepository.findByIdOrThrow(commentId))
-            .willReturn(commentByAdmin);
+            given(commentRepository.findByIdOrThrow(commentId))
+                .willReturn(comment);
 
-        // when
-        commentService.deleteComment(commentId, requestAdmin);
+            // when
+            commentService.deleteComment(commentId, requestAdmin);
 
-        // then
-        verify(commentRepository, times(1))
-            .deleteById(commentId);
-        assertThat(feedback.getAnswerStatus())
-            .isEqualTo(AnswerStatus.BEFORE);
+            // then
+            verify(commentRepository, times(1))
+                .deleteById(commentId);
+        }
+
+        @DisplayName("댓글 작성자와 다른 사람이 삭제 시, 실패한다.")
+        @Test
+        void deleteCommentFailure() {
+            // given
+            Long commentId = comment.getCommentId();
+            CustomUser2Member requestUser = createCurrentMember(999999L, MemberRole.USER);
+
+            given(commentRepository.findByIdOrThrow(commentId))
+                .willReturn(comment);
+
+            // when & then
+            try {
+                commentService.deleteComment(commentId, requestUser);
+            } catch (BusinessException e) {
+                assertThat(e.getErrorCode())
+                    .isEqualTo(CommentErrorCode.COMMENT_ELIMINATOR_NOT_AUTHORIZED);
+            }
+        }
+
+        @DisplayName("관리자 본인의 댓글(답변)을 삭제한다.")
+        @Test
+        void deleteAdminComment() {
+            // given
+            feedback.updateFeedbackStatus();    // AnswerStatus : BEFORE -> COMPLETION
+            Comment commentByAdmin = createComment(2L, "by admin", admin, feedback);
+            Long commentId = commentByAdmin.getCommentId();
+            CustomUser2Member requestAdmin = createCurrentMember(admin.getMemberId(), MemberRole.ADMIN);
+
+            given(commentRepository.findByIdOrThrow(commentId))
+                .willReturn(commentByAdmin);
+
+            // when
+            commentService.deleteComment(commentId, requestAdmin);
+
+            // then
+            verify(commentRepository, times(1))
+                .deleteById(commentId);
+            assertThat(feedback.getAnswerStatus())
+                .isEqualTo(AnswerStatus.BEFORE);
+        }
     }
 
     private Member createMember(Long id, String email, String nickname, MemberRole role) {
