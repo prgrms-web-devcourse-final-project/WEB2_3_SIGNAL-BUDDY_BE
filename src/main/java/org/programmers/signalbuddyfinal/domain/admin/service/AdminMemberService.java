@@ -30,7 +30,6 @@ public class AdminMemberService {
     private BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
 
     public PageResponse<AdminMemberResponse> getAllMembers(Pageable pageable) {
-
         return memberRepository.findAllMembers(pageable);
     }
 
@@ -42,28 +41,9 @@ public class AdminMemberService {
     public PageResponse<AdminMemberResponse> getAllMembersWithFilter(Pageable pageable,
         MemberFilterRequest memberFilterRequest) {
 
-        checkFilterException(memberFilterRequest);
+        memberFilterRequest.validateDateRange();
 
         return memberRepository.findAllMemberWithFilter(pageable, memberFilterRequest);
-    }
-
-    private void checkFilterException(MemberFilterRequest memberFilterRequest) {
-
-        if (isBothNull(memberFilterRequest)) {
-            return;
-        }
-
-        if (isStartNull(memberFilterRequest)) {
-            throw new BusinessException(AdminErrorCode.END_DATE_NOT_SELECTED);
-        }
-
-        if (isEndNull(memberFilterRequest)) {
-            throw new BusinessException(AdminErrorCode.START_DATE_NOT_SELECTED);
-        }
-
-        if (isStartAfterEnd(memberFilterRequest)) {
-            throw new BusinessException(AdminErrorCode.START_DATE_AFTER_END_DATE);
-        }
     }
 
     private List<AdminBookmarkResponse> findBookmark(Member member) {
@@ -77,22 +57,6 @@ public class AdminMemberService {
     private AdminMemberDetailResponse convertorDetailResponse(Member member,
         List<AdminBookmarkResponse> bookmarkResponse) {
         return AdminMapper.INSTANCE.toAdminMemberResponse(member, bookmarkResponse);
-    }
-
-    private boolean isBothNull(MemberFilterRequest filterRequest) {
-        return (filterRequest.getEndDate() == null && filterRequest.getStartDate() == null);
-    }
-
-    private boolean isStartNull(MemberFilterRequest filterRequest) {
-        return (filterRequest.getEndDate() != null && filterRequest.getStartDate() == null);
-    }
-
-    private boolean isEndNull(MemberFilterRequest filterRequest) {
-        return filterRequest.getEndDate() == null && filterRequest.getStartDate() != null;
-    }
-
-    private boolean isStartAfterEnd(MemberFilterRequest filterRequest) {
-        return filterRequest.getStartDate().isAfter(filterRequest.getEndDate());
     }
 
 }
