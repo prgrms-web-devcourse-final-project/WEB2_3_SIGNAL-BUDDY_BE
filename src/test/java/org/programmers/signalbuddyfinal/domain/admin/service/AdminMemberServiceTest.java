@@ -1,12 +1,19 @@
 package org.programmers.signalbuddyfinal.domain.admin.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.programmers.signalbuddyfinal.domain.admin.dto.MemberFilterRequest;
+import org.programmers.signalbuddyfinal.domain.bookmark.dto.BookmarkRequest;
+import org.programmers.signalbuddyfinal.domain.bookmark.entity.Bookmark;
+import org.programmers.signalbuddyfinal.domain.bookmark.service.BookmarkService;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
@@ -32,6 +39,9 @@ public class AdminMemberServiceTest extends ServiceTest {
     @Autowired
     SocialProviderRepository socialProviderRepository;
 
+    @Autowired
+    BookmarkService bookmarkService;
+
     @BeforeEach
     void setUp() {
         createMember("user1@test.com", "user1", MemberRole.USER, MemberStatus.ACTIVITY, null);
@@ -44,6 +54,37 @@ public class AdminMemberServiceTest extends ServiceTest {
         createMember("user8@test.com", "user8", MemberRole.USER, MemberStatus.WITHDRAWAL, "naver");
         createMember("admin@test.com", "amin", MemberRole.ADMIN, MemberStatus.ACTIVITY, null);
         pageable = PageRequest.of(0, 10);
+    }
+
+    @DisplayName("회원 전체 조회 성공 테스트")
+    @Test
+    public void successGetAllMember() {
+        assertThat(adminService.getAllMembers(pageable).getTotalElements()).isEqualTo(9);
+    }
+
+    @DisplayName("회원 조회 성공 테스트")
+    @Test
+    public void successGetMember() {
+        Member member = findMemberByEmail("user1@test.com");
+        assertThat(adminService.getMember(member.getMemberId()).getEmail()).isEqualTo(
+            "user1@test.com");
+    }
+
+    @DisplayName("회원 조회 실패 예외 발생 테스트")
+    @Test
+    public void failGetMember() {
+        assertThrows(BusinessException.class, () -> {
+            adminService.getMember(20L);
+        });
+    }
+
+    @DisplayName("회원별 북마크 조회 성공 테스트")
+    @Test
+    public void successGetBookmarkTest(){
+        bookmarkService.createBookmark(createBookmarkRequest((long) 111.111,"우리집"),1L);
+        bookmarkService.createBookmark(createBookmarkRequest((long) 222.222,"남의집"),1L);
+        int count = adminService.getMember(1L).getBookmarkCount();
+        assertThat(count).isEqualTo(2);
     }
 
     @DisplayName("기간별 조회 시작일 미지정 예외 테스트")
@@ -64,7 +105,7 @@ public class AdminMemberServiceTest extends ServiceTest {
 
         MemberFilterRequest afterStartDateFilter = createFilter(null, null, null,
             LocalDateTime.of(2025, 1, 25, 0, 0, 0),
-            LocalDateTime.of(2024, 1, 25, 0, 0, 0),  null);
+            LocalDateTime.of(2024, 1, 25, 0, 0, 0), null);
 
         assertThrows(
             BusinessException.class,
@@ -105,4 +146,18 @@ public class AdminMemberServiceTest extends ServiceTest {
             .search(search)
             .build();
     }
+
+    private Member findMemberByEmail(String email) {
+        return memberRepository.findByEmail(email).get();
+    }
+
+    private BookmarkRequest createBookmarkRequest(Long lat, String name){
+        return BookmarkRequest.builder()
+            .lng(123.456)
+            .lat(lat)
+            .address("서울시 어쩌구")
+            .name(name)
+            .build();
+    }
+
 }
