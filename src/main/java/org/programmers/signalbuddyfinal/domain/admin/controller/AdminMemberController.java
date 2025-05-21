@@ -27,14 +27,12 @@ public class AdminMemberController {
     public ResponseEntity<ApiResponse<PageResponse<AdminMemberResponse>>> getAllMembers(
         @PageableDefault(page = 0, size = 10, sort = "email") Pageable pageable) {
 
-        PageResponse<AdminMemberResponse> members = adminService.getAllMembers(pageable);
-        return ResponseEntity.ok(ApiResponse.createSuccess(members));
+        return ResponseEntity.ok(ApiResponse.createSuccess(adminService.getAllMembers(pageable)));
     }
 
     @GetMapping("{id}")
     public ResponseEntity<AdminMemberDetailResponse> getMember(@PathVariable Long id) {
-        final AdminMemberDetailResponse member = adminService.getMember(id);
-        return ResponseEntity.ok(member);
+        return ResponseEntity.ok(adminService.getMember(id));
     }
 
     @GetMapping("/filter")
@@ -42,10 +40,9 @@ public class AdminMemberController {
         @PageableDefault(page = 0, size = 10, sort = "email") Pageable pageable,
         @ModelAttribute MemberFilterRequest memberFilterRequest) {
 
-        PageResponse<AdminMemberResponse> members = adminService.getAllMembersWithFilter(pageable,
-            memberFilterRequest);
-
-        return ResponseEntity.ok(ApiResponse.createSuccess(members));
+        return ResponseEntity.ok(
+            ApiResponse.createSuccess(adminService.getAllMembersWithFilter(pageable,
+                memberFilterRequest)));
     }
 
 }

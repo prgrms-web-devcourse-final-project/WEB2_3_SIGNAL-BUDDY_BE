@@ -42,7 +42,6 @@ public class AdminMemberService {
         MemberFilterRequest memberFilterRequest) {
 
         memberFilterRequest.validateDateRange();
-
         return memberRepository.findAllMemberWithFilter(pageable, memberFilterRequest);
     }
 
