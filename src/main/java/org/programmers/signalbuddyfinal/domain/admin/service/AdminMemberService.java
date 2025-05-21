@@ -36,9 +36,7 @@ public class AdminMemberService {
     public AdminMemberDetailResponse getMember(Long id) {
         Member member = memberRepository.findByIdOrThrow(id);
 
-        List<AdminBookmarkResponse> adminBookmarkResponses = getBookmark(member);
-
-        return convertorDetailResponse(member, adminBookmarkResponses);
+        return convertorDetailResponse(member, getBookmark(member));
     }
 
     public PageResponse<AdminMemberResponse> getAllMemberWithFilter(Pageable pageable,
@@ -50,7 +48,8 @@ public class AdminMemberService {
     }
 
     private void checkFilterException(MemberFilterRequest memberFilterRequest) {
-        if(memberFilterRequest.getEndDate()== null && memberFilterRequest.getStartDate()==null) {
+        if (memberFilterRequest.getEndDate() == null
+            && memberFilterRequest.getStartDate() == null) {
             return;
         }
 
@@ -73,7 +72,8 @@ public class AdminMemberService {
         return bookmarkRepository.findBookmarkByMember(member.getMemberId());
     }
 
-    private AdminMemberDetailResponse convertorDetailResponse(Member member, List<AdminBookmarkResponse> bookmarkResponse) {
+    private AdminMemberDetailResponse convertorDetailResponse(Member member,
+        List<AdminBookmarkResponse> bookmarkResponse) {
         return AdminMapper.INSTANCE.toAdminMemberResponse(member, bookmarkResponse);
     }
 
