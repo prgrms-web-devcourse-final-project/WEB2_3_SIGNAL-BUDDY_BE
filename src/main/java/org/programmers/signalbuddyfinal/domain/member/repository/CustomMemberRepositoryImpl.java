@@ -65,25 +65,6 @@ public class CustomMemberRepositoryImpl implements CustomMemberRepository {
 
         return new PageResponse<>(new PageImpl<>(members, pageable, total));
     }
-    @Override
-    public Page<WithdrawalMemberResponse> findAllWithdrawMembers(Pageable pageable) {
-        List<WithdrawalMemberResponse> members = jpaQueryFactory
-            .select(withdrawalMemberResponseDto)
-            .from(member)
-            .where(member.memberStatus.eq(MemberStatus.WITHDRAWAL))
-            .offset(pageable.getOffset())
-            .limit(pageable.getPageSize())
-            .orderBy(member.email.asc())
-            .fetch();
-
-        long total = jpaQueryFactory
-            .select(member.count())
-            .from(member)
-            .where(member.memberStatus.eq(MemberStatus.WITHDRAWAL))
-            .fetchOne();
-
-        return new PageImpl<>(members, pageable, total);
-    }
 
     @Override
     public PageResponse<AdminMemberResponse> findAllMemberWithFilter(Pageable pageable,

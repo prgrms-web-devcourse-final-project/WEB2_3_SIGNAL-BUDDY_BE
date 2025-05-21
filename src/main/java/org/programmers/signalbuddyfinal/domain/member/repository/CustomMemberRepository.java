@@ -12,7 +12,6 @@ import org.springframework.data.domain.Pageable;
 
 public interface CustomMemberRepository {
     PageResponse<AdminMemberResponse> findAllMembers(Pageable pageable);
-    Page<WithdrawalMemberResponse> findAllWithdrawMembers(Pageable pageable);
     PageResponse<AdminMemberResponse> findAllMemberWithFilter(Pageable pageable, MemberFilterRequest filter);
     Optional<Member> findByProviderAndSocialId(Provider provider, String socialId);
 }
