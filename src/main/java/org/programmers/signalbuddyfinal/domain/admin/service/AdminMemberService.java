@@ -80,23 +80,19 @@ public class AdminMemberService {
     }
 
     private boolean isBothNull(MemberFilterRequest filterRequest) {
-        return (filterRequest.getEndDate() == null
-            && filterRequest.getStartDate() == null) ? true : false;
-
+        return (filterRequest.getEndDate() == null && filterRequest.getStartDate() == null);
     }
 
     private boolean isStartNull(MemberFilterRequest filterRequest) {
-        return (filterRequest.getEndDate() != null
-            && filterRequest.getStartDate() == null) ? true : false;
+        return (filterRequest.getEndDate() != null && filterRequest.getStartDate() == null);
     }
 
     private boolean isEndNull(MemberFilterRequest filterRequest) {
-        return filterRequest.getEndDate() == null
-            && filterRequest.getStartDate() != null ? true : false;
+        return filterRequest.getEndDate() == null && filterRequest.getStartDate() != null;
     }
 
     private boolean isStartAfterEnd(MemberFilterRequest filterRequest) {
-        return filterRequest.getStartDate().isAfter(filterRequest.getEndDate()) ? true : false;
+        return filterRequest.getStartDate().isAfter(filterRequest.getEndDate());
     }
 
 }
