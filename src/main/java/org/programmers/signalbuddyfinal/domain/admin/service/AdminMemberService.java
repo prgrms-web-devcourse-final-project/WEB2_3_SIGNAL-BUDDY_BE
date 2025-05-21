@@ -9,6 +9,7 @@ import org.programmers.signalbuddyfinal.domain.admin.dto.WithdrawalMemberRespons
 import org.programmers.signalbuddyfinal.domain.admin.exception.AdminErrorCode;
 import org.programmers.signalbuddyfinal.domain.admin.mapper.AdminMapper;
 import org.programmers.signalbuddyfinal.domain.bookmark.dto.AdminBookmarkResponse;
+import org.programmers.signalbuddyfinal.domain.bookmark.entity.Bookmark;
 import org.programmers.signalbuddyfinal.domain.bookmark.repository.BookmarkRepository;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.exception.MemberErrorCode;
@@ -34,9 +35,9 @@ public class AdminMemberService {
     }
 
     public AdminMemberDetailResponse getMember(Long id) {
-        Member member = memberRepository.findByIdOrThrow(id);
+        Member member = findMember(id);
 
-        return convertorDetailResponse(member, getBookmark(member));
+        return convertorDetailResponse(member, findBookmark(member));
     }
 
     public PageResponse<AdminMemberResponse> getAllMemberWithFilter(Pageable pageable,
@@ -68,13 +69,18 @@ public class AdminMemberService {
         }
     }
 
-    private List<AdminBookmarkResponse> getBookmark(Member member) {
+    private List<AdminBookmarkResponse> findBookmark(Member member) {
         return bookmarkRepository.findBookmarkByMember(member.getMemberId());
+    }
+
+    private Member findMember(Long id){
+       return memberRepository.findByIdOrThrow(id);
     }
 
     private AdminMemberDetailResponse convertorDetailResponse(Member member,
         List<AdminBookmarkResponse> bookmarkResponse) {
         return AdminMapper.INSTANCE.toAdminMemberResponse(member, bookmarkResponse);
     }
+
 
 }
