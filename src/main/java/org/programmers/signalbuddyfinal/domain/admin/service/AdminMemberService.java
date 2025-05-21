@@ -36,8 +36,7 @@ public class AdminMemberService {
     public AdminMemberDetailResponse getMember(Long id) {
         Member member = memberRepository.findByIdOrThrow(id);
 
-        List<AdminBookmarkResponse> adminBookmarkResponses = bookmarkRepository.findBookmarkByMember(
-            member.getMemberId());
+        List<AdminBookmarkResponse> adminBookmarkResponses = getBookmark(member);
 
         return AdminMapper.INSTANCE.toAdminMemberResponse(member, adminBookmarkResponses);
     }
@@ -68,6 +67,10 @@ public class AdminMemberService {
         if (memberFilterRequest.getStartDate().isAfter(memberFilterRequest.getEndDate())) {
             throw new BusinessException(AdminErrorCode.START_DATE_AFTER_END_DATE);
         }
+    }
+
+    private List<AdminBookmarkResponse> getBookmark(Member member) {
+        return bookmarkRepository.findBookmarkByMember(member.getMemberId());
     }
 
 }
