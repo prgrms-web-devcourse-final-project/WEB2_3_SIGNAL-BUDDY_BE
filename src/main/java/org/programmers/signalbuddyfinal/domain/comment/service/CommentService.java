@@ -43,7 +43,6 @@ public class CommentService {
             .feedback(feedback).member(member)
             .build();
 
-        // 관리자일 때 피드백 상태 변경
         if (comment.getMember().isAdmin()) {
             feedback.updateFeedbackStatus();
         }
