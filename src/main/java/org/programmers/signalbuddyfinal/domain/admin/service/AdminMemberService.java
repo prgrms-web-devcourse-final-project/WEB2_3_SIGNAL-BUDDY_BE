@@ -43,11 +43,6 @@ public class AdminMemberService {
         return AdminMapper.INSTANCE.toAdminMemberResponse(member, adminBookmarkResponses);
     }
 
-    public Page<WithdrawalMemberResponse> getAllWithdrawalMembers(Pageable pageable) {
-
-        return memberRepository.findAllWithdrawMembers(pageable);
-    }
-
     public PageResponse<AdminMemberResponse> getAllMemberWithFilter(Pageable pageable,
         MemberFilterRequest memberFilterRequest) {
 
