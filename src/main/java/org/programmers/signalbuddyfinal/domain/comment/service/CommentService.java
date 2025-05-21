@@ -50,7 +50,7 @@ public class CommentService {
         commentRepository.save(comment);
 
         if (shouldSendCommentNotification(user, feedback.getMember())) {
-            sendCommentNotification(user, feedback);
+            notifyFeedbackAuthor(user, feedback);
         }
     }
 
@@ -114,7 +114,7 @@ public class CommentService {
             .build();
     }
 
-    private void sendCommentNotification(
+    private void notifyFeedbackAuthor(
         CustomUser2Member requestedUser,
         Feedback feedback
     ) {
