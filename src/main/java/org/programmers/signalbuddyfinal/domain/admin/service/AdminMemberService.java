@@ -36,7 +36,6 @@ public class AdminMemberService {
 
     public AdminMemberDetailResponse getMember(Long id) {
         Member member = findMember(id);
-
         return convertorDetailResponse(member, findBookmark(member));
     }
 
@@ -49,22 +48,20 @@ public class AdminMemberService {
     }
 
     private void checkFilterException(MemberFilterRequest memberFilterRequest) {
-        if (memberFilterRequest.getEndDate() == null
-            && memberFilterRequest.getStartDate() == null) {
+
+        if (isBothNull(memberFilterRequest)) {
             return;
         }
 
-        if (memberFilterRequest.getStartDate() != null
-            && memberFilterRequest.getEndDate() == null) {
+        if (isStartNull(memberFilterRequest)) {
             throw new BusinessException(AdminErrorCode.END_DATE_NOT_SELECTED);
         }
 
-        if (memberFilterRequest.getStartDate() == null
-            && memberFilterRequest.getEndDate() != null) {
+        if (isEndNull(memberFilterRequest)) {
             throw new BusinessException(AdminErrorCode.START_DATE_NOT_SELECTED);
         }
 
-        if (memberFilterRequest.getStartDate().isAfter(memberFilterRequest.getEndDate())) {
+        if (isStartAfterEnd(memberFilterRequest)) {
             throw new BusinessException(AdminErrorCode.START_DATE_AFTER_END_DATE);
         }
     }
@@ -73,8 +70,8 @@ public class AdminMemberService {
         return bookmarkRepository.findBookmarkByMember(member.getMemberId());
     }
 
-    private Member findMember(Long id){
-       return memberRepository.findByIdOrThrow(id);
+    private Member findMember(Long id) {
+        return memberRepository.findByIdOrThrow(id);
     }
 
     private AdminMemberDetailResponse convertorDetailResponse(Member member,
@@ -82,5 +79,24 @@ public class AdminMemberService {
         return AdminMapper.INSTANCE.toAdminMemberResponse(member, bookmarkResponse);
     }
 
+    private boolean isBothNull(MemberFilterRequest filterRequest) {
+        return (filterRequest.getEndDate() == null
+            && filterRequest.getStartDate() == null) ? true : false;
+
+    }
+
+    private boolean isStartNull(MemberFilterRequest filterRequest) {
+        return (filterRequest.getEndDate() != null
+            && filterRequest.getStartDate() == null) ? true : false;
+    }
+
+    private boolean isEndNull(MemberFilterRequest filterRequest) {
+        return filterRequest.getEndDate() == null
+            && filterRequest.getStartDate() != null ? true : false;
+    }
+
+    private boolean isStartAfterEnd(MemberFilterRequest filterRequest) {
+        return filterRequest.getStartDate().isAfter(filterRequest.getEndDate()) ? true : false;
+    }
 
 }
