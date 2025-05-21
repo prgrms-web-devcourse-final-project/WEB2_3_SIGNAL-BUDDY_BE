@@ -2,19 +2,14 @@ package org.programmers.signalbuddyfinal.domain.admin.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatCode;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.programmers.signalbuddyfinal.domain.admin.dto.AdminMemberRequest;
 import org.programmers.signalbuddyfinal.domain.admin.dto.MemberFilterRequest;
 import org.programmers.signalbuddyfinal.domain.bookmark.dto.BookmarkRequest;
-import org.programmers.signalbuddyfinal.domain.bookmark.entity.Bookmark;
 import org.programmers.signalbuddyfinal.domain.bookmark.service.BookmarkService;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
@@ -95,7 +90,7 @@ public class AdminMemberServiceTest extends ServiceTest {
         MemberFilterRequest request = createFilter(null, null, null, null,
             null, null);
         assertThat(
-            adminService.getAllMemberWithFilter(pageable, request).getTotalElements()).isEqualTo(9);
+            adminService.getAllMembersWithFilter(pageable, request).getTotalElements()).isEqualTo(9);
     }
 
     @DisplayName("기간별 조회 시작일 미지정 예외 테스트")
@@ -107,7 +102,7 @@ public class AdminMemberServiceTest extends ServiceTest {
 
         assertThrows(
             BusinessException.class,
-            () -> adminService.getAllMemberWithFilter(pageable, noStartDateFilter));
+            () -> adminService.getAllMembersWithFilter(pageable, noStartDateFilter));
     }
 
     @DisplayName("기간별 조회 종료일 미지정 예외 테스트")
@@ -119,7 +114,7 @@ public class AdminMemberServiceTest extends ServiceTest {
 
         assertThrows(
             BusinessException.class,
-            () -> adminService.getAllMemberWithFilter(pageable, noEndDateFilter));
+            () -> adminService.getAllMembersWithFilter(pageable, noEndDateFilter));
     }
 
     @DisplayName("기간별 조회 시작일 > 종료일 예외 테스트")
@@ -132,7 +127,7 @@ public class AdminMemberServiceTest extends ServiceTest {
 
         assertThrows(
             BusinessException.class,
-            () -> adminService.getAllMemberWithFilter(pageable, afterStartDateFilter));
+            () -> adminService.getAllMembersWithFilter(pageable, afterStartDateFilter));
     }
 
     @DisplayName("기간별 조회 성공 테스트")
@@ -143,7 +138,7 @@ public class AdminMemberServiceTest extends ServiceTest {
             LocalDateTime.of(2024, 1, 25, 0, 0, 0),
             LocalDateTime.of(2025, 6, 1, 0, 0, 0), null);
 
-        assertThat(adminService.getAllMemberWithFilter(pageable, filter)
+        assertThat(adminService.getAllMembersWithFilter(pageable, filter)
             .getTotalElements()).isEqualTo(9);
     }
 
@@ -155,7 +150,7 @@ public class AdminMemberServiceTest extends ServiceTest {
             null, null, null);
 
         assertThatCode(() ->
-            adminService.getAllMemberWithFilter(pageable, filter)
+            adminService.getAllMembersWithFilter(pageable, filter)
         ).doesNotThrowAnyException();
     }
 

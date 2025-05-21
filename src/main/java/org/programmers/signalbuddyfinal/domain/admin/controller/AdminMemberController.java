@@ -4,11 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.admin.dto.AdminMemberDetailResponse;
 import org.programmers.signalbuddyfinal.domain.admin.dto.AdminMemberResponse;
 import org.programmers.signalbuddyfinal.domain.admin.dto.MemberFilterRequest;
-import org.programmers.signalbuddyfinal.domain.admin.dto.WithdrawalMemberResponse;
 import org.programmers.signalbuddyfinal.domain.admin.service.AdminMemberService;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
@@ -44,7 +42,7 @@ public class AdminMemberController {
         @PageableDefault(page = 0, size = 10, sort = "email") Pageable pageable,
         @ModelAttribute MemberFilterRequest memberFilterRequest) {
 
-        PageResponse<AdminMemberResponse> members = adminService.getAllMemberWithFilter(pageable,
+        PageResponse<AdminMemberResponse> members = adminService.getAllMembersWithFilter(pageable,
             memberFilterRequest);
 
         return ResponseEntity.ok(ApiResponse.createSuccess(members));

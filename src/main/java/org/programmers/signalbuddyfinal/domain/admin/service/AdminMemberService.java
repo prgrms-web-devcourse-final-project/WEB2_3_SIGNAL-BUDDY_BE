@@ -40,7 +40,7 @@ public class AdminMemberService {
         return convertorDetailResponse(member, findBookmark(member));
     }
 
-    public PageResponse<AdminMemberResponse> getAllMemberWithFilter(Pageable pageable,
+    public PageResponse<AdminMemberResponse> getAllMembersWithFilter(Pageable pageable,
         MemberFilterRequest memberFilterRequest) {
 
         checkFilterException(memberFilterRequest);
