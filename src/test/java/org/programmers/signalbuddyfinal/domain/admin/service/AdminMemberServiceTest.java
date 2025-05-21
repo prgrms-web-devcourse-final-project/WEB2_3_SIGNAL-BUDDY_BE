@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.programmers.signalbuddyfinal.domain.admin.dto.AdminMemberRequest;
 import org.programmers.signalbuddyfinal.domain.admin.dto.MemberFilterRequest;
 import org.programmers.signalbuddyfinal.domain.bookmark.dto.BookmarkRequest;
 import org.programmers.signalbuddyfinal.domain.bookmark.entity.Bookmark;
@@ -80,11 +81,21 @@ public class AdminMemberServiceTest extends ServiceTest {
 
     @DisplayName("회원별 북마크 조회 성공 테스트")
     @Test
-    public void successGetBookmarkTest(){
-        bookmarkService.createBookmark(createBookmarkRequest((long) 111.111,"우리집"),1L);
-        bookmarkService.createBookmark(createBookmarkRequest((long) 222.222,"남의집"),1L);
+    public void successGetBookmarkTest() {
+        bookmarkService.createBookmark(createBookmarkRequest((long) 111.111, "우리집"), 1L);
+        bookmarkService.createBookmark(createBookmarkRequest((long) 222.222, "남의집"), 1L);
         int count = adminService.getMember(1L).getBookmarkCount();
         assertThat(count).isEqualTo(2);
+    }
+
+    @DisplayName("회원 필터링 조회 성공 테스트")
+    @Test
+    public void successGetAllMemberWithFilterTest() {
+        // given
+        MemberFilterRequest request = createFilter(null, null, null, null,
+            null, null);
+        //when
+        assertThat(adminService.getAllMemberWithFilter(pageable, request).getTotalElements()).isEqualTo(9);
     }
 
     @DisplayName("기간별 조회 시작일 미지정 예외 테스트")
@@ -97,6 +108,17 @@ public class AdminMemberServiceTest extends ServiceTest {
         assertThrows(
             BusinessException.class,
             () -> adminService.getAllMemberWithFilter(pageable, noStartDateFilter));
+    }
+
+    @DisplayName("기간별 조회 종료일 미지정 예외 테스트")
+    @Test
+    public void 기간별_조회_종료일_미지정_테스트(){
+        MemberFilterRequest noEndDateFilter = createFilter(null, null, null, LocalDateTime.of(2025, 1, 25, 0, 0, 0),
+            null, null);
+
+        assertThrows(
+            BusinessException.class,
+            () -> adminService.getAllMemberWithFilter(pageable, noEndDateFilter));
     }
 
     @DisplayName("기간별 조회 시작일 > 종료일 예외 테스트")
@@ -151,7 +173,7 @@ public class AdminMemberServiceTest extends ServiceTest {
         return memberRepository.findByEmail(email).get();
     }
 
-    private BookmarkRequest createBookmarkRequest(Long lat, String name){
+    private BookmarkRequest createBookmarkRequest(Long lat, String name) {
         return BookmarkRequest.builder()
             .lng(123.456)
             .lat(lat)
