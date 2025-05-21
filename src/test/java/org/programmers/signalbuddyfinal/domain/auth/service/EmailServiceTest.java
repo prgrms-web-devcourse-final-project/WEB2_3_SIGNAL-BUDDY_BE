@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.programmers.signalbuddyfinal.global.db.RedisTestContainer;
-import org.programmers.signalbuddyfinal.global.support.ServiceTest;
+import org.programmers.signalbuddyfinal.global.support.IntegrationTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -14,7 +14,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 @EnableAsync
-class EmailServiceTest extends ServiceTest implements RedisTestContainer {
+class EmailServiceTest extends IntegrationTest implements RedisTestContainer {
 
     @Autowired
     private EmailService emailService;

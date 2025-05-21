@@ -14,7 +14,7 @@ import org.programmers.signalbuddyfinal.domain.air_quality.dto.CachedAirQuality;
 import org.programmers.signalbuddyfinal.global.config.RedisConfig;
 import org.programmers.signalbuddyfinal.global.db.RedisTestContainer;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
-import org.programmers.signalbuddyfinal.global.support.ServiceTest;
+import org.programmers.signalbuddyfinal.global.support.IntegrationTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
@@ -35,7 +35,7 @@ import java.io.IOException;
     "schedule.air-quality-api.lockAtLeastFor=50m"
 })
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-public class AirQualityServiceTest extends ServiceTest implements RedisTestContainer {
+public class AirQualityServiceTest extends IntegrationTest implements RedisTestContainer {
 
     @Autowired
     private AirQualityService airQualityService;

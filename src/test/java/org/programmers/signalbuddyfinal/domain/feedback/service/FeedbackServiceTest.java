@@ -34,13 +34,13 @@ import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
 import org.programmers.signalbuddyfinal.global.service.AwsFileService;
-import org.programmers.signalbuddyfinal.global.support.ServiceTest;
+import org.programmers.signalbuddyfinal.global.support.IntegrationTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-class FeedbackServiceTest extends ServiceTest {
+class FeedbackServiceTest extends IntegrationTest {
 
     @Autowired
     private FeedbackService feedbackService;

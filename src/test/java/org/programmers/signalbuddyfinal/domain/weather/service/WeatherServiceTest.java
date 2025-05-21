@@ -1,28 +1,26 @@
 package org.programmers.signalbuddyfinal.domain.weather.service;
 
-import java.io.IOException;
-import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.programmers.signalbuddyfinal.domain.weather.dto.GridResponse;
 import org.programmers.signalbuddyfinal.domain.weather.dto.Weather;
 import org.programmers.signalbuddyfinal.domain.weather.dto.WeatherResponse;
 import org.programmers.signalbuddyfinal.domain.weather.repository.GridCoordinateRepository;
+import org.programmers.signalbuddyfinal.global.support.ServiceTest;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-@ExtendWith(MockitoExtension.class)
-class WeatherServiceMockitoTest {
+class WeatherServiceMockitoTest extends ServiceTest {
 
     @Mock
     private GridCoordinateRepository gridCoordinateRepository;
@@ -99,7 +97,7 @@ class WeatherServiceMockitoTest {
     }
 
     @Test
-    void testSendWeatherUpdates() throws IOException {
+    void testSendWeatherUpdates() {
         // given: 구독된 SSE 연결이 존재하도록 설정
         final GridResponse gridResponse = GridResponse.builder().gridX(36).gridY(127).build();
         when(gridCoordinateRepository.findByLatAndLngWithRadius(anyDouble(), anyDouble(),

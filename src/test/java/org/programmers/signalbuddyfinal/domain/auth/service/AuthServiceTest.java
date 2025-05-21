@@ -17,10 +17,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.programmers.signalbuddyfinal.domain.auth.dto.EmailRequest;
 import org.programmers.signalbuddyfinal.domain.auth.dto.LoginRequest;
 import org.programmers.signalbuddyfinal.domain.auth.dto.LoginResponse;
@@ -43,14 +41,14 @@ import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
 import org.programmers.signalbuddyfinal.global.security.jwt.JwtService;
 import org.programmers.signalbuddyfinal.global.security.jwt.JwtUtil;
+import org.programmers.signalbuddyfinal.global.support.ServiceTest;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 
-@ExtendWith(MockitoExtension.class)
-class AuthServiceTest {
+class AuthServiceTest extends ServiceTest {
 
     @InjectMocks
     private AuthService authService;

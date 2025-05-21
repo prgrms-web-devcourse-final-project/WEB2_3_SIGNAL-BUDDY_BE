@@ -15,12 +15,12 @@ import org.programmers.signalbuddyfinal.domain.social.entity.Provider;
 import org.programmers.signalbuddyfinal.domain.social.entity.SocialProvider;
 import org.programmers.signalbuddyfinal.domain.social.repository.SocialProviderRepository;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
-import org.programmers.signalbuddyfinal.global.support.ServiceTest;
+import org.programmers.signalbuddyfinal.global.support.IntegrationTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
-public class AdminMemberServiceTest extends ServiceTest {
+public class AdminMemberServiceTest extends IntegrationTest {
 
     private Pageable pageable;
     @Autowired

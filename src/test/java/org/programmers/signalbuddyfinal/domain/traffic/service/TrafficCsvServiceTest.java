@@ -8,20 +8,18 @@ import org.junit.jupiter.api.Test;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.dto.TrafficFileResponse;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.repository.TrafficRepository;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.service.TrafficCsvService;
-import org.programmers.signalbuddyfinal.global.support.ServiceTest;
+import org.programmers.signalbuddyfinal.global.support.IntegrationTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.*;
 import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Transactional
-public class TrafficCsvServiceTest extends ServiceTest {
+public class TrafficCsvServiceTest extends IntegrationTest {
 
     @Autowired
     private TrafficRepository trafficRepository;

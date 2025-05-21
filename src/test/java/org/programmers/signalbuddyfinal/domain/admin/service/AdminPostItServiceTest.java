@@ -24,7 +24,7 @@ import org.programmers.signalbuddyfinal.domain.postit.repository.PostItRepositor
 import org.programmers.signalbuddyfinal.domain.postitsolve.entity.PostitSolve;
 import org.programmers.signalbuddyfinal.domain.postitsolve.repository.PostitSolveRepository;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
-import org.programmers.signalbuddyfinal.global.support.ServiceTest;
+import org.programmers.signalbuddyfinal.global.support.IntegrationTest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +33,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
-public class AdminPostItServiceTest extends ServiceTest {
+public class AdminPostItServiceTest extends IntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(AdminPostItServiceTest.class);
     List<Member> member;

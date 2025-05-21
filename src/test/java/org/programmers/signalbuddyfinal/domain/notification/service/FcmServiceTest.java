@@ -29,13 +29,13 @@ import org.programmers.signalbuddyfinal.domain.notification.repository.FcmTokenR
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
-import org.programmers.signalbuddyfinal.global.support.ServiceTest;
+import org.programmers.signalbuddyfinal.global.support.IntegrationTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpCookie;
 import org.springframework.http.ResponseCookie;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-class FcmServiceTest extends ServiceTest {
+class FcmServiceTest extends IntegrationTest {
 
     @Autowired
     private FcmService fcmService;
