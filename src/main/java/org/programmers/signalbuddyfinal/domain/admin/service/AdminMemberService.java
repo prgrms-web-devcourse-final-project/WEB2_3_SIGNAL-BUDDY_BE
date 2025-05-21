@@ -38,7 +38,7 @@ public class AdminMemberService {
 
         List<AdminBookmarkResponse> adminBookmarkResponses = getBookmark(member);
 
-        return AdminMapper.INSTANCE.toAdminMemberResponse(member, adminBookmarkResponses);
+        return convertorDetailResponse(member, adminBookmarkResponses);
     }
 
     public PageResponse<AdminMemberResponse> getAllMemberWithFilter(Pageable pageable,
@@ -71,6 +71,10 @@ public class AdminMemberService {
 
     private List<AdminBookmarkResponse> getBookmark(Member member) {
         return bookmarkRepository.findBookmarkByMember(member.getMemberId());
+    }
+
+    private AdminMemberDetailResponse convertorDetailResponse(Member member, List<AdminBookmarkResponse> bookmarkResponse) {
+        return AdminMapper.INSTANCE.toAdminMemberResponse(member, bookmarkResponse);
     }
 
 }
