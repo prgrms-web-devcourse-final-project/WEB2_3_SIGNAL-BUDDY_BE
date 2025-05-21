@@ -51,13 +51,7 @@ public class CommentService {
         commentRepository.save(comment);
 
         if (shouldSendCommentNotification(user, feedback.getMember())) {
-            // 피드백 작성자에게 댓글 알림 발송
-            FcmMessage message = makeCommentNotiMessage(
-                user.getNickname(), feedback.getSubject(),
-                feedback.getFeedbackId()
-            );
-
-            fcmService.sendMessage(message, feedback.getMember().getMemberId());
+            sendCommentNotification(user, feedback);
         }
     }
 
@@ -119,5 +113,17 @@ public class CommentService {
             )
             .data(Map.of("feedbackId", feedbackId.toString()))
             .build();
+    }
+
+    private void sendCommentNotification(
+        CustomUser2Member requestedUser,
+        Feedback feedback
+    ) {
+        FcmMessage message = makeCommentNotiMessage(
+            requestedUser.getNickname(), feedback.getSubject(),
+            feedback.getFeedbackId()
+        );
+
+        fcmService.sendMessage(message, feedback.getMember().getMemberId());
     }
 }
