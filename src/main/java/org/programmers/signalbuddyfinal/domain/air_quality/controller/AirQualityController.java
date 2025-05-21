@@ -7,6 +7,7 @@ import org.programmers.signalbuddyfinal.global.response.ApiResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -14,10 +15,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AirQualityController {
 
-    private final AirQualityService airQualityService;
+  private final AirQualityService airQualityService;
 
-    @GetMapping
-    public ResponseEntity<ApiResponse<AirQualityResponse>> getAirQuality() {
-        return ResponseEntity.ok(ApiResponse.createSuccess(airQualityService.getAirQuality()));
-    }
+  @GetMapping
+  public ResponseEntity<ApiResponse<AirQualityResponse>> getAirQuality(
+      @RequestParam double lat,
+      @RequestParam double lng
+  ) {
+    return ResponseEntity.ok(ApiResponse.createSuccess(airQualityService.getAirQuality(lat, lng)));
+  }
 }
