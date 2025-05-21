@@ -50,10 +50,7 @@ public class CommentService {
 
         commentRepository.save(comment);
 
-        // 작성자 본인의 댓글은 알림 발송 안 함
-        if (Member.isNotSameMember(user, feedback.getMember()) &&
-            feedback.getMember().isNotificationEnabled()
-        ) {
+        if (shouldSendCommentNotification(user, feedback.getMember())) {
             // 피드백 작성자에게 댓글 알림 발송
             FcmMessage message = makeCommentNotiMessage(
                 user.getNickname(), feedback.getSubject(),
@@ -99,6 +96,14 @@ public class CommentService {
         }
 
         commentRepository.deleteById(commentId);
+    }
+
+    private boolean shouldSendCommentNotification(
+        CustomUser2Member requestedUser,
+        Member feedbackWriter
+    ) {
+        return Member.isNotSameMember(requestedUser, feedbackWriter) &&
+            feedbackWriter.isNotificationEnabled();
     }
 
     private FcmMessage makeCommentNotiMessage(
