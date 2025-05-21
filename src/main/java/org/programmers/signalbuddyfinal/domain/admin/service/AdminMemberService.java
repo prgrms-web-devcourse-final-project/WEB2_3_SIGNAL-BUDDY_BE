@@ -34,8 +34,7 @@ public class AdminMemberService {
     }
 
     public AdminMemberDetailResponse getMember(Long id) {
-        Member member = memberRepository.findById(id).orElseThrow(() -> new BusinessException(
-            MemberErrorCode.NOT_FOUND_MEMBER));
+        Member member = memberRepository.findByIdOrThrow(id);
 
         List<AdminBookmarkResponse> adminBookmarkResponses = bookmarkRepository.findBookmarkByMember(
             member.getMemberId());
