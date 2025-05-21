@@ -91,11 +91,10 @@ public class AdminMemberServiceTest extends ServiceTest {
     @DisplayName("회원 필터링 조회 성공 테스트")
     @Test
     public void successGetAllMemberWithFilterTest() {
-        // given
         MemberFilterRequest request = createFilter(null, null, null, null,
             null, null);
-        //when
-        assertThat(adminService.getAllMemberWithFilter(pageable, request).getTotalElements()).isEqualTo(9);
+        assertThat(
+            adminService.getAllMemberWithFilter(pageable, request).getTotalElements()).isEqualTo(9);
     }
 
     @DisplayName("기간별 조회 시작일 미지정 예외 테스트")
@@ -112,8 +111,9 @@ public class AdminMemberServiceTest extends ServiceTest {
 
     @DisplayName("기간별 조회 종료일 미지정 예외 테스트")
     @Test
-    public void 기간별_조회_종료일_미지정_테스트(){
-        MemberFilterRequest noEndDateFilter = createFilter(null, null, null, LocalDateTime.of(2025, 1, 25, 0, 0, 0),
+    public void 기간별_조회_종료일_미지정_테스트() {
+        MemberFilterRequest noEndDateFilter = createFilter(null, null, null,
+            LocalDateTime.of(2025, 1, 25, 0, 0, 0),
             null, null);
 
         assertThrows(
@@ -133,6 +133,30 @@ public class AdminMemberServiceTest extends ServiceTest {
             BusinessException.class,
             () -> adminService.getAllMemberWithFilter(pageable, afterStartDateFilter));
     }
+
+    @DisplayName("기간별 조회 성공 테스트")
+    @Test
+    public void 기간별_조회_성공_테스트() {
+
+        MemberFilterRequest filter = createFilter(null, null, null,
+            LocalDateTime.of(2024, 1, 25, 0, 0, 0),
+            LocalDateTime.of(2025, 6, 1, 0, 0, 0), null);
+
+        assertThat(adminService.getAllMemberWithFilter(pageable, filter)
+            .getTotalElements()).isEqualTo(9);
+    }
+
+    @DisplayName("기간별 조회 성공 테스트")
+    @Test
+    public void 기간별_조회_미지정_성공_테스트() {
+
+        MemberFilterRequest filter = createFilter(null, null, null,
+            null, null, null);
+
+        assertThat(adminService.getAllMemberWithFilter(pageable, filter)
+            .getTotalElements()).isEqualTo(9);
+    }
+
 
     private void createMember(String email, String nickname, MemberRole role, MemberStatus status,
         String oAuthProvider) {
