@@ -43,11 +43,6 @@ public class AdminMemberService {
         return AdminMapper.INSTANCE.toAdminMemberResponse(member, adminBookmarkResponses);
     }
 
-    public Page<WithdrawalMemberResponse> getAllWithdrawalMembers(Pageable pageable) {
-
-        return memberRepository.findAllWithdrawMembers(pageable);
-    }
-
     public PageResponse<AdminMemberResponse> getAllMemberWithFilter(Pageable pageable,
         MemberFilterRequest memberFilterRequest) {
 
@@ -57,6 +52,10 @@ public class AdminMemberService {
     }
 
     private void checkFilterException(MemberFilterRequest memberFilterRequest) {
+        if(memberFilterRequest.getEndDate()== null && memberFilterRequest.getStartDate()==null) {
+            return;
+        }
+
         if (memberFilterRequest.getStartDate() != null
             && memberFilterRequest.getEndDate() == null) {
             throw new BusinessException(AdminErrorCode.END_DATE_NOT_SELECTED);

@@ -39,14 +39,6 @@ public class AdminMemberController {
         return ResponseEntity.ok(member);
     }
 
-    @GetMapping("/withdrawal")
-    public ResponseEntity<Page<WithdrawalMemberResponse>> getAllWithdrawMembers(
-        @PageableDefault(page = 0, size = 10, sort = "email") Pageable pageable) {
-
-        Page<WithdrawalMemberResponse> members = adminService.getAllWithdrawalMembers(pageable);
-        return ResponseEntity.ok(members);
-    }
-
     @GetMapping("/filter")
     public ResponseEntity<ApiResponse<PageResponse<AdminMemberResponse>>> getAllFilteredMembers(
         @PageableDefault(page = 0, size = 10, sort = "email") Pageable pageable,
