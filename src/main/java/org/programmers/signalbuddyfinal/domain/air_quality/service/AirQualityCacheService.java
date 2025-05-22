@@ -12,25 +12,22 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class AirQualityCacheService implements AirQualityCache {
+public class AirQualityCacheService {
 
     private final RedisTemplate<Object, Object> redisTemplate;
 
     private static final String PREFIX = "air-quality:";
     private static final Duration TTL = Duration.ofHours(2);
 
-    @Override
     public CachedAirQuality get(String regionCode) {
         return (CachedAirQuality) redisTemplate.opsForValue().get(formatKey(regionCode));
     }
 
-    @Override
     public void save(String regionCode, AirQualityResponse airQualityResponse, boolean fresh) {
         redisTemplate.opsForValue()
             .set(formatKey(regionCode), new CachedAirQuality(airQualityResponse, fresh), TTL);
     }
 
-    @Override
     public AirQualityResponse failBackOrThrow(String regionCode) {
         return Optional.ofNullable(get(regionCode))
             .map(cache -> {
