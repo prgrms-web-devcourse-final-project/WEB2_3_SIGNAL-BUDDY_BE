@@ -17,6 +17,7 @@ import org.programmers.signalbuddyfinal.domain.member.entity.QMember;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.programmers.signalbuddyfinal.domain.social.entity.Provider;
+import org.programmers.signalbuddyfinal.domain.social.entity.SocialProvider;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -125,13 +126,11 @@ public class CustomMemberRepositoryImpl implements CustomMemberRepository {
             ? socialProvider.oauthProvider.eq(oauthProvider) : Expressions.TRUE);
     }
 
-    // 검색
     private BooleanExpression eqSearch(String search) {
         return ((search != null && !search.isEmpty()) ? member.email.eq(search)
             .or(member.nickname.eq(search)) : Expressions.TRUE);
     }
 
-    // 기간 조회
     private BooleanExpression betweenCreatedAt(LocalDateTime startDate, LocalDateTime endDate) {
         if (startDate != null && endDate != null)
             return member.createdAt.between(startDate, endDate);
