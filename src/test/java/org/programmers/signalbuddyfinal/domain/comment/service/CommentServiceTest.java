@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.programmers.signalbuddyfinal.domain.comment.dto.CommentRequest;
 import org.programmers.signalbuddyfinal.domain.comment.entity.Comment;
 import org.programmers.signalbuddyfinal.domain.comment.exception.CommentErrorCode;
@@ -28,6 +29,7 @@ import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
 import org.programmers.signalbuddyfinal.domain.notification.dto.FcmMessage;
+import org.programmers.signalbuddyfinal.domain.notification.factory.CommentNotificationFactory;
 import org.programmers.signalbuddyfinal.domain.notification.service.FcmService;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
@@ -51,6 +53,9 @@ class CommentServiceTest extends ServiceTest {
 
     @Mock
     private FcmService fcmService;
+
+    @Spy
+    private CommentNotificationFactory commentNotificationFactory;
 
     private Member member;
     private Member admin;
