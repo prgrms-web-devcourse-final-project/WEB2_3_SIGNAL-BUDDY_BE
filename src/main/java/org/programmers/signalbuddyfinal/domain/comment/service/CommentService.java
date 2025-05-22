@@ -1,6 +1,5 @@
 package org.programmers.signalbuddyfinal.domain.comment.service;
 
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.comment.dto.CommentRequest;
 import org.programmers.signalbuddyfinal.domain.comment.dto.CommentResponse;
@@ -13,7 +12,7 @@ import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
 import org.programmers.signalbuddyfinal.domain.notification.dto.FcmMessage;
-import org.programmers.signalbuddyfinal.domain.notification.dto.FcmMessage.Notification;
+import org.programmers.signalbuddyfinal.domain.notification.factory.CommentNotificationFactory;
 import org.programmers.signalbuddyfinal.domain.notification.service.FcmService;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
@@ -32,6 +31,7 @@ public class CommentService {
     private final MemberRepository memberRepository;
     private final FeedbackRepository feedbackRepository;
     private final FcmService fcmService;
+    private final CommentNotificationFactory commentNotificationFactory;
 
     @Transactional
     public void writeComment(Long feedbackId, CommentRequest request, CustomUser2Member user) {
@@ -99,26 +99,11 @@ public class CommentService {
             feedbackWriter.isNotificationEnabled();
     }
 
-    private FcmMessage makeCommentNotiMessage(
-        String commentWriterNickname, String feedbackSubject,
-        Long feedbackId
-    ) {
-        return FcmMessage.builder()
-            .notification(
-                Notification.builder()
-                    .title("\uD83D\uDEA6 [" + commentWriterNickname + "]님이 당신의 피드백에 답변을 남겼어요!")
-                    .body("\"" + feedbackSubject + "\"에 [" + commentWriterNickname + "]님의 의견이 추가되었습니다. 확인해 보시겠어요?")
-                    .build()
-            )
-            .data(Map.of("feedbackId", feedbackId.toString()))
-            .build();
-    }
-
     private void notifyFeedbackAuthor(
         CustomUser2Member requestedUser,
         Feedback feedback
     ) {
-        FcmMessage message = makeCommentNotiMessage(
+        FcmMessage message = commentNotificationFactory.createMessage(
             requestedUser.getNickname(), feedback.getSubject(),
             feedback.getFeedbackId()
         );
