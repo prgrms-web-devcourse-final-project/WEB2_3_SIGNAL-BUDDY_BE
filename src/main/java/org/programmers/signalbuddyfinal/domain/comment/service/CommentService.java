@@ -1,6 +1,5 @@
 package org.programmers.signalbuddyfinal.domain.comment.service;
 
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.comment.dto.CommentRequest;
 import org.programmers.signalbuddyfinal.domain.comment.dto.CommentResponse;
@@ -13,7 +12,7 @@ import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
 import org.programmers.signalbuddyfinal.domain.notification.dto.FcmMessage;
-import org.programmers.signalbuddyfinal.domain.notification.dto.FcmMessage.Notification;
+import org.programmers.signalbuddyfinal.domain.notification.factory.CommentNotificationFactory;
 import org.programmers.signalbuddyfinal.domain.notification.service.FcmService;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
@@ -32,6 +31,7 @@ public class CommentService {
     private final MemberRepository memberRepository;
     private final FeedbackRepository feedbackRepository;
     private final FcmService fcmService;
+    private final CommentNotificationFactory commentNotificationFactory;
 
     @Transactional
     public void writeComment(Long feedbackId, CommentRequest request, CustomUser2Member user) {
@@ -43,24 +43,14 @@ public class CommentService {
             .feedback(feedback).member(member)
             .build();
 
-        // 관리자일 때 피드백 상태 변경
         if (comment.getMember().isAdmin()) {
             feedback.updateFeedbackStatus();
         }
 
         commentRepository.save(comment);
 
-        // 작성자 본인의 댓글은 알림 발송 안 함
-        if (Member.isNotSameMember(user, feedback.getMember()) &&
-            feedback.getMember().isNotificationEnabled()
-        ) {
-            // 피드백 작성자에게 댓글 알림 발송
-            FcmMessage message = makeCommentNotiMessage(
-                user.getNickname(), feedback.getSubject(),
-                feedback.getFeedbackId()
-            );
-
-            fcmService.sendMessage(message, feedback.getMember().getMemberId());
+        if (shouldSendCommentNotification(user, feedback.getMember())) {
+            notifyFeedbackAuthor(user, feedback);
         }
     }
 
@@ -101,18 +91,23 @@ public class CommentService {
         commentRepository.deleteById(commentId);
     }
 
-    private FcmMessage makeCommentNotiMessage(
-        String commentWriterNickname, String feedbackSubject,
-        Long feedbackId
+    private boolean shouldSendCommentNotification(
+        CustomUser2Member requestedUser,
+        Member feedbackWriter
     ) {
-        return FcmMessage.builder()
-            .notification(
-                Notification.builder()
-                    .title("\uD83D\uDEA6 [" + commentWriterNickname + "]님이 당신의 피드백에 답변을 남겼어요!")
-                    .body("\"" + feedbackSubject + "\"에 [" + commentWriterNickname + "]님의 의견이 추가되었습니다. 확인해 보시겠어요?")
-                    .build()
-            )
-            .data(Map.of("feedbackId", feedbackId.toString()))
-            .build();
+        return Member.isNotSameMember(requestedUser, feedbackWriter) &&
+            feedbackWriter.isNotificationEnabled();
+    }
+
+    private void notifyFeedbackAuthor(
+        CustomUser2Member requestedUser,
+        Feedback feedback
+    ) {
+        FcmMessage message = commentNotificationFactory.createMessage(
+            requestedUser.getNickname(), feedback.getSubject(),
+            feedback.getFeedbackId()
+        );
+
+        fcmService.sendMessage(message, feedback.getMember().getMemberId());
     }
 }
