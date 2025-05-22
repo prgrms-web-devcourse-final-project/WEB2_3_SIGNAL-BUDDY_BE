@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-@Qualifier("regionStrategy")
+@Qualifier("regionAirQualityStrategy")
 public class RegionAirQualityService implements AirQualityStrategy {
 
     private final AirQualityCacheService airQualityCacheService;
