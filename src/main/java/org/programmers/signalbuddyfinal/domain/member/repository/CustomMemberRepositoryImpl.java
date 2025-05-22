@@ -11,31 +11,22 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.programmers.signalbuddyfinal.domain.admin.dto.AdminMemberResponse;
 import org.programmers.signalbuddyfinal.domain.admin.dto.MemberFilterRequest;
-import org.programmers.signalbuddyfinal.domain.admin.dto.WithdrawalMemberResponse;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
-import org.programmers.signalbuddyfinal.domain.member.entity.QMember;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
 import org.programmers.signalbuddyfinal.domain.social.entity.Provider;
-import org.programmers.signalbuddyfinal.domain.social.entity.SocialProvider;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 import java.util.List;
+
 import static org.programmers.signalbuddyfinal.domain.member.entity.QMember.member;
 import static org.programmers.signalbuddyfinal.domain.social.entity.QSocialProvider.socialProvider;
 
-@Slf4j
 @Repository
 @RequiredArgsConstructor
 public class CustomMemberRepositoryImpl implements CustomMemberRepository {
-
-    private static final QBean<WithdrawalMemberResponse> withdrawalMemberResponseDto = Projections.fields(
-        WithdrawalMemberResponse.class, member.memberId, member.email, member.nickname,
-        member.profileImageUrl, member.role, member.memberStatus,
-        member.createdAt, member.updatedAt);
 
     private static final QBean<AdminMemberResponse> adminMemberResponseDto = Projections.fields(
         AdminMemberResponse.class, member.memberId.as("memberId"), member.email, member.nickname,
@@ -43,8 +34,6 @@ public class CustomMemberRepositoryImpl implements CustomMemberRepository {
         member.memberStatus.as("status"), member.createdAt,
         socialProvider.oauthProvider.as("oauthProvider")
     );
-
-    private static final QMember qmember = QMember.member;
 
     private final JPAQueryFactory jpaQueryFactory;
 
@@ -62,7 +51,7 @@ public class CustomMemberRepositoryImpl implements CustomMemberRepository {
         long total = jpaQueryFactory
             .select(member.count())
             .from(member)
-            .fetchOne();
+            .fetchFirst();
 
         return new PageResponse<>(new PageImpl<>(members, pageable, total));
     }
@@ -75,13 +64,7 @@ public class CustomMemberRepositoryImpl implements CustomMemberRepository {
             .select(adminMemberResponseDto)
             .from(member)
             .leftJoin(socialProvider).on(socialProvider.member.memberId.eq(member.memberId))
-            .where(
-                eqSearch(filter.getSearch()),
-                eqStatus(filter.getStatus()),
-                eqRole(filter.getRole()),
-                eqOAuthProvider(filter.getOAuthProvider()),
-                betweenCreatedAt(filter.getStartDate(), filter.getEndDate())
-            )
+            .where(conditions(filter))
             .offset(pageable.getOffset())
             .limit(pageable.getPageSize())
             .orderBy(member.email.asc())
@@ -91,14 +74,8 @@ public class CustomMemberRepositoryImpl implements CustomMemberRepository {
             .select(member.count())
             .from(member)
             .leftJoin(socialProvider).on(socialProvider.member.memberId.eq(member.memberId))
-            .where(
-                eqSearch(filter.getSearch()),
-                eqStatus(filter.getStatus()),
-                eqRole(filter.getRole()),
-                eqOAuthProvider(filter.getOAuthProvider()),
-                betweenCreatedAt(filter.getStartDate(), filter.getEndDate())
-            )
-            .fetchOne();
+            .where(conditions(filter))
+            .fetchFirst();
 
         return new PageResponse<>(new PageImpl<>(members, pageable, total));
     }
@@ -111,6 +88,16 @@ public class CustomMemberRepositoryImpl implements CustomMemberRepository {
             .on(member.memberId.eq(socialProvider.member.memberId))
             .where(socialProvider.oauthProvider.eq(provider)
                 .and(socialProvider.socialId.eq(socialId))).fetchOne());
+    }
+
+   private BooleanExpression[] conditions(MemberFilterRequest filter){
+       return new BooleanExpression[]{
+           eqSearch(filter.getSearch()),
+           eqStatus(filter.getStatus()),
+           eqRole(filter.getRole()),
+           eqOAuthProvider(filter.getOAuthProvider()),
+           betweenCreatedAt(filter.getStartDate(), filter.getEndDate())
+       };
     }
 
     private BooleanExpression eqStatus(MemberStatus status) {
