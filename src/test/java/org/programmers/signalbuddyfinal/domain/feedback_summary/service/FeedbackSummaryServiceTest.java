@@ -26,7 +26,7 @@ class FeedbackSummaryServiceTest extends IntegrationTest {
     @MockitoBean
     private FeedbackSummaryRepository feedbackSummaryRepository;
 
-    @DisplayName("")
+    @DisplayName("피드백 집계 데이터를 가져온다.")
     @Test
     void getFeedbackSummary() {
         // Given
