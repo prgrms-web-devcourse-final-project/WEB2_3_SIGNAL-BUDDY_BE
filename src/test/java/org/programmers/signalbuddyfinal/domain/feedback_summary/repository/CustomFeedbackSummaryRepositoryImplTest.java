@@ -16,8 +16,7 @@ import org.programmers.signalbuddyfinal.domain.feedback.repository.FeedbackRepos
 import org.programmers.signalbuddyfinal.domain.feedback_summary.entity.CrossroadFeedbackCount;
 import org.programmers.signalbuddyfinal.domain.feedback_summary.entity.FeedbackCategoryCount;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
-import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
-import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
+import org.programmers.signalbuddyfinal.domain.member.fixture.TestMemberFactory;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
 import org.programmers.signalbuddyfinal.global.support.IntegrationTest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +39,9 @@ class CustomFeedbackSummaryRepositoryImplTest extends IntegrationTest {
 
     @BeforeEach
     void setUp() {
-        Member member = saveMember("test@test.com", "tester");
+        Member feedbackWriter = memberRepository.save(
+            TestMemberFactory.createActiveUser("test@test.com", "tester")
+        );
         Crossroad crossroad1 = saveCrossroad("1321", "00 사거리", 37.12123, 127.1231);
         Crossroad crossroad2 = saveCrossroad("132122", "001 사거리", 37.121123, 127.1251);
         Crossroad crossroad3 = saveCrossroad("133321", "002 사거리", 37.12323, 127.1221);
@@ -49,7 +50,7 @@ class CustomFeedbackSummaryRepositoryImplTest extends IntegrationTest {
             if (i == 1) {
                 saveFeedback(
                     "subject " + i, "content " + i, FeedbackCategory.ETC,
-                    member, crossroad3
+                    feedbackWriter, crossroad3
                 );
                 continue;
             }
@@ -57,21 +58,21 @@ class CustomFeedbackSummaryRepositoryImplTest extends IntegrationTest {
             if (i % 3 == 0) {
                 saveFeedback(
                     "subject " + i, "content " + i, FeedbackCategory.DELAY,
-                    member, crossroad1
+                    feedbackWriter, crossroad1
                 );
             }
 
             if (i % 2 == 0) {
                 saveFeedback(
                     "subject " + i, "content " + i, FeedbackCategory.ADD_SIGNAL,
-                    member, crossroad2
+                    feedbackWriter, crossroad2
                 );
             }
         }
 
         saveDeletedFeedback(
             "deleted subject ", "deleted content ",
-            FeedbackCategory.DELAY, member, crossroad1
+            FeedbackCategory.DELAY, feedbackWriter, crossroad1
         );
     }
 
@@ -118,13 +119,6 @@ class CustomFeedbackSummaryRepositoryImplTest extends IntegrationTest {
             feedbackSummaryRepository.countFeedbackByDate(LocalDate.now())
         ).isEqualTo(6L);
 
-    }
-
-    private Member saveMember(String email, String nickname) {
-        return memberRepository.saveAndFlush(
-            Member.builder().email(email).password("123456").role(MemberRole.USER)
-                .nickname(nickname).memberStatus(MemberStatus.ACTIVITY)
-                .profileImageUrl("https://test-image.com/test-123131").build());
     }
 
     private Crossroad saveCrossroad(String apiId, String name, double lat, double lng) {

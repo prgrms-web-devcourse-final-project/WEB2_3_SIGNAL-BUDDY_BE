@@ -20,8 +20,7 @@ import org.programmers.signalbuddyfinal.domain.feedback_report.entity.FeedbackRe
 import org.programmers.signalbuddyfinal.domain.feedback_report.entity.enums.FeedbackReportCategory;
 import org.programmers.signalbuddyfinal.domain.feedback_report.entity.enums.FeedbackReportStatus;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
-import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
-import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
+import org.programmers.signalbuddyfinal.domain.member.fixture.TestMemberFactory;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
 import org.programmers.signalbuddyfinal.global.constant.SearchTarget;
 import org.programmers.signalbuddyfinal.global.support.RepositoryTest;
@@ -50,17 +49,19 @@ class FeedbackReportRepositoryTest extends RepositoryTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    private Member member;
+    private Member feedbackWriter;
     private Feedback feedback;
 
     @BeforeEach
     void setup() {
-        member = saveMember("test@test.com", "tester");
+        feedbackWriter = memberRepository.save(
+            TestMemberFactory.createActiveUser("test@test.com", "tester")
+        );
         Crossroad crossroad = saveCrossroad("12313", "00 사거리", 37.12, 127.12);
-        feedback = saveFeedback("test", "test", member, crossroad);
+        feedback = saveFeedback("test", "test", feedbackWriter, crossroad);
 
         for (int i = 1; i <= 12; i++) {
-            saveFeedbackReport("test " + i, member, feedback);
+            saveFeedbackReport("test " + i, feedbackWriter, feedback);
         }
 
         createFulltextIndexOnMember();
@@ -100,7 +101,7 @@ class FeedbackReportRepositoryTest extends RepositoryTest {
         // Given
         Pageable pageable = PageRequest.of(0, 7,
             Direction.DESC, "createdAt");
-        String keyword = member.getNickname();
+        String keyword = feedbackWriter.getNickname();
 
         // When
         Page<FeedbackReportResponse> actual = reportRepository.findAllByFilter(
@@ -131,11 +132,11 @@ class FeedbackReportRepositoryTest extends RepositoryTest {
         String keyword = "test";
 
         FeedbackReport feedbackReport1 = saveFeedbackReport(
-            "test 13", FeedbackReportCategory.FALSE, member, feedback
+            "test 13", FeedbackReportCategory.FALSE, feedbackWriter, feedback
         );
         feedbackReport1.updateStatus(FeedbackReportStatus.REJECTED);
         FeedbackReport feedbackReport2 = saveFeedbackReport(
-            "test 14", FeedbackReportCategory.OFFENSIVE, member, feedback
+            "test 14", FeedbackReportCategory.OFFENSIVE, feedbackWriter, feedback
         );
         feedbackReport2.updateStatus(FeedbackReportStatus.PROCESSED);
         reportRepository.save(feedbackReport1);
@@ -194,13 +195,6 @@ class FeedbackReportRepositoryTest extends RepositoryTest {
                 pageable, SearchTarget.SUBJECT_OR_CONTENT, keyword,
                 Collections.emptySet(), null, startDate, endDate
             );
-    }
-
-    private Member saveMember(String email, String nickname) {
-        return memberRepository.save(
-            Member.builder().email(email).password("123456").role(MemberRole.USER)
-                .nickname(nickname).memberStatus(MemberStatus.ACTIVITY)
-                .profileImageUrl("https://test-image.com/test-123131").build());
     }
 
     private Crossroad saveCrossroad(String apiId, String name, double lat, double lng) {

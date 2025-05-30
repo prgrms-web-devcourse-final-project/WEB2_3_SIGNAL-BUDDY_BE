@@ -20,8 +20,8 @@ import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.AnswerStatu
 import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.FeedbackCategory;
 import org.programmers.signalbuddyfinal.domain.feedback.exception.FeedbackErrorCode;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
-import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
+import org.programmers.signalbuddyfinal.domain.member.fixture.TestMemberFactory;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
 import org.programmers.signalbuddyfinal.global.constant.SearchTarget;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
@@ -48,19 +48,23 @@ class FeedbackRepositoryImplTest extends RepositoryTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    private Member member;
-    private Member withDrawalMember;
+    private Member feedbackWriter;
+    private Member withdrawalFeedbackWriter;
 
     @BeforeEach
     void setup() {
-        member = saveMember("test@test.com", "tester");
-        withDrawalMember = saveWithDrawalMember("with@test.com", "withdrawal");
+        feedbackWriter = memberRepository.save(
+            TestMemberFactory.createActiveUser("test@test.com", "tester")
+        );
+        withdrawalFeedbackWriter = memberRepository.save(
+            TestMemberFactory.createWithdrawalUser("with@test.com", "withdrawal")
+        );
         Crossroad crossroad = saveCrossroad("13214", "00사거리", 37.12222, 127.12132);
 
-        saveFeedback("test subject", "test content", member, crossroad);
-        saveFeedback("test subject2", "test content2", withDrawalMember, crossroad);
-        saveFeedback("test subject3", "test content3", member, crossroad);
-        saveFeedback("test subject4", "test content4", member, crossroad);
+        saveFeedback("test subject", "test content", feedbackWriter, crossroad);
+        saveFeedback("test subject2", "test content2", withdrawalFeedbackWriter, crossroad);
+        saveFeedback("test subject3", "test content3", feedbackWriter, crossroad);
+        saveFeedback("test subject4", "test content4", feedbackWriter, crossroad);
 
         createFulltextIndexOnMember();
         createFulltextIndexOnFeedback();
@@ -69,13 +73,16 @@ class FeedbackRepositoryImplTest extends RepositoryTest {
     @DisplayName("활동 중인 회원들의 피드백 목록을 조회한다.")
     @Test
     void getFeedbacks() {
+        // Given
         FeedbackSearchCondition searchCondition = FeedbackSearchCondition.builder()
             .target(SearchTarget.SUBJECT_OR_CONTENT).answerStatus(AnswerStatus.BEFORE)
             .build();
 
+        // When
         Page<FeedbackResponse> allByActiveMembers = feedbackRepository.findAllByActiveMembers(
             Pageable.ofSize(10), null, searchCondition);
 
+        // Then
         assertThat(allByActiveMembers).isNotNull();
         assertThat(allByActiveMembers.getTotalElements()).isEqualTo(3);
         assertThat(allByActiveMembers.getTotalPages()).isEqualTo(1);
@@ -93,9 +100,9 @@ class FeedbackRepositoryImplTest extends RepositoryTest {
         String subject = "test subject";
         String content = "test content";
         for (int i = 10; i < 13; i++) {
-            saveFeedback(subject + i, content + i, member, crossroad);
+            saveFeedback(subject + i, content + i, feedbackWriter, crossroad);
         }
-        saveFeedback(subject + 13, content + 13, withDrawalMember, crossroad);
+        saveFeedback(subject + 13, content + 13, withdrawalFeedbackWriter, crossroad);
 
         createFulltextIndexOnFeedback();
 
@@ -128,10 +135,11 @@ class FeedbackRepositoryImplTest extends RepositoryTest {
         // Given
         Set<FeedbackCategory> categories = Set.of(FeedbackCategory.DELAY, FeedbackCategory.ADD_SIGNAL);
         Crossroad crossroad = saveCrossroad("114111", "00삼거리", 37.42222, 127.42132);
-        saveFeedback("test subject11", "test content11", FeedbackCategory.DELAY, member, crossroad);
-        saveFeedback("test subject12", "test content12", FeedbackCategory.DELAY, member, crossroad);
-        saveFeedback("test subject13", "test content13", FeedbackCategory.ADD_SIGNAL, member, crossroad);
-        saveFeedback("test subject14", "test content14", member, crossroad);
+        saveFeedback("test subject11", "test content11", FeedbackCategory.DELAY, feedbackWriter, crossroad);
+        saveFeedback("test subject12", "test content12", FeedbackCategory.DELAY, feedbackWriter, crossroad);
+        saveFeedback("test subject13", "test content13", FeedbackCategory.ADD_SIGNAL,
+            feedbackWriter, crossroad);
+        saveFeedback("test subject14", "test content14", feedbackWriter, crossroad);
 
         createFulltextIndexOnFeedback();
 
@@ -168,10 +176,11 @@ class FeedbackRepositoryImplTest extends RepositoryTest {
         String keyword = "홍길동";
         Set<FeedbackCategory> categories = Set.of(FeedbackCategory.DELAY, FeedbackCategory.ADD_SIGNAL);
         Crossroad crossroad = saveCrossroad("114111", "00삼거리", 37.42222, 127.42132);
-        saveFeedback("ㅁㅁㅁ " + keyword, "test content11", FeedbackCategory.DELAY, member, crossroad);
-        saveFeedback("test subject12", "test content12", FeedbackCategory.DELAY, member, crossroad);
-        saveFeedback("test subject13", keyword + " ㅁㅁㅁ", FeedbackCategory.ADD_SIGNAL, member, crossroad);
-        saveFeedback("test subject14", "test content14", member, crossroad);
+        saveFeedback("ㅁㅁㅁ " + keyword, "test content11", FeedbackCategory.DELAY, feedbackWriter, crossroad);
+        saveFeedback("test subject12", "test content12", FeedbackCategory.DELAY, feedbackWriter, crossroad);
+        saveFeedback("test subject13", keyword + " ㅁㅁㅁ", FeedbackCategory.ADD_SIGNAL,
+            feedbackWriter, crossroad);
+        saveFeedback("test subject14", "test content14", feedbackWriter, crossroad);
 
         createFulltextIndexOnFeedback();
 
@@ -205,7 +214,7 @@ class FeedbackRepositoryImplTest extends RepositoryTest {
     @Test
     void findAllByActiveMembersByKeywordFromWriter() {
         // Given
-        String keyword = member.getNickname();
+        String keyword = feedbackWriter.getNickname();
 
         FeedbackSearchCondition searchCondition = FeedbackSearchCondition.builder()
             .target(SearchTarget.WRITER).keyword(keyword)
@@ -307,20 +316,6 @@ class FeedbackRepositoryImplTest extends RepositoryTest {
         } catch (BusinessException e) {
             assertThat(e.getErrorCode()).isEqualTo(FeedbackErrorCode.NOT_FOUND_FEEDBACK);
         }
-    }
-
-    private Member saveMember(String email, String nickname) {
-        return memberRepository.save(
-            Member.builder().email(email).password("123456").role(MemberRole.USER)
-                .nickname(nickname).memberStatus(MemberStatus.ACTIVITY)
-                .profileImageUrl("https://test-image.com/test-123131").build());
-    }
-
-    private Member saveWithDrawalMember(String email, String nickname) {
-        return memberRepository.save(
-            Member.builder().email(email).password("123456").role(MemberRole.USER)
-                .nickname(nickname).memberStatus(MemberStatus.WITHDRAWAL)
-                .profileImageUrl("https://test-image.com/test-123131").build());
     }
 
     private Crossroad saveCrossroad(String apiId, String name, double lat, double lng) {

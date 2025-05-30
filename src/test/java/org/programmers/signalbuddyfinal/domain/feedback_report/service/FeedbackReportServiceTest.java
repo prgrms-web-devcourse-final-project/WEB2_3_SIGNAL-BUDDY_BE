@@ -22,6 +22,7 @@ import org.programmers.signalbuddyfinal.domain.feedback_report.repository.Feedba
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
+import org.programmers.signalbuddyfinal.domain.member.fixture.TestMemberFactory;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
@@ -46,16 +47,20 @@ class FeedbackReportServiceTest extends IntegrationTest {
     @Autowired
     private CrossroadRepository crossroadRepository;
 
-    private Member member;
+    private Member feedbackWriter;
     private Member admin;
     private Feedback feedback;
 
     @BeforeEach
     void setup() {
-        admin = saveAdmin("admin@test.com", "admin");
-        member = saveMember("test@test.com", "tester");
+        admin = memberRepository.save(
+            TestMemberFactory.createAdmin("admin@test.com", "admin")
+        );
+        feedbackWriter = memberRepository.save(
+            TestMemberFactory.createActiveUser("test@test.com", "tester")
+        );
         Crossroad crossroad = saveCrossroad("12313", "00 사거리", 37.12, 127.12);
-        feedback = saveFeedback("test", "test", member, crossroad);
+        feedback = saveFeedback("test", "test", feedbackWriter, crossroad);
     }
 
     @DisplayName("피드백 신고를 작성한다.")
@@ -67,7 +72,9 @@ class FeedbackReportServiceTest extends IntegrationTest {
         FeedbackReportRequest request = FeedbackReportRequest.builder()
             .content(content).category(FeedbackReportCategory.ETC)
             .build();
-        Member requestMember = saveMember("request@test.com", "request");
+        Member requestMember = memberRepository.save(
+            TestMemberFactory.createActiveUser("request@test.com", "request")
+        );
         CustomUser2Member user = getCurrentMember(requestMember.getMemberId(), MemberRole.USER);
 
         // When
@@ -88,7 +95,7 @@ class FeedbackReportServiceTest extends IntegrationTest {
     void updateFeedbackReportByAdmin_Success() {
         // Given
         Long feedbackId = feedback.getFeedbackId();
-        FeedbackReport report = saveFeedbackReport("test", member, feedback);
+        FeedbackReport report = saveFeedbackReport("test", feedbackWriter, feedback);
         Long reportId = report.getFeedbackReportId();
 
         FeedbackReportUpdateRequest request = FeedbackReportUpdateRequest.builder()
@@ -113,7 +120,7 @@ class FeedbackReportServiceTest extends IntegrationTest {
     void deleteFeedbackReportByAdmin_Success() {
         // Given
         Long feedbackId = feedback.getFeedbackId();
-        FeedbackReport report = saveFeedbackReport("test", member, feedback);
+        FeedbackReport report = saveFeedbackReport("test", feedbackWriter, feedback);
         CustomUser2Member user = getCurrentMember(admin.getMemberId(), MemberRole.ADMIN);
 
         // When
@@ -128,8 +135,8 @@ class FeedbackReportServiceTest extends IntegrationTest {
     void deleteFeedbackReportByUser_Failure() {
         // Given
         Long feedbackId = feedback.getFeedbackId();
-        FeedbackReport report = saveFeedbackReport("test", member, feedback);
-        CustomUser2Member user = getCurrentMember(member.getMemberId(), MemberRole.USER);
+        FeedbackReport report = saveFeedbackReport("test", feedbackWriter, feedback);
+        CustomUser2Member user = getCurrentMember(feedbackWriter.getMemberId(), MemberRole.USER);
 
         // When & Then
         try {
@@ -145,7 +152,7 @@ class FeedbackReportServiceTest extends IntegrationTest {
     void deleteFeedbackReport_Failure() {
         // Given
         Long feedbackId = 99999999999L;
-        FeedbackReport report = saveFeedbackReport("test", member, feedback);
+        FeedbackReport report = saveFeedbackReport("test", feedbackWriter, feedback);
         CustomUser2Member user = getCurrentMember(admin.getMemberId(), MemberRole.ADMIN);
 
         // When & Then
@@ -155,20 +162,6 @@ class FeedbackReportServiceTest extends IntegrationTest {
             assertThat(e.getErrorCode())
                 .isEqualTo(FeedbackReportErrorCode.FEEDBACK_REPORT_MISMATCH);
         }
-    }
-
-    private Member saveMember(String email, String nickname) {
-        return memberRepository.save(
-            Member.builder().email(email).password("123456").role(MemberRole.USER)
-                .nickname(nickname).memberStatus(MemberStatus.ACTIVITY)
-                .profileImageUrl("https://test-image.com/test-123131").build());
-    }
-
-    private Member saveAdmin(String email, String nickname) {
-        return memberRepository.save(
-            Member.builder().email(email).password("123456").role(MemberRole.ADMIN)
-                .nickname(nickname).memberStatus(MemberStatus.ACTIVITY)
-                .profileImageUrl("https://test-image.com/test-123131").build());
     }
 
     private Crossroad saveCrossroad(String apiId, String name, double lat, double lng) {

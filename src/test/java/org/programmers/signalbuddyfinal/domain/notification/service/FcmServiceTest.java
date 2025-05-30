@@ -20,6 +20,7 @@ import org.mockito.Mock;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
+import org.programmers.signalbuddyfinal.domain.member.fixture.TestMemberFactory;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
 import org.programmers.signalbuddyfinal.domain.notification.dto.FcmMessage;
 import org.programmers.signalbuddyfinal.domain.notification.dto.FcmMessage.Notification;
@@ -57,7 +58,9 @@ class FcmServiceTest extends IntegrationTest {
 
     @BeforeEach
     void setUp() {
-        member = saveMember("test email", "tester");
+        member = memberRepository.save(
+            TestMemberFactory.createActiveUser("test email", "tester")
+        );
         fcmToken = saveFcmToken("test token", member);
     }
 
@@ -88,7 +91,9 @@ class FcmServiceTest extends IntegrationTest {
     void sendMessageNotDeviceToken_Success() {
         // Given
         FcmMessage request = getFcmMessage("test title", "test body");
-        Member otherMember = saveMember("test1 email", "other tester");
+        Member otherMember = memberRepository.save(
+            TestMemberFactory.createActiveUser("test1 email", "other tester")
+        );
         CustomUser2Member user = getCurrentMember(otherMember.getMemberId());
 
         when(firebaseMessaging.sendEachForMulticastAsync(any(MulticastMessage.class)))
@@ -189,7 +194,9 @@ class FcmServiceTest extends IntegrationTest {
     void deleteDeviceToken_Failure() {
         // Given
         String deviceTokenUuid = fcmToken.getFcmTokenUuid();
-        Member otherMember = saveMember("other email", "other");
+        Member otherMember = memberRepository.save(
+            TestMemberFactory.createActiveUser("other email", "other")
+        );
         CustomUser2Member user = getCurrentMember(otherMember.getMemberId());
 
         // When & Then
@@ -199,13 +206,6 @@ class FcmServiceTest extends IntegrationTest {
             assertThat(e.getErrorCode())
                 .isEqualTo(FcmErrorCode.FCM_TOKEN_ELIMINATOR_NOT_AUTHORIZED);
         }
-    }
-
-    private Member saveMember(String email, String nickname) {
-        return memberRepository.save(
-            Member.builder().email(email).password("123456").role(MemberRole.USER)
-                .nickname(nickname).memberStatus(MemberStatus.ACTIVITY)
-                .profileImageUrl("https://test-image.com/test-123131").build());
     }
 
     private FcmToken saveFcmToken(String deviceToken, Member member) {

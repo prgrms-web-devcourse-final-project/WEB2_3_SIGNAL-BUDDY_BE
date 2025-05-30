@@ -27,6 +27,7 @@ import org.programmers.signalbuddyfinal.domain.feedback.repository.FeedbackRepos
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
+import org.programmers.signalbuddyfinal.domain.member.fixture.TestMemberFactory;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
 import org.programmers.signalbuddyfinal.domain.notification.dto.FcmMessage;
 import org.programmers.signalbuddyfinal.domain.notification.factory.CommentNotificationFactory;
@@ -57,17 +58,17 @@ class CommentServiceTest extends ServiceTest {
     @Spy
     private CommentNotificationFactory commentNotificationFactory;
 
-    private Member member;
+    private Member feedbackWriter;
     private Member admin;
     private Feedback feedback;
     private Comment comment;
 
     @BeforeEach
     void setup() {
-        member = createMember(1L, "test@test.com", "tester", MemberRole.USER);
-        admin = createMember(7777L, "admin@test.com", "admin", MemberRole.ADMIN);
-        feedback = createFeedback(member);
-        comment = createComment(1L, "test comment content", member, feedback);
+        feedbackWriter = TestMemberFactory.createActiveUser(1L, "test@test.com", "tester");
+        admin = TestMemberFactory.createAdmin(7777L, "admin@test.com", "admin");
+        feedback = createFeedback(feedbackWriter);
+        comment = createComment(1L, "test comment content", feedbackWriter, feedback);
     }
 
     @DisplayName("댓글 작성")
@@ -80,9 +81,8 @@ class CommentServiceTest extends ServiceTest {
             // given
             Long feedbackId = feedback.getFeedbackId();
             CommentRequest request = new CommentRequest("test comment content");
-            Member otherMember = createMember(
-                2L, "other@test.com", "other tester",
-                MemberRole.USER
+            Member otherMember = TestMemberFactory.createActiveUser(
+                2L, "other@test.com", "other tester"
             );
             CustomUser2Member requestUser = createCurrentMember(
                 otherMember.getMemberId(), MemberRole.USER
@@ -113,14 +113,14 @@ class CommentServiceTest extends ServiceTest {
             Long feedbackId = feedback.getFeedbackId();
             String content = "test comment content";
             CommentRequest request = new CommentRequest(content);
-            CustomUser2Member requestUser = createCurrentMember(member.getMemberId(), MemberRole.USER);
+            CustomUser2Member requestUser = createCurrentMember(feedbackWriter.getMemberId(), MemberRole.USER);
 
             given(memberRepository.findByIdOrThrow(requestUser.getMemberId()))
-                .willReturn(member);
+                .willReturn(feedbackWriter);
             given(feedbackRepository.findByIdOrThrow(feedbackId))
                 .willReturn(feedback);
             given(commentRepository.save(any(Comment.class)))
-                .willReturn(createComment(2L, request.getContent(), member, feedback));
+                .willReturn(createComment(2L, request.getContent(), feedbackWriter, feedback));
             doNothing().when(fcmService).sendMessage(any(FcmMessage.class), anyLong());
 
             // when
@@ -140,11 +140,10 @@ class CommentServiceTest extends ServiceTest {
             Long feedbackId = feedback.getFeedbackId();
             String content = "test comment content";
             CommentRequest request = new CommentRequest(content);
-            Member otherMember = createMember(
-                2L, "other@test.com", "other tester",
-                MemberRole.USER
+            Member otherMember = TestMemberFactory.createActiveUser(
+                2L, "other@test.com", "other tester"
             );
-            member.updateNotifyEnabled(Boolean.FALSE);
+            feedbackWriter.updateNotifyEnabled(Boolean.FALSE);
             CustomUser2Member requestUser = createCurrentMember(
                 otherMember.getMemberId(), MemberRole.USER
             );
@@ -206,7 +205,7 @@ class CommentServiceTest extends ServiceTest {
             // given
             String updatedContent = "update comment content";
             CommentRequest request = new CommentRequest(updatedContent);
-            CustomUser2Member requestUser = createCurrentMember(member.getMemberId(), MemberRole.USER);
+            CustomUser2Member requestUser = createCurrentMember(feedbackWriter.getMemberId(), MemberRole.USER);
 
             given(commentRepository.findByIdOrThrow(requestUser.getMemberId()))
                 .willReturn(comment);
@@ -224,9 +223,8 @@ class CommentServiceTest extends ServiceTest {
             // given
             String updatedContent = "update comment content";
             CommentRequest request = new CommentRequest(updatedContent);
-            Member otherMember = createMember(
-                2L, "other@test.com", "other tester",
-                MemberRole.USER
+            Member otherMember = TestMemberFactory.createActiveUser(
+                2L, "other@test.com", "other tester"
             );
             CustomUser2Member requestUser = createCurrentMember(
                 otherMember.getMemberId(), MemberRole.USER
@@ -254,7 +252,7 @@ class CommentServiceTest extends ServiceTest {
         void deleteComment() {
             // given
             Long commentId = comment.getCommentId();
-            CustomUser2Member requestUser = createCurrentMember(member.getMemberId(), MemberRole.USER);
+            CustomUser2Member requestUser = createCurrentMember(feedbackWriter.getMemberId(), MemberRole.USER);
 
             given(commentRepository.findByIdOrThrow(commentId))
                 .willReturn(comment);
@@ -325,14 +323,6 @@ class CommentServiceTest extends ServiceTest {
             assertThat(feedback.getAnswerStatus())
                 .isEqualTo(AnswerStatus.BEFORE);
         }
-    }
-
-    private Member createMember(Long id, String email, String nickname, MemberRole role) {
-        return Member.builder()
-            .memberId(id).email(email).password("123456").role(role)
-            .nickname(nickname).memberStatus(MemberStatus.ACTIVITY)
-            .profileImageUrl("https://test-image.com/test-123131")
-            .build();
     }
 
     private Crossroad createCrossroad() {

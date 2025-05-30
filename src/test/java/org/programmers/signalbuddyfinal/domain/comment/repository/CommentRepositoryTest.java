@@ -14,8 +14,7 @@ import org.programmers.signalbuddyfinal.domain.feedback.entity.Feedback;
 import org.programmers.signalbuddyfinal.domain.feedback.entity.enums.FeedbackCategory;
 import org.programmers.signalbuddyfinal.domain.feedback.repository.FeedbackRepository;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
-import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
-import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
+import org.programmers.signalbuddyfinal.domain.member.fixture.TestMemberFactory;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
 import org.programmers.signalbuddyfinal.global.support.RepositoryTest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,15 +36,14 @@ class CommentRepositoryTest extends RepositoryTest {
     @Autowired
     private CrossroadRepository crossroadRepository;
 
-    private Member member;
+    private Member feedbackWriter;
     private Feedback feedback;
 
     @BeforeEach
     void setup() {
-        member = Member.builder().email("test@test.com").password("123456").role(MemberRole.USER)
-            .nickname("tester").memberStatus(MemberStatus.ACTIVITY)
-            .profileImageUrl("https://test-image.com/test-123131").build();
-        member = memberRepository.save(member);
+        feedbackWriter = memberRepository.save(
+            TestMemberFactory.createActiveUser("test@test.com", "tester")
+        );
 
         Crossroad crossroad = Crossroad.create()
             .crossroadApiId("13214").name("00사거리")
@@ -58,7 +56,7 @@ class CommentRepositoryTest extends RepositoryTest {
         Feedback entity = Feedback.create()
             .subject(subject).content(content).secret(Boolean.FALSE)
             .category(FeedbackCategory.ETC)
-            .member(member).crossroad(crossroad)
+            .member(feedbackWriter).crossroad(crossroad)
             .build();
         feedback = feedbackRepository.save(entity);
 
@@ -66,7 +64,7 @@ class CommentRepositoryTest extends RepositoryTest {
         for (int i = 0; i < 30; i++) {
             Comment comment = Comment.create()
                 .content("test comment content")
-                .feedback(feedback).member(member).build();
+                .feedback(feedback).member(feedbackWriter).build();
             commentList.add(comment);
         }
         commentRepository.saveAll(commentList);
@@ -93,7 +91,7 @@ class CommentRepositoryTest extends RepositoryTest {
             softAssertions.assertThat(actual.getContent().get(3).getContent())
                 .isEqualTo("test comment content");
             softAssertions.assertThat(actual.getContent().get(3).getMember().getMemberId())
-                .isEqualTo(member.getMemberId());
+                .isEqualTo(feedbackWriter.getMemberId());
         });
     }
 }
