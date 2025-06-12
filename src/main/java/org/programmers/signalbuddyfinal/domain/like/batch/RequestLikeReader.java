@@ -35,6 +35,10 @@ public class RequestLikeReader implements ItemStreamReader<LikeUpdateRequest> {
             String key = new String(cursor.next(), StandardCharsets.UTF_8);
             String[] keyInfo = key.split(":");
 
+            if (keyInfo.length < 3) {
+                return null;
+            }
+
             Long feedbackId = Long.parseLong(keyInfo[1]);
             Long memberId = Long.parseLong(keyInfo[2]);
             String likeRequestType = redisTemplate.opsForValue().get(key);
