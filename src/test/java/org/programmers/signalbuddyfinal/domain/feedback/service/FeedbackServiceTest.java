@@ -28,6 +28,7 @@ import org.programmers.signalbuddyfinal.domain.like.repository.LikeRepository;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
+import org.programmers.signalbuddyfinal.domain.member.fixture.TestMemberFactory;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
@@ -60,19 +61,21 @@ class FeedbackServiceTest extends IntegrationTest {
     @MockitoBean
     private AwsFileService awsFileService;
 
-    private Member member;
+    private Member feedbackWriter;
     private Crossroad crossroad;
     private final String imageFormName = "imageFile";
 
     @BeforeEach
     void setup() {
-        member = saveMember("test@test.com", "tester");
+        feedbackWriter = memberRepository.save(
+            TestMemberFactory.createActiveUser("test@test.com", "tester")
+        );
         crossroad = saveCrossroad("13214", "00사거리", 37.12222, 127.12132);
 
-        saveFeedback("test subject", "test content", member, crossroad);
-        saveFeedback("test subject2", "test content2", member, crossroad);
-        saveFeedback("test subject3", "test content3", member, crossroad);
-        saveSoftDeleteFeedback("test subject4", "test content4", member, crossroad);
+        saveFeedback("test subject", "test content", feedbackWriter, crossroad);
+        saveFeedback("test subject2", "test content2", feedbackWriter, crossroad);
+        saveFeedback("test subject3", "test content3", feedbackWriter, crossroad);
+        saveSoftDeleteFeedback("test subject4", "test content4", feedbackWriter, crossroad);
     }
 
     @DisplayName("피드백을 작성한다.")
@@ -87,7 +90,7 @@ class FeedbackServiceTest extends IntegrationTest {
             .category(FeedbackCategory.ETC).crossroadId(crossroadId)
             .build();
         MockMultipartFile imageFile = getMockImageFile(imageFormName);
-        CustomUser2Member user = getCurrentMember(member.getMemberId(), MemberRole.USER);
+        CustomUser2Member user = getCurrentMember(feedbackWriter.getMemberId(), MemberRole.USER);
 
         // When
         URL mockURL = mock(URL.class);
@@ -113,7 +116,7 @@ class FeedbackServiceTest extends IntegrationTest {
     void getFeedbacksByMember() {
         // feedbackNoMemberDto
         final PageResponse<FeedbackResponse> feedbacks = feedbackService.findPagedExcludingMember(
-            member.getMemberId(), Pageable.ofSize(10));
+            feedbackWriter.getMemberId(), Pageable.ofSize(10));
 
         assertThat(feedbacks).isNotNull();
         assertThat(feedbacks.getTotalElements()).isEqualTo(3);
@@ -136,7 +139,7 @@ class FeedbackServiceTest extends IntegrationTest {
         SoftAssertions.assertSoftly(softAssertions -> {
             assertThat(response.getFeedbackId()).isEqualTo(feedbackId);
             assertThat(response.getMember().getMemberId())
-                .isEqualTo(member.getMemberId());
+                .isEqualTo(feedbackWriter.getMemberId());
             assertThat(response.getCrossroad().getCrossroadId())
                 .isEqualTo(crossroad.getCrossroadId());
         });
@@ -147,9 +150,9 @@ class FeedbackServiceTest extends IntegrationTest {
     void searchSecretFeedbackDetail_Success() {
         // Given
         Feedback secret = saveSecretFeedback(
-            "test subject5", "test content5", member, crossroad
+            "test subject5", "test content5", feedbackWriter, crossroad
         );
-        CustomUser2Member user = getCurrentMember(member.getMemberId(), MemberRole.USER);
+        CustomUser2Member user = getCurrentMember(feedbackWriter.getMemberId(), MemberRole.USER);
 
         // When
         FeedbackResponse response = feedbackService.searchFeedbackDetail(
@@ -161,7 +164,7 @@ class FeedbackServiceTest extends IntegrationTest {
             assertThat(response.getFeedbackId()).isEqualTo(secret.getFeedbackId());
             assertThat(response.getSecret()).isTrue();
             assertThat(response.getMember().getMemberId())
-                .isEqualTo(member.getMemberId());
+                .isEqualTo(feedbackWriter.getMemberId());
             assertThat(response.getCrossroad().getCrossroadId())
                 .isEqualTo(crossroad.getCrossroadId());
         });
@@ -172,9 +175,11 @@ class FeedbackServiceTest extends IntegrationTest {
     void searchSecretFeedbackDetail_Failure() {
         // Given
         Feedback secret = saveSecretFeedback(
-            "test subject5", "test content5", member, crossroad
+            "test subject5", "test content5", feedbackWriter, crossroad
         );
-        Member otherMember = saveMember("test2@test.com", "tester2");
+        Member otherMember = memberRepository.save(
+            TestMemberFactory.createActiveUser("test2@test.com", "tester2")
+        );
         CustomUser2Member user = getCurrentMember(otherMember.getMemberId(), MemberRole.USER);
 
         // When & Then
@@ -191,9 +196,11 @@ class FeedbackServiceTest extends IntegrationTest {
     void searchSecretFeedbackDetailByAdmin_Success() {
         // Given
         Feedback secret = saveSecretFeedback(
-            "test subject5", "test content5", member, crossroad
+            "test subject5", "test content5", feedbackWriter, crossroad
         );
-        Member admin = saveAdmin("test@test.com", "tester2");
+        Member admin = memberRepository.save(
+            TestMemberFactory.createAdmin("test@test.com", "tester2")
+        );
         CustomUser2Member user = getCurrentMember(admin.getMemberId(), MemberRole.ADMIN);
 
         // When
@@ -206,7 +213,7 @@ class FeedbackServiceTest extends IntegrationTest {
             assertThat(response.getFeedbackId()).isEqualTo(secret.getFeedbackId());
             assertThat(response.getSecret()).isTrue();
             assertThat(response.getMember().getMemberId())
-                .isEqualTo(member.getMemberId());
+                .isEqualTo(feedbackWriter.getMemberId());
             assertThat(response.getMember().getMemberId())
                 .isNotEqualTo(user.getMemberId());
             assertThat(response.getCrossroad().getCrossroadId())
@@ -219,7 +226,7 @@ class FeedbackServiceTest extends IntegrationTest {
     void updateFeedback() {
         // Given
         Feedback feedback = saveFeedback(
-            "test subject", "test content", member, crossroad
+            "test subject", "test content", feedbackWriter, crossroad
         );
         Long feedbackId = feedback.getFeedbackId();
         FeedbackCategory updatedCategory = FeedbackCategory.DELAY;
@@ -229,7 +236,7 @@ class FeedbackServiceTest extends IntegrationTest {
             .category(updatedCategory).crossroadId(crossroad.getCrossroadId())
             .build();
         MockMultipartFile updatedImageFile = getMockImageFile(imageFormName);
-        CustomUser2Member user = getCurrentMember(member.getMemberId(), MemberRole.USER);
+        CustomUser2Member user = getCurrentMember(feedbackWriter.getMemberId(), MemberRole.USER);
 
         // When
         URL mockURL = mock(URL.class);
@@ -254,7 +261,7 @@ class FeedbackServiceTest extends IntegrationTest {
     void updateFeedback_DeleteImage() {
         // Given
         Feedback feedback = saveFeedback(
-            "test subject", "test content", member, crossroad
+            "test subject", "test content", feedbackWriter, crossroad
         );
         Long feedbackId = feedback.getFeedbackId();
         FeedbackCategory updatedCategory = FeedbackCategory.DELAY;
@@ -264,7 +271,7 @@ class FeedbackServiceTest extends IntegrationTest {
             .category(updatedCategory).crossroadId(crossroad.getCrossroadId())
             .build();
         MockMultipartFile updatedImageFile = null;
-        CustomUser2Member user = getCurrentMember(member.getMemberId(), MemberRole.USER);
+        CustomUser2Member user = getCurrentMember(feedbackWriter.getMemberId(), MemberRole.USER);
 
         // When
         FeedbackResponse actual = feedbackService.updateFeedback(
@@ -286,7 +293,9 @@ class FeedbackServiceTest extends IntegrationTest {
             .subject("updated").content("aaaa").crossroadId(1L)
             .category(FeedbackCategory.ETC).secret(Boolean.FALSE)
             .build();
-        Member otherMember = saveMember("test@test.com", "tester2");
+        Member otherMember = memberRepository.save(
+            TestMemberFactory.createActiveUser("test@test.com", "tester2")
+        );
         CustomUser2Member user = getCurrentMember(otherMember.getMemberId(), MemberRole.USER);
 
         // When & Then
@@ -303,7 +312,7 @@ class FeedbackServiceTest extends IntegrationTest {
     void deleteFeedback_Success() {
         // Given
         Long feedbackId = 2L;
-        CustomUser2Member user = getCurrentMember(member.getMemberId(), MemberRole.USER);
+        CustomUser2Member user = getCurrentMember(feedbackWriter.getMemberId(), MemberRole.USER);
 
         // When
         feedbackService.deleteFeedback(feedbackId, user);
@@ -317,7 +326,9 @@ class FeedbackServiceTest extends IntegrationTest {
     void deleteFeedback_Failure() {
         // Given
         Long feedbackId = 2L;
-        Member otherMember = saveMember("test@test.com", "tester2");
+        Member otherMember = memberRepository.save(
+            TestMemberFactory.createActiveUser("test@test.com", "tester2")
+        );
         CustomUser2Member user = getCurrentMember(otherMember.getMemberId(), MemberRole.USER);
 
         // When & Then
@@ -334,7 +345,9 @@ class FeedbackServiceTest extends IntegrationTest {
     void deleteFeedbackByAdmin() {
         // Given
         Long feedbackId = 2L;
-        Member admin = saveAdmin("test@test.com", "tester2");
+        Member admin = memberRepository.save(
+            TestMemberFactory.createAdmin("test@test.com", "tester2")
+        );
         CustomUser2Member user = getCurrentMember(admin.getMemberId(), MemberRole.ADMIN);
 
         // When
@@ -350,7 +363,9 @@ class FeedbackServiceTest extends IntegrationTest {
         final List<Feedback> feedbacks = feedbackRepository.findAll().stream()
             .filter(feedback -> !feedback.isDeleted())
             .toList();
-        final Member likedUser = saveMember("test2@test.com", "tester2");
+        final Member likedUser = memberRepository.save(
+            TestMemberFactory.createActiveUser("test2@test.com", "tester2")
+        );
 
         final List<Like> likes = List.of(
             Like.create(likedUser, feedbacks.get(0)),
@@ -363,22 +378,8 @@ class FeedbackServiceTest extends IntegrationTest {
         assertThat(feedbacks).hasSize(3);
         assertThat(likedFeedbacks.getTotalElements()).isEqualTo(2);
         assertThat(likedFeedbacks.getSearchResults()).allSatisfy(feedback -> {
-            assertThat(feedback.getMember().getMemberId()).isEqualTo(member.getMemberId());
+            assertThat(feedback.getMember().getMemberId()).isEqualTo(feedbackWriter.getMemberId());
         });
-    }
-
-    private Member saveMember(String email, String nickname) {
-        return memberRepository.save(
-            Member.builder().email(email).password("123456").role(MemberRole.USER)
-                .nickname(nickname).memberStatus(MemberStatus.ACTIVITY)
-                .profileImageUrl("https://test-image.com/test-123131").build());
-    }
-
-    private Member saveAdmin(String email, String nickname) {
-        return memberRepository.save(
-            Member.builder().email(email).password("123456").role(MemberRole.ADMIN)
-                .nickname(nickname).memberStatus(MemberStatus.ACTIVITY)
-                .profileImageUrl("https://test-image.com/test-123131").build());
     }
 
     private Crossroad saveCrossroad(String apiId, String name, double lat, double lng) {

@@ -18,6 +18,7 @@ import org.programmers.signalbuddyfinal.domain.like.service.LikeService;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
+import org.programmers.signalbuddyfinal.domain.member.fixture.TestMemberFactory;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
 import org.programmers.signalbuddyfinal.global.db.RedisTestContainer;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
@@ -55,15 +56,9 @@ class LikeJobConfigTest extends BatchTest implements RedisTestContainer {
     void setup() {
         List<Member> memberList = new ArrayList<>();
         for (int i = 0; i < 100; i++) {
-            Member member = Member.builder()
-                .email("test@test.com")
-                .password("123456" + i)
-                .role(MemberRole.USER)
-                .nickname("tester")
-                .memberStatus(MemberStatus.ACTIVITY)
-                .profileImageUrl("https://test-image.com/test-123131")
-                .build();
-            memberList.add(member);
+            memberList.add(
+                TestMemberFactory.createActiveUser("test" + i + "@test.com", "tester" + i)
+            );
         }
         savedMemberList = memberRepository.saveAll(memberList);
     }

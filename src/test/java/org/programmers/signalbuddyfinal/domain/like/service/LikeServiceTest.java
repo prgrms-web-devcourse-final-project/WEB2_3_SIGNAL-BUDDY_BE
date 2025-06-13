@@ -19,6 +19,7 @@ import org.programmers.signalbuddyfinal.domain.like.repository.LikeRepository;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
+import org.programmers.signalbuddyfinal.domain.member.fixture.TestMemberFactory;
 import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
 import org.programmers.signalbuddyfinal.global.db.RedisTestContainer;
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
@@ -49,20 +50,14 @@ class LikeServiceTest extends IntegrationTest implements RedisTestContainer {
     @Autowired
     private StringRedisTemplate redisTemplate;
 
-    private Member member;
+    private Member feedbackWriter;
     private Feedback feedback;
 
     @BeforeEach
     void setup() {
-        member = Member.builder()
-            .email("test@test.com")
-            .password("123456")
-            .role(MemberRole.USER)
-            .nickname("tester")
-            .memberStatus(MemberStatus.ACTIVITY)
-            .profileImageUrl("https://test-image.com/test-123131")
-            .build();
-        member = memberRepository.save(member);
+        feedbackWriter = memberRepository.save(
+            TestMemberFactory.createActiveUser("test@test.com", "tester")
+        );
 
         Crossroad crossroad = Crossroad.create()
             .crossroadApiId("13214").name("00사거리")
@@ -75,7 +70,7 @@ class LikeServiceTest extends IntegrationTest implements RedisTestContainer {
         Feedback entity = Feedback.create()
             .subject(subject).content(content).secret(Boolean.FALSE)
             .category(FeedbackCategory.ETC)
-            .member(member).crossroad(crossroad)
+            .member(feedbackWriter).crossroad(crossroad)
             .build();
         feedback = feedbackRepository.save(entity);
     }
@@ -93,7 +88,7 @@ class LikeServiceTest extends IntegrationTest implements RedisTestContainer {
     void addLike_Success() {
         // given
         CustomUser2Member user = new CustomUser2Member(
-            new CustomUserDetails(member.getMemberId(), "", "",
+            new CustomUserDetails(feedbackWriter.getMemberId(), "", "",
                 "", "", MemberRole.USER, MemberStatus.ACTIVITY));
 
         // when
@@ -101,10 +96,10 @@ class LikeServiceTest extends IntegrationTest implements RedisTestContainer {
 
         // then
         String deleteLike = redisTemplate.opsForValue()
-            .get(generateKey(feedback.getFeedbackId(), member.getMemberId()));
+            .get(generateKey(feedback.getFeedbackId(), feedbackWriter.getMemberId()));
         assertThat(deleteLike).isEqualTo("ADD");
         redisTemplate.delete(
-            generateKey(feedback.getFeedbackId(), member.getMemberId())
+            generateKey(feedback.getFeedbackId(), feedbackWriter.getMemberId())
         );
     }
 
@@ -113,10 +108,10 @@ class LikeServiceTest extends IntegrationTest implements RedisTestContainer {
     void addLike_Failure() {
         // given
         CustomUser2Member user = new CustomUser2Member(
-            new CustomUserDetails(member.getMemberId(), "", "",
+            new CustomUserDetails(feedbackWriter.getMemberId(), "", "",
                 "", "", MemberRole.USER, MemberStatus.ACTIVITY));
 
-        likeRepository.save(Like.create(member, feedback));
+        likeRepository.save(Like.create(feedbackWriter, feedback));
 
         // when & then
         try {
@@ -131,20 +126,20 @@ class LikeServiceTest extends IntegrationTest implements RedisTestContainer {
     void deleteLike_Success() {
         // given
         CustomUser2Member user = new CustomUser2Member(
-            new CustomUserDetails(member.getMemberId(), "", "",
+            new CustomUserDetails(feedbackWriter.getMemberId(), "", "",
                 "", "", MemberRole.USER, MemberStatus.ACTIVITY));
 
-        likeRepository.save(Like.create(member, feedback));
+        likeRepository.save(Like.create(feedbackWriter, feedback));
 
         // when
         likeService.deleteLike(feedback.getFeedbackId(), user);
 
         // then
         String deleteLike = redisTemplate.opsForValue()
-            .get(generateKey(feedback.getFeedbackId(), member.getMemberId()));
+            .get(generateKey(feedback.getFeedbackId(), feedbackWriter.getMemberId()));
         assertThat(deleteLike).isEqualTo("CANCEL");
         redisTemplate.delete(
-            generateKey(feedback.getFeedbackId(), member.getMemberId())
+            generateKey(feedback.getFeedbackId(), feedbackWriter.getMemberId())
         );
     }
 
@@ -153,7 +148,7 @@ class LikeServiceTest extends IntegrationTest implements RedisTestContainer {
     void deleteLike_Failure() {
         // given
         CustomUser2Member user = new CustomUser2Member(
-            new CustomUserDetails(member.getMemberId(), "", "",
+            new CustomUserDetails(feedbackWriter.getMemberId(), "", "",
                 "", "", MemberRole.USER, MemberStatus.ACTIVITY));
 
         // when & then
@@ -170,10 +165,10 @@ class LikeServiceTest extends IntegrationTest implements RedisTestContainer {
         // given
         Long feedbackId = feedback.getFeedbackId();
         CustomUser2Member user = new CustomUser2Member(
-            new CustomUserDetails(member.getMemberId(), "", "",
+            new CustomUserDetails(feedbackWriter.getMemberId(), "", "",
                 "", "", MemberRole.USER, MemberStatus.ACTIVITY));
 
-        likeRepository.save(Like.create(member, feedback));
+        likeRepository.save(Like.create(feedbackWriter, feedback));
 
         // when
         LikeExistResponse actual = likeService.existsLike(feedbackId, user);
@@ -188,7 +183,7 @@ class LikeServiceTest extends IntegrationTest implements RedisTestContainer {
         // given
         Long feedbackId = feedback.getFeedbackId();
         CustomUser2Member user = new CustomUser2Member(
-            new CustomUserDetails(member.getMemberId(), "", "",
+            new CustomUserDetails(feedbackWriter.getMemberId(), "", "",
                 "", "", MemberRole.USER, MemberStatus.ACTIVITY));
 
         // when
@@ -204,7 +199,7 @@ class LikeServiceTest extends IntegrationTest implements RedisTestContainer {
         // given
         Long feedbackId = feedback.getFeedbackId();
         CustomUser2Member user = new CustomUser2Member(
-            new CustomUserDetails(member.getMemberId(), "", "",
+            new CustomUserDetails(feedbackWriter.getMemberId(), "", "",
                 "", "", MemberRole.USER, MemberStatus.ACTIVITY));
 
         likeService.addLike(feedbackId, user);
@@ -222,10 +217,10 @@ class LikeServiceTest extends IntegrationTest implements RedisTestContainer {
         // given
         Long feedbackId = feedback.getFeedbackId();
         CustomUser2Member user = new CustomUser2Member(
-            new CustomUserDetails(member.getMemberId(), "", "",
+            new CustomUserDetails(feedbackWriter.getMemberId(), "", "",
                 "", "", MemberRole.USER, MemberStatus.ACTIVITY));
 
-        likeRepository.save(Like.create(member, feedback));
+        likeRepository.save(Like.create(feedbackWriter, feedback));
         likeService.deleteLike(feedbackId, user);
 
         // when
