@@ -1,16 +1,14 @@
 package org.programmers.signalbuddyfinal.domain.air_quality.service;
 
-import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.programmers.signalbuddyfinal.domain.air_quality.dto.AirQuality;
-import org.programmers.signalbuddyfinal.domain.air_quality.dto.AirQualityResponse;
-import org.programmers.signalbuddyfinal.domain.air_quality.dto.CachedAirQuality;
+import org.locationtech.proj4j.ProjCoordinate;
+import org.programmers.signalbuddyfinal.domain.air_quality.dto.*;
 import org.programmers.signalbuddyfinal.domain.air_quality.exception.AirQualityErrorCode;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -18,60 +16,37 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AirQualityService {
 
-    private final AirQualityProvider airQualityProvider;
-    private final RedisTemplate<Object, Object> redisTemplate;
+    private final ObservatoryProvider observatoryProvider;
+    private final CoordinateConverter coordinateConverter;
+    private final List<AirQualityStrategy> strategies;
 
-    private static final String key = "air-quality: ";
-    private static final Duration TTL = Duration.ofHours(2);
+    public AirQualityResponse getAirQuality(double lat, double lng) {
+        ObservatoryResponse observatoryResponse = getObservatory(lat, lng).orElseThrow(
+            () -> new BusinessException(AirQualityErrorCode.AIR_QUALITY_SERVICE_UNAVAILABLE));
 
-    public AirQualityResponse getAirQuality() {
-        return getCachedAirQuality().orElseGet(this::updateAriQuality);
+        AirQualityStrategy strategy = strategies.stream()
+            .filter(s -> s.supports(observatoryResponse.getAddr()))
+            .findFirst()
+            .orElseThrow(
+                () -> new BusinessException(AirQualityErrorCode.AIR_QUALITY_SERVICE_UNAVAILABLE));
+
+        return strategy.getCache(getRegionCode(observatoryResponse)).orElseGet(
+            () -> strategy.update(observatoryResponse)
+        );
+
     }
 
-    public AirQualityResponse updateAriQuality() {
-        return requestAirQuality()
-                .map(this::successfulResponse)
-                .orElseGet(this::failBackOrThrow);
+    private String getRegionCode(ObservatoryResponse observatoryResponse) {
+        return observatoryResponse.getStationCode();
     }
 
-    private Optional<AirQualityResponse> getCachedAirQuality() {
-        return Optional.ofNullable(getCache())
-                .filter(CachedAirQuality::isFresh)
-                .map(CachedAirQuality::getData);
+    private ProjCoordinate convertCoordinate(double lat, double lng) {
+        return coordinateConverter.convert(lat, lng);
     }
 
-    private AirQualityResponse successfulResponse(AirQuality newAirQuality) {
-        AirQualityResponse response = createResponse(newAirQuality);
-        saveToCache(response, true);
-        return response;
+    private Optional<ObservatoryResponse> getObservatory(double lat, double lng) {
+        ProjCoordinate coordinate = convertCoordinate(lat, lng);
+        return observatoryProvider.getObservatory(coordinate.x, coordinate.y);
     }
 
-    private AirQualityResponse failBackOrThrow() {
-        return Optional.ofNullable(getCache())
-                .map(cache -> {
-                    saveToCache(cache.getData(), false);
-                    return cache.getData();
-                })
-                .orElseThrow(() -> new BusinessException(AirQualityErrorCode.AIR_QUALITY_SERVICE_UNAVAILABLE));
-    }
-
-    private void saveToCache(AirQualityResponse airQualityResponse, boolean fresh) {
-        redisTemplate.opsForValue().set(key, new CachedAirQuality(airQualityResponse, fresh), TTL);
-    }
-
-    private CachedAirQuality getCache() {
-        return (CachedAirQuality) redisTemplate.opsForValue().get(key);
-    }
-
-    private Optional<AirQuality> requestAirQuality() {
-        return airQualityProvider.getAirQuality();
-    }
-
-    private AirQualityResponse createResponse(AirQuality airQuality) {
-        return AirQualityResponse.builder()
-                .grade(airQuality.getRow().get(0).getGrade())
-                .pm25(airQuality.getRow().get(0).getPm25())
-                .pm10(airQuality.getRow().get(0).getPm10())
-                .build();
-    }
 }

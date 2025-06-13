@@ -24,7 +24,7 @@ import org.testcontainers.shaded.org.apache.commons.lang3.ArrayUtils;
 @WebMvcTest(AirQualityController.class)
 public class AirQualityControllerTest extends ControllerTest {
 
-    private final String tag = "AirQuality API";
+    private final String tag = "SeoulAirQuality API";
 
     @MockitoBean
     private AirQualityService airQualityService;
@@ -38,9 +38,12 @@ public class AirQualityControllerTest extends ControllerTest {
             .pm10("25")
             .build();
 
-        given(airQualityService.getAirQuality()).willReturn(response);
+        given(airQualityService.getAirQuality(127.4170933,127.4170933)).willReturn(response);
 
-        mockMvc.perform(get("/api/air-quality"))
+        mockMvc.perform(get("/api/air-quality")
+                .param("lat","127.4170933")
+                .param("lng", "127.4170933")
+            )
             .andExpect(status().isOk())
             .andDo(print())
             .andDo(document("미세먼지 조회",
