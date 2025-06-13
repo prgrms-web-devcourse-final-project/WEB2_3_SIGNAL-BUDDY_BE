@@ -4,11 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.admin.dto.AdminMemberDetailResponse;
 import org.programmers.signalbuddyfinal.domain.admin.dto.AdminMemberResponse;
 import org.programmers.signalbuddyfinal.domain.admin.dto.MemberFilterRequest;
-import org.programmers.signalbuddyfinal.domain.admin.dto.WithdrawalMemberResponse;
 import org.programmers.signalbuddyfinal.domain.admin.service.AdminMemberService;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
@@ -29,22 +27,12 @@ public class AdminMemberController {
     public ResponseEntity<ApiResponse<PageResponse<AdminMemberResponse>>> getAllMembers(
         @PageableDefault(page = 0, size = 10, sort = "email") Pageable pageable) {
 
-        PageResponse<AdminMemberResponse> members = adminService.getAllMembers(pageable);
-        return ResponseEntity.ok(ApiResponse.createSuccess(members));
+        return ResponseEntity.ok(ApiResponse.createSuccess(adminService.getAllMembers(pageable)));
     }
 
     @GetMapping("{id}")
     public ResponseEntity<AdminMemberDetailResponse> getMember(@PathVariable Long id) {
-        final AdminMemberDetailResponse member = adminService.getMember(id);
-        return ResponseEntity.ok(member);
-    }
-
-    @GetMapping("/withdrawal")
-    public ResponseEntity<Page<WithdrawalMemberResponse>> getAllWithdrawMembers(
-        @PageableDefault(page = 0, size = 10, sort = "email") Pageable pageable) {
-
-        Page<WithdrawalMemberResponse> members = adminService.getAllWithdrawalMembers(pageable);
-        return ResponseEntity.ok(members);
+        return ResponseEntity.ok(adminService.getMember(id));
     }
 
     @GetMapping("/filter")
@@ -52,10 +40,9 @@ public class AdminMemberController {
         @PageableDefault(page = 0, size = 10, sort = "email") Pageable pageable,
         @ModelAttribute MemberFilterRequest memberFilterRequest) {
 
-        PageResponse<AdminMemberResponse> members = adminService.getAllMemberWithFilter(pageable,
-            memberFilterRequest);
-
-        return ResponseEntity.ok(ApiResponse.createSuccess(members));
+        return ResponseEntity.ok(
+            ApiResponse.createSuccess(adminService.getAllMembersWithFilter(pageable,
+                memberFilterRequest)));
     }
 
 }

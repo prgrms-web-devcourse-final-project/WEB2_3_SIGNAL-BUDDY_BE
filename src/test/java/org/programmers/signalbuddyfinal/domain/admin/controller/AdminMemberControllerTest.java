@@ -120,7 +120,7 @@ class AdminMemberControllerTest extends ControllerTest {
         final PageResponse<AdminMemberResponse> page = new PageResponse<>(
             new PageImpl<>(members, pageable, members.size()));
 
-        given(adminService.getAllMemberWithFilter(any(Pageable.class),
+        given(adminService.getAllMembersWithFilter(any(Pageable.class),
             any(MemberFilterRequest.class)))
             .willReturn(page);
 
