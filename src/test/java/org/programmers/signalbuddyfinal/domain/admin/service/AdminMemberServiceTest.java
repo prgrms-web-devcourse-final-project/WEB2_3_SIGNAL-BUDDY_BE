@@ -24,7 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
-public class AdminMemberServiceTest extends IntegrationTest {
+class AdminMemberServiceTest extends IntegrationTest {
 
     private Pageable pageable;
     @Autowired
@@ -55,13 +55,13 @@ public class AdminMemberServiceTest extends IntegrationTest {
 
     @DisplayName("회원 전체 조회 성공 테스트")
     @Test
-    public void successGetAllMember() {
+    void successGetAllMember() {
         assertThat(adminService.getAllMembers(pageable).getTotalElements()).isEqualTo(9);
     }
 
     @DisplayName("회원 조회 성공 테스트")
     @Test
-    public void successGetMember() {
+    void successGetMember() {
         Member member = findMemberByEmail("user1@test.com");
         assertThat(adminService.getMember(member.getMemberId()).getEmail()).isEqualTo(
             "user1@test.com");
@@ -69,7 +69,7 @@ public class AdminMemberServiceTest extends IntegrationTest {
 
     @DisplayName("회원 조회 실패 예외 발생 테스트")
     @Test
-    public void failGetMember() {
+    void failGetMember() {
         assertThrows(BusinessException.class, () -> {
             adminService.getMember(20L);
         });
@@ -77,7 +77,7 @@ public class AdminMemberServiceTest extends IntegrationTest {
 
     @DisplayName("회원별 북마크 조회 성공 테스트")
     @Test
-    public void successGetBookmarkTest() {
+    void successGetBookmarkTest() {
         bookmarkService.createBookmark(createBookmarkRequest((long) 111.111, "우리집"), 1L);
         bookmarkService.createBookmark(createBookmarkRequest((long) 222.222, "남의집"), 1L);
         int count = adminService.getMember(1L).getBookmarkCount();
@@ -86,7 +86,7 @@ public class AdminMemberServiceTest extends IntegrationTest {
 
     @DisplayName("회원 필터링 조회 성공 테스트")
     @Test
-    public void successGetAllMemberWithFilterTest() {
+    void successGetAllMemberWithFilterTest() {
         MemberFilterRequest request = createFilter(null, null, null, null,
             null, null);
         assertThat(
@@ -95,7 +95,7 @@ public class AdminMemberServiceTest extends IntegrationTest {
 
     @DisplayName("기간별 조회 시작일 미지정 예외 테스트")
     @Test
-    public void 기간별_조회_시작일_미지정_테스트() {
+    void 기간별_조회_시작일_미지정_테스트() {
 
         MemberFilterRequest noStartDateFilter = createFilter(null, null, null, null,
             LocalDateTime.of(2025, 1, 25, 0, 0, 0), null);
@@ -107,7 +107,7 @@ public class AdminMemberServiceTest extends IntegrationTest {
 
     @DisplayName("기간별 조회 종료일 미지정 예외 테스트")
     @Test
-    public void 기간별_조회_종료일_미지정_테스트() {
+    void 기간별_조회_종료일_미지정_테스트() {
         MemberFilterRequest noEndDateFilter = createFilter(null, null, null,
             LocalDateTime.of(2025, 1, 25, 0, 0, 0),
             null, null);
@@ -119,7 +119,7 @@ public class AdminMemberServiceTest extends IntegrationTest {
 
     @DisplayName("기간별 조회 시작일 > 종료일 예외 테스트")
     @Test
-    public void 기간별_조회_시작일_종료일_비교_테스트() {
+    void 기간별_조회_시작일_종료일_비교_테스트() {
 
         MemberFilterRequest afterStartDateFilter = createFilter(null, null, null,
             LocalDateTime.of(2025, 1, 25, 0, 0, 0),
@@ -132,19 +132,19 @@ public class AdminMemberServiceTest extends IntegrationTest {
 
     @DisplayName("기간별 조회 성공 테스트")
     @Test
-    public void 기간별_조회_성공_테스트() {
+    void 기간별_조회_성공_테스트() {
 
         MemberFilterRequest filter = createFilter(null, null, null,
             LocalDateTime.of(2024, 1, 25, 0, 0, 0),
-            LocalDateTime.of(2025, 6, 1, 0, 0, 0), null);
+            LocalDateTime.now(), null);
 
         assertThat(adminService.getAllMembersWithFilter(pageable, filter)
             .getTotalElements()).isEqualTo(9);
     }
 
-    @DisplayName("기간별 조회 성공 테스트")
+    @DisplayName("기간별 조회 미지정 성공 테스트")
     @Test
-    public void 기간별_조회_미지정_성공_테스트() {
+    void 기간별_조회_미지정_성공_테스트() {
 
         MemberFilterRequest filter = createFilter(null, null, null,
             null, null, null);
