@@ -31,8 +31,10 @@ public final class QueryDslUtils {
      * @param endDate   조회하려는 끝 날짜 (null이면 없는 것으로 처리)
      * @return 시작 날짜 ~ 끝 날짜 범위를 조건으로 설정하여 반환 (둘 다 null이면 전체 조회)
      */
-    public static BooleanExpression betweenDates(DateTimePath<LocalDateTime> path,
-        LocalDate startDate, LocalDate endDate) {
+    public static BooleanExpression betweenDates(
+        DateTimePath<LocalDateTime> path,
+        LocalDate startDate, LocalDate endDate
+    ) {
         BooleanExpression predicate = null;
 
         if (startDate != null) {
@@ -57,8 +59,11 @@ public final class QueryDslUtils {
      * @throws org.springframework.dao.InvalidDataAccessApiUsageException 잘못된 필드명을 입력하면 쿼리를 처리하는 중
      *                                                                    해당 예외가 발생한다.
      */
-    public static OrderSpecifier<?>[] getOrderSpecifiers(Pageable pageable, Class<?> type,
-        String variable) {
+    public static OrderSpecifier<?>[] getOrderSpecifiers(
+        Pageable pageable,
+        Class<?> type,
+        String variable
+    ) {
         List<OrderSpecifier<?>> orderSpecifiers = new ArrayList<>();
 
         // 정렬 조건이 없는 경우
@@ -76,8 +81,7 @@ public final class QueryDslUtils {
         }
 
         @SuppressWarnings("unchecked")
-        OrderSpecifier<?>[] results = orderSpecifiers.toArray(
-            new OrderSpecifier<?>[0]);
+        OrderSpecifier<?>[] results = orderSpecifiers.toArray(new OrderSpecifier<?>[0]);
         return results;
     }
 
@@ -89,7 +93,10 @@ public final class QueryDslUtils {
      * @param target2 타켓 컬럼 2
      * @return QueryDSL에서 Where의 조건으로 사용
      */
-    public static BooleanExpression fulltextSearch(String keyword, StringPath target1, StringPath target2) {
+    public static BooleanExpression fulltextSearch(
+        String keyword,
+        StringPath target1, StringPath target2
+    ) {
         if (keyword == null || keyword.isBlank()) {
             return Expressions.TRUE;
         }
