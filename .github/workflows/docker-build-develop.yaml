@@ -1,4 +1,4 @@
-name: develop 브랜치 도커 이미지 생성
+name: develop 브랜치 CI/CD
 
 on:
   push:
@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      docker_image: ${{ steps.docker.outputs.docker_image }}
 
     steps:
       - name: 리포지토리 체크아웃
@@ -41,11 +43,12 @@ jobs:
           export CR_PAT=${{ secrets.GIT_TOKEN }}
           echo $CR_PAT | docker login ghcr.io -u ${{ secrets.GIT_ID }} --password-stdin
 
-
       - name: 도커 이미지 생성
+        id: docker
         run: |
           TAG=$(git rev-parse --short HEAD)
           DOCKER_IMAGE=${{ secrets.DOCKER_REGISTRY }}/signal-buddy:$TAG
+          echo "docker_image=$DOCKER_IMAGE" >> "$GITHUB_OUTPUT"
           docker build -t test -f submodule/docker/dev.Dockerfile .
           docker tag test $DOCKER_IMAGE
           docker push $DOCKER_IMAGE
