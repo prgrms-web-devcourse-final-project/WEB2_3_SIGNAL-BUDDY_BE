@@ -94,7 +94,7 @@ public final class QueryDslUtils {
             return Expressions.TRUE;
         }
 
-        String formattedSearchWord = "\"" + keyword + "\"";
+        String formattedSearchWord = keyword + "*";
         return numberTemplate(
             Double.class, "function('match2_against', {0}, {1}, {2})",
             target1, target2, formattedSearchWord
@@ -113,7 +113,7 @@ public final class QueryDslUtils {
             return Expressions.TRUE;
         }
 
-        String formattedSearchWord = "\"" + keyword + "\"";
+        String formattedSearchWord = keyword + "*";
         return numberTemplate(
             Double.class, "function('match_against', {0}, {1})",
             target, formattedSearchWord
