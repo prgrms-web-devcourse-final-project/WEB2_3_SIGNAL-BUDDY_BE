@@ -71,6 +71,10 @@ jobs:
     needs: build
 
     steps:
+      - name: GitHub Actions Runner의 Public IP 가져오기
+        id: ip
+        uses: haythem/public-ip@v1.3
+
       - name: AWS EC2 SSH 접속 및 배포
         uses: appleboy/ssh-action@v1.2.2
         with:
