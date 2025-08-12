@@ -73,10 +73,22 @@ jobs:
     steps:
       - name: GitHub Actions Runner의 Public IP 가져오기
         id: ip
-        uses: haythem/public-ip@v1.3
+        uses: haythem/public-ip@v1
+
+      - name: AWS credentials 설정
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_IAM_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_IAM_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: GitHub Actions IP를 인바운드 룰에 임시 추가
+        run: |
+          aws ec2 authorize-security-group-ingress --group-id ${{ secrets.AWS_SECRET_GROUP_ID }} \
+          --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
 
       - name: AWS EC2 SSH 접속 및 배포
-        uses: appleboy/ssh-action@v1.2.2
+        uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
