@@ -1,4 +1,4 @@
-name: develop 브랜치 도커 이미지 생성
+name: develop 브랜치 Docker Build & 무중단 배포
 
 on:
   push:
@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      docker_image: ${{ steps.docker.outputs.docker_image }}
 
     steps:
       - name: 리포지토리 체크아웃
@@ -38,14 +40,15 @@ jobs:
 
       - name: GitHub Container Registry 로그인
         run: |
-          export CR_PAT=${{ secrets.SIGNAL_BUDDY_TOKEN }}
+          export CR_PAT=${{ secrets.GIT_TOKEN }}
           echo $CR_PAT | docker login ghcr.io -u ${{ secrets.GIT_ID }} --password-stdin
 
-
       - name: 도커 이미지 생성
+        id: docker
         run: |
           TAG=$(git rev-parse --short HEAD)
           DOCKER_IMAGE=${{ secrets.DOCKER_REGISTRY }}/signal-buddy:$TAG
+          echo "docker_image=$DOCKER_IMAGE" >> "$GITHUB_OUTPUT"
           docker build -t test -f submodule/docker/dev.Dockerfile .
           docker tag test $DOCKER_IMAGE
           docker push $DOCKER_IMAGE
@@ -62,3 +65,48 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: ./gradlew sonar --info --stacktrace
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+
+    concurrency:
+      group: deploy
+      cancel-in-progress: true  # 기존 실행 중인 워크플로우는 취소, 새 커밋 기준으로 실행
+
+    steps:
+      - name: GitHub Actions Runner의 Public IP 가져오기
+        id: ip
+        uses: haythem/public-ip@v1
+
+      - name: AWS credentials 설정
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_IAM_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_IAM_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: GitHub Actions IP를 인바운드 룰에 임시 추가
+        run: |
+          aws ec2 authorize-security-group-ingress --group-id ${{ secrets.AWS_SECURITY_GROUP_ID }} \
+          --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
+
+      - name: AWS EC2 SSH 접속 및 배포
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+            echo ${{ secrets.GIT_TOKEN }} | docker login ghcr.io -u ${{ secrets.GIT_ID }} --password-stdin
+            docker pull ${{ needs.build.outputs.docker_image }}
+            echo 'DOCKER_IMAGE=${{ needs.build.outputs.docker_image }}' > ${{ secrets.SUBMODULE_DIRECTORY }}/docker/.env
+            sudo sh ${{ secrets.SUBMODULE_DIRECTORY }}/script/deploy.sh
+            docker system prune -a -f || true
+            
+      - name: GitHub Actions Runner의 IP를 인바운드에서 삭제
+        if: always()
+        run: |
+          aws ec2 revoke-security-group-ingress --group-id ${{ secrets.AWS_SECURITY_GROUP_ID }} \
+          --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32

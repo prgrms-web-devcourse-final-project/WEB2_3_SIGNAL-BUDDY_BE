@@ -38,7 +38,7 @@ jobs:
 
       - name: GitHub Container Registry 로그인
         run: |
-          export CR_PAT=${{ secrets.SIGNAL_BUDDY_TOKEN }}
+          export CR_PAT=${{ secrets.GIT_TOKEN }}
           echo $CR_PAT | docker login ghcr.io -u ${{ secrets.GIT_ID }} --password-stdin
 
 
