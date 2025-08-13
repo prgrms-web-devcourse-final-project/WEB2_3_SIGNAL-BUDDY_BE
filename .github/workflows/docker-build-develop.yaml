@@ -1,4 +1,4 @@
-name: develop 브랜치 CI/CD
+name: develop 브랜치 Docker Build & 무중단 배포
 
 on:
   push:
@@ -84,7 +84,7 @@ jobs:
 
       - name: GitHub Actions IP를 인바운드 룰에 임시 추가
         run: |
-          aws ec2 authorize-security-group-ingress --group-id ${{ secrets.AWS_SECRET_GROUP_ID }} \
+          aws ec2 authorize-security-group-ingress --group-id ${{ secrets.AWS_SECURITY_GROUP_ID }} \
           --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
 
       - name: AWS EC2 SSH 접속 및 배포
@@ -100,3 +100,8 @@ jobs:
             echo 'DOCKER_IMAGE=${{ needs.build.outputs.docker_image }}' > ${{ secrets.SUBMODULE_DIRECTORY }}/docker/.env
             sudo sh ${{ secrets.SUBMODULE_DIRECTORY }}/script/deploy.sh
             docker system prune -a -f || true
+            
+      - name: GitHub Actions Runner의 IP를 인바운드에서 삭제
+        run: |
+          aws ec2 revoke-security-group-ingress --group-id ${{ secrets.AWS_SECURITY_GROUP_ID }} \
+          --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
