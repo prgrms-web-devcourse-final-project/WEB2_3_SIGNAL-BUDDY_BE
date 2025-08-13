@@ -70,6 +70,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
 
+    concurrency:
+      group: deploy
+      cancel-in-progress: true  # 기존 실행 중인 워크플로우는 취소, 새 커밋 기준으로 실행
+
     steps:
       - name: GitHub Actions Runner의 Public IP 가져오기
         id: ip
