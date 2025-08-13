@@ -47,8 +47,8 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
           restore-keys: ${{ runner.os }}-gradle
 
-      - name: Gradle Build
-        run: ./gradlew build
+      - name: Gradle Test
+        run: ./gradlew test
 
       - name: SonarCloud 분석
         env:
