@@ -76,8 +76,8 @@ jobs:
 
     steps:
       - name: GitHub Actions Runner의 Public IP 가져오기
-        id: ip
-        uses: haythem/public-ip@v1
+        run : |
+          echo "IPV4=$(curl -s ifconfig.me)" >> "$GITHUB_ENV"
 
       - name: AWS credentials 설정
         uses: aws-actions/configure-aws-credentials@v4
@@ -89,7 +89,7 @@ jobs:
       - name: GitHub Actions IP를 인바운드 룰에 임시 추가
         run: |
           aws ec2 authorize-security-group-ingress --group-id ${{ secrets.AWS_SECURITY_GROUP_ID }} \
-          --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
+          --protocol tcp --port 22 --cidr ${{ env.IPV4 }}/32
 
       - name: AWS EC2 SSH 접속 및 배포
         uses: appleboy/ssh-action@v1
@@ -101,7 +101,7 @@ jobs:
             set -e
             echo ${{ secrets.GIT_TOKEN }} | docker login ghcr.io -u ${{ secrets.GIT_ID }} --password-stdin
             docker pull ${{ needs.build.outputs.docker_image }}
-            echo 'DOCKER_IMAGE=${{ needs.build.outputs.docker_image }}' > ${{ secrets.SUBMODULE_DIRECTORY }}/docker/.env
+            echo "DOCKER_IMAGE=${{ needs.build.outputs.docker_image }}" > ${{ secrets.SUBMODULE_DIRECTORY }}/docker/.env
             sudo sh ${{ secrets.SUBMODULE_DIRECTORY }}/script/deploy.sh
             docker system prune -a -f || true
             
@@ -109,4 +109,4 @@ jobs:
         if: always()
         run: |
           aws ec2 revoke-security-group-ingress --group-id ${{ secrets.AWS_SECURITY_GROUP_ID }} \
-          --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
+          --protocol tcp --port 22 --cidr ${{ env.IPV4 }}/32
