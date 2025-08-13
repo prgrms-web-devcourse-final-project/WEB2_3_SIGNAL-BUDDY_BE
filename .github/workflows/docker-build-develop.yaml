@@ -101,7 +101,7 @@ jobs:
             set -e
             echo ${{ secrets.GIT_TOKEN }} | docker login ghcr.io -u ${{ secrets.GIT_ID }} --password-stdin
             docker pull ${{ needs.build.outputs.docker_image }}
-            echo 'DOCKER_IMAGE=${{ needs.build.outputs.docker_image }}' > ${{ secrets.SUBMODULE_DIRECTORY }}/docker/.env
+            echo "DOCKER_IMAGE=${{ needs.build.outputs.docker_image }}" > ${{ secrets.SUBMODULE_DIRECTORY }}/docker/.env
             sudo sh ${{ secrets.SUBMODULE_DIRECTORY }}/script/deploy.sh
             docker system prune -a -f || true
             
