@@ -106,6 +106,7 @@ jobs:
             docker system prune -a -f || true
             
       - name: GitHub Actions Runner의 IP를 인바운드에서 삭제
+        if: always()
         run: |
           aws ec2 revoke-security-group-ingress --group-id ${{ secrets.AWS_SECURITY_GROUP_ID }} \
           --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
