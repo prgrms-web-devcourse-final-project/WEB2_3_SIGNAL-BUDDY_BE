@@ -54,3 +54,6 @@ src/main/resources/static/docs/
 
 ### Log ###
 logs/
+
+### GitHub Actions Locally Secrets ###
+.secrets
