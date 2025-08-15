@@ -97,7 +97,7 @@ jobs:
       - name: AWS EC2 SSH 접속 및 배포
         uses: appleboy/ssh-action@v1
         env:
-          DOCKER_IMAGE: ${{ needs.build.outputs.docker_image }}
+          DOCKER_IMAGE: ${{ secrets.DOCKER_REGISTRY }}/signal-buddy:${{ needs.build.outputs.docker_tag }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
