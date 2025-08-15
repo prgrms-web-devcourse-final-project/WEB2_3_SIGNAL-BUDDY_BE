@@ -49,7 +49,7 @@ jobs:
         run: |
           TAG=$(git rev-parse --short HEAD)
           DOCKER_IMAGE=${{ secrets.DOCKER_REGISTRY }}/signal-buddy:$TAG
-          echo "docker_image=$DOCKER_IMAGE" >> "$GITHUB_OUTPUT"
+          echo "docker_image=$DOCKER_IMAGE" >> "$env:GITHUB_OUTPUT"
           docker build -t test -f submodule/docker/dev.Dockerfile .
           docker tag test $DOCKER_IMAGE
           docker push $DOCKER_IMAGE
