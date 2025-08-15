@@ -52,8 +52,9 @@ jobs:
       - name: Docker Image 생성
         run: |
           docker build -t test -f submodule/docker/dev.Dockerfile .
-          docker tag test ${{ steps.docker.outputs.docker_image }}
-          docker push ${{ steps.docker.outputs.docker_image }}
+          DOCKER_IMAGE=${{ secrets.DOCKER_REGISTRY }}/signal-buddy:${{ steps.docker.outputs.tag }}
+          docker tag test $DOCKER_IMAGE
+          docker push $DOCKER_IMAGE
 
       - name: SonarQube 캐싱
         uses: actions/cache@v4
