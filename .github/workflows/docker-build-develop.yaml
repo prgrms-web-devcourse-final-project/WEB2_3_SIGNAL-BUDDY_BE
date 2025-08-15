@@ -44,15 +44,18 @@ jobs:
           export CR_PAT=${{ secrets.GIT_TOKEN }}
           echo $CR_PAT | docker login ghcr.io -u ${{ secrets.GIT_ID }} --password-stdin
 
-      - name: 도커 이미지 생성
+      - name: Docker Meta Data 설정
         id: docker
         run: |
           TAG=$(git rev-parse --short HEAD)
           DOCKER_IMAGE=${{ secrets.DOCKER_REGISTRY }}/signal-buddy:$TAG
-          echo "docker_image=$DOCKER_IMAGE" >> "$env:GITHUB_OUTPUT"
+          echo "docker_image=$DOCKER_IMAGE" >> "$GITHUB_OUTPUT"
+
+      - name: Docker Image 생성
+        run: |
           docker build -t test -f submodule/docker/dev.Dockerfile .
-          docker tag test $DOCKER_IMAGE
-          docker push $DOCKER_IMAGE
+          docker tag test $docker_image
+          docker push $docker_image
 
       - name: SonarQube 캐싱
         uses: actions/cache@v4
