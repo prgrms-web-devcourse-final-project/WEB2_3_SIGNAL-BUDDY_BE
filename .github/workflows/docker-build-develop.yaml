@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     outputs:
-      docker_image: ${{ steps.docker.outputs.docker_image }}
+      docker_tag: ${{ steps.docker.outputs.tag }}
 
     steps:
       - name: 리포지토리 체크아웃
@@ -44,12 +44,10 @@ jobs:
           export CR_PAT=${{ secrets.GIT_TOKEN }}
           echo $CR_PAT | docker login ghcr.io -u ${{ secrets.GIT_ID }} --password-stdin
 
-      - name: Docker Meta Data 설정
+      - name: Docker Image Tag 설정
         id: docker
         run: |
-          TAG=$(git rev-parse --short HEAD)
-          DOCKER_IMAGE=${{ secrets.DOCKER_REGISTRY }}/signal-buddy:$TAG
-          echo "docker_image=$DOCKER_IMAGE" >> "$GITHUB_OUTPUT"
+          echo "tag=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Docker Image 생성
         run: |
