@@ -6,6 +6,9 @@ on:
       - develop
       - main
 
+    paths-ignore:
+      - 'README.md'
+
 jobs:
   test:
     name: CI
