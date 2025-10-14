@@ -93,8 +93,7 @@
 ![전체 아키텍처](https://github.com/user-attachments/assets/e2159b76-6fce-4cb0-adf8-d475eac1305c)
 
 ### CI / CD
-![CI/CD](https://github.com/user-attachments/assets/aa9fa5b0-b195-454c-8c99-0e58ed098dd3)
-
+![CI/CD](https://github.com/user-attachments/assets/a5e5b463-7763-4971-99a7-b4f8e2861926)
 
 ### Monitoring
 ![Monitoring](https://github.com/user-attachments/assets/d2a7a419-4f45-46af-bc72-d910c762e593)
