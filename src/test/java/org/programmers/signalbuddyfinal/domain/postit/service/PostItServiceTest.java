@@ -56,7 +56,7 @@ class PostItServiceTest extends IntegrationTest {
     MockMultipartFile mockImage2;
 
     @BeforeEach
-    protected void setUp() {
+    void setUp() {
         member1 = createMember("user1@gmail.com", "user1");
 
         mockImage1 = new MockMultipartFile(
