@@ -1,15 +1,19 @@
 package org.programmers.signalbuddyfinal.domain.postit.service;
 
 
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import java.net.URL;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Point;
-import org.programmers.signalbuddyfinal.global.util.PointUtils;
 import org.programmers.signalbuddyfinal.domain.member.entity.Member;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberRole;
 import org.programmers.signalbuddyfinal.domain.member.entity.enums.MemberStatus;
@@ -24,9 +28,12 @@ import org.programmers.signalbuddyfinal.domain.postitsolve.repository.PostitSolv
 import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.security.basic.CustomUserDetails;
+import org.programmers.signalbuddyfinal.global.service.AwsFileService;
 import org.programmers.signalbuddyfinal.global.support.IntegrationTest;
+import org.programmers.signalbuddyfinal.global.util.PointUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 class PostItServiceTest extends IntegrationTest {
 
@@ -38,6 +45,8 @@ class PostItServiceTest extends IntegrationTest {
     private MemberRepository memberRepository;
     @Autowired
     private PostitSolveRepository postitSolveRepository;
+    @MockitoBean
+    private AwsFileService awsFileService;
 
     private Member member1;
     private Member member2;
@@ -82,6 +91,10 @@ class PostItServiceTest extends IntegrationTest {
         PostItCreateRequest request = createPostItCreateRequest("제목", "내용",
             LocalDateTime.of(25, 1, 1, 0, 0));
 
+        when(awsFileService.uploadFileToS3(any(MockMultipartFile.class), anyString()))
+            .thenReturn(mockImage2.getName());
+        when(awsFileService.getFileFromS3(anyString(), anyString()))
+            .thenReturn(mock(URL.class));
         PostItResponse response = postItService.createPostIt(request, mockImage1, user1);
 
         assertThat(response.getContent()).isEqualTo(request.getContent());
@@ -108,6 +121,10 @@ class PostItServiceTest extends IntegrationTest {
                 "제목1", "img1", LocalDateTime.of(2025, 1, 1, 0, 0), member1));
         PostItRequest request = createPostItRequest("제목", "내용");
 
+        when(awsFileService.uploadFileToS3(any(MockMultipartFile.class), anyString()))
+            .thenReturn(mockImage2.getName());
+        when(awsFileService.getFileFromS3(anyString(), anyString()))
+            .thenReturn(mock(URL.class));
         PostItResponse response = postItService.updatePostIt(1L, request, mockImage2, user1);
 
         assertThat(response.getContent()).isEqualTo(request.getContent());
