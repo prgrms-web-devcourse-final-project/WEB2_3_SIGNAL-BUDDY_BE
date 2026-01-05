@@ -49,7 +49,6 @@ class PostItServiceTest extends IntegrationTest {
     private AwsFileService awsFileService;
 
     private Member member1;
-    private Member member2;
     private CustomUser2Member user1;
     private CustomUser2Member user2;
     private CustomUser2Member notUser;
@@ -57,9 +56,8 @@ class PostItServiceTest extends IntegrationTest {
     MockMultipartFile mockImage2;
 
     @BeforeEach
-    protected void setUp() throws Exception {
+    protected void setUp() {
         member1 = createMember("user1@gmail.com", "user1");
-        member2 = createMember("user2@gmail.com", "user2");
 
         mockImage1 = new MockMultipartFile(
             "image",
@@ -163,7 +161,6 @@ class PostItServiceTest extends IntegrationTest {
         postItRepository.save(
             createPostIt(Danger.NOTICE, PointUtils.toPoint(1.0203, 1.3048), "제목1",
                 "제목1", "img1", LocalDateTime.of(2025, 1, 1, 0, 0), member1));
-        PostItRequest request = createPostItRequest("제목", "내용");
 
         assertThrows(BusinessException.class,
             () -> postItService.deletePostIt(1L, user2));
