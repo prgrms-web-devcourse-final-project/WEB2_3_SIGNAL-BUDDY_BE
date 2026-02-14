@@ -33,7 +33,7 @@ public class Crossroad extends BaseTimeEntity {
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "POINT")
     private Point coordinate;
 
     @Column(nullable = false)
