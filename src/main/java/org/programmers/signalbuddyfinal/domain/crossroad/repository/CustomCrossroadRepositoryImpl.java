@@ -1,15 +1,18 @@
 package org.programmers.signalbuddyfinal.domain.crossroad.repository;
 
+import static org.programmers.signalbuddyfinal.domain.crossroad.entity.QCrossroad.crossroad;
+import static org.programmers.signalbuddyfinal.global.util.QueryDslUtils.mbrContains;
+
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.QBean;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Point;
 import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadResponse;
-import static org.programmers.signalbuddyfinal.domain.crossroad.entity.QCrossroad.crossroad;
 import org.springframework.stereotype.Repository;
 
 
@@ -26,12 +29,19 @@ public class CustomCrossroadRepositoryImpl implements CustomCrossroadRepository 
 
     @Override
     public List<CrossroadResponse> findNearestCrossroads(double lat, double lng, int radius) {
-        return jqf.select(crossroadDto).from(crossroad).where(
-            Expressions.numberTemplate(Double.class, "ST_DISTANCE_SPHERE(POINT({0}, {1}), {2})",
-                lng, lat, crossroad.coordinate).loe(radius) // 반경 내 필터링
-        ).orderBy(
-            Expressions.numberTemplate(Double.class, "ST_DISTANCE_SPHERE(POINT({0}, {1}), {2})",
-                lng, lat, crossroad.coordinate).asc()).fetch();
+        NumberExpression<Double> distanceSphere = Expressions.numberTemplate(
+            Double.class,
+            "ST_Distance_Sphere(Point({0}, {1}), {2})",
+            lng, lat,
+            crossroad.coordinate
+        );
+
+        return jqf.select(crossroadDto).from(crossroad)
+            .where(
+                mbrContains(lat, lng, radius, crossroad.coordinate).isTrue(),
+                distanceSphere.loe(radius)
+            )
+            .orderBy(distanceSphere.asc()).fetch();
     }
 
     @Override

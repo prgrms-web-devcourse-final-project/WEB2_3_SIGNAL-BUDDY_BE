@@ -2,6 +2,7 @@ package org.programmers.signalbuddyfinal.global.util;
 
 import static com.querydsl.core.types.dsl.Expressions.numberTemplate;
 
+import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -9,15 +10,15 @@ import com.querydsl.core.types.dsl.DateTimePath;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.core.types.dsl.StringPath;
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+import org.locationtech.jts.geom.Point;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class QueryDslUtils {
@@ -125,5 +126,56 @@ public final class QueryDslUtils {
             Double.class, "function('match_against', {0}, {1})",
             target, formattedSearchWord
         ).gt(0);
+    }
+
+    /**
+     * 중심 좌표와 반경(m)을 받아 MBR(최소 경계 사각형) 내의 데이터 필터링
+     *
+     * @param lat 위도
+     * @param lng 경도
+     * @param radius 반경(m)
+     * @param point 비교할 좌표 데이터 <br> ex) QCrossroad.crossroad.coordinate)
+     * @return 반경 내 포함 여부, 1(True) or 0(False) 반환
+     */
+    public static BooleanExpression mbrContains(
+        double lat, double lng,
+        int radius,
+        Expression<Point> point
+    ) {
+        return Expressions.booleanTemplate(
+            "MBRContains(GeomFromText({0}), {1})",
+            createMBRPolygonText(lat, lng, radius),
+            point
+        );
+    }
+
+    /**
+     * 중심 좌표와 반경(m)을 받아 MBR(최소 경계 사각형) 좌표에 대한 문자열 생성
+     *
+     * @param lat 위도
+     * @param lng 경도
+     * @param radius 반경(m)
+     * @return Polygon 타입의 MBR 좌표 텍스트
+     */
+    private static String createMBRPolygonText(double lat, double lng, int radius) {
+        double radiusKm = Math.abs(radius) / 1000.0;  // m -> km (단위 변환)
+
+        // radius 거리 당 위도와 경도의 차이
+        double latDiff = radiusKm / 111.32;
+        double lngDiff = radiusKm / (111.32 * Math.cos(Math.toRadians(lat)));
+
+        // MBR 좌표
+        double minLat = lat - latDiff;
+        double maxLat = lat + latDiff;
+        double minLng = lng - lngDiff;
+        double maxLng = lng + lngDiff;
+
+        return String.format("Polygon((%f %f, %f %f, %f %f, %f %f, %f %f))",
+            minLng, minLat, // 좌하단
+            maxLng, minLat, // 우하단
+            maxLng, maxLat, // 우상단
+            minLng, maxLat, // 좌상단
+            minLng, minLat  // 닫기 (시작점과 동일)
+        );
     }
 }
