@@ -13,6 +13,8 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Point;
 import org.programmers.signalbuddyfinal.domain.crossroad.dto.CrossroadResponse;
+import org.programmers.signalbuddyfinal.global.util.PointUtils;
+import org.programmers.signalbuddyfinal.global.util.QueryDslUtils;
 import org.springframework.stereotype.Repository;
 
 
@@ -29,11 +31,8 @@ public class CustomCrossroadRepositoryImpl implements CustomCrossroadRepository 
 
     @Override
     public List<CrossroadResponse> findNearestCrossroads(double lat, double lng, int radius) {
-        NumberExpression<Double> distanceSphere = Expressions.numberTemplate(
-            Double.class,
-            "ST_Distance_Sphere(Point({0}, {1}), {2})",
-            lng, lat,
-            crossroad.coordinate
+        NumberExpression<Double> distanceSphere = QueryDslUtils.distanceSphere(
+            crossroad.coordinate, PointUtils.toPoint(lat, lng)
         );
 
         return jqf.select(crossroadDto).from(crossroad)
@@ -51,9 +50,10 @@ public class CustomCrossroadRepositoryImpl implements CustomCrossroadRepository 
     }
 
     private BooleanExpression filterByRadius(List<Point> points, int radius) {
-        return points.stream().map(
-                point -> Expressions.numberTemplate(Double.class, "ST_Distance_Sphere({0}, {1})",
-                    crossroad.coordinate, point).loe(radius))  // 반경 내 교차로 필터링
-            .reduce(BooleanExpression::or).orElse(null);
+        return points.stream()
+            // 반경 내 교차로 필터링
+            .map(point -> QueryDslUtils.distanceSphere(crossroad.coordinate, point).loe(radius))
+            .reduce(BooleanExpression::or)
+            .orElse(null);
     }
 }

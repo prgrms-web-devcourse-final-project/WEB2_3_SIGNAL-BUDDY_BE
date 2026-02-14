@@ -8,6 +8,7 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.DateTimePath;
 import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.core.types.dsl.StringPath;
 import java.time.LocalDate;
@@ -126,6 +127,24 @@ public final class QueryDslUtils {
             Double.class, "function('match_against', {0}, {1})",
             target, formattedSearchWord
         ).gt(0);
+    }
+
+    /**
+     * 두 좌표 간의 거리 계산
+     *
+     * @param coordinate DB의 좌표 데이터 <br> ex) QCrossroad.crossroad.coordinate
+     * @param target 비교할 좌표
+     * @return 두 좌표 간의 거리(m)
+     */
+    public static NumberExpression<Double> distanceSphere(
+        Expression<Point> coordinate,
+        Point target
+    ) {
+        return Expressions.numberTemplate(
+            Double.class,
+            "ST_Distance_Sphere({0}, {1})",
+            coordinate, target
+        );
     }
 
     /**
