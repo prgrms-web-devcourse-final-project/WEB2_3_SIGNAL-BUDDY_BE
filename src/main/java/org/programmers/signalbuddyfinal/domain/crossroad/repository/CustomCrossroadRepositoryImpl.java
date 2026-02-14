@@ -31,13 +31,14 @@ public class CustomCrossroadRepositoryImpl implements CustomCrossroadRepository 
 
     @Override
     public List<CrossroadResponse> findNearestCrossroads(double lat, double lng, int radius) {
+        Point point = PointUtils.toPoint(lat, lng);
         NumberExpression<Double> distanceSphere = QueryDslUtils.distanceSphere(
-            crossroad.coordinate, PointUtils.toPoint(lat, lng)
+            crossroad.coordinate, point
         );
 
         return jqf.select(crossroadDto).from(crossroad)
             .where(
-                mbrContains(lat, lng, radius, crossroad.coordinate).isTrue(),
+                mbrContains(point, radius, crossroad.coordinate).isTrue(),
                 distanceSphere.loe(radius)
             )
             .orderBy(distanceSphere.asc()).fetch();

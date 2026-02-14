@@ -150,21 +150,20 @@ public final class QueryDslUtils {
     /**
      * 중심 좌표와 반경(m)을 받아 MBR(최소 경계 사각형) 내의 데이터 필터링
      *
-     * @param lat 위도
-     * @param lng 경도
+     * @param center 중심점
      * @param radius 반경(m)
-     * @param point 비교할 좌표 데이터 <br> ex) QCrossroad.crossroad.coordinate)
+     * @param coordinate 필터링할 DB의 좌표 데이터 <br> ex) QCrossroad.crossroad.coordinate)
      * @return 반경 내 포함 여부, 1(True) or 0(False) 반환
      */
     public static BooleanExpression mbrContains(
-        double lat, double lng,
+        Point center,
         int radius,
-        Expression<Point> point
+        Expression<Point> coordinate
     ) {
         return Expressions.booleanTemplate(
             "MBRContains(GeomFromText({0}), {1})",
-            createMBRPolygonText(lat, lng, radius),
-            point
+            createMBRPolygonText(center.getY(), center.getX(), radius),
+            coordinate
         );
     }
 
