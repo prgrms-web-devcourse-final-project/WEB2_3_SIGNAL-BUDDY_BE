@@ -52,8 +52,9 @@ public class CustomCrossroadRepositoryImpl implements CustomCrossroadRepository 
 
     private BooleanExpression filterByRadius(List<Point> points, int radius) {
         return points.stream()
-            // 반경 내 교차로 필터링
-            .map(point -> QueryDslUtils.distanceSphere(crossroad.coordinate, point).loe(radius))
+            .map(point -> QueryDslUtils.mbrContains(point, radius, crossroad.coordinate).isTrue()
+                .and(QueryDslUtils.distanceSphere(crossroad.coordinate, point).loe(radius))
+            )
             .reduce(BooleanExpression::or)
             .orElse(null);
     }
