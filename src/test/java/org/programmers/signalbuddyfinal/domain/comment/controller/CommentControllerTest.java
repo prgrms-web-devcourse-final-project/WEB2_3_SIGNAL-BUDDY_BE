@@ -28,6 +28,7 @@ import com.epages.restdocs.apispec.SimpleType;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.commons.lang3.ArrayUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.programmers.signalbuddyfinal.domain.comment.dto.CommentRequest;
@@ -49,7 +50,6 @@ import org.springframework.http.MediaType;
 import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.ResultActions;
-import org.testcontainers.shaded.org.apache.commons.lang3.ArrayUtils;
 
 @WebMvcTest(CommentController.class)
 class CommentControllerTest extends ControllerTest {
