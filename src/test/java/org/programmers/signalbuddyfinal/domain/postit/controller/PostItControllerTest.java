@@ -56,7 +56,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.web.multipart.MultipartFile;
 
 @WebMvcTest(PostItController.class)
-public class PostItControllerTest extends ControllerTest {
+class PostItControllerTest extends ControllerTest {
 
     @MockitoBean
     private PostItService postItService;
@@ -70,7 +70,7 @@ public class PostItControllerTest extends ControllerTest {
     @DisplayName("포스트잇 등록")
     @Test
     @WithMockCustomUser
-    public void createPostIt() throws Exception {
+    void createPostIt() throws Exception {
 
         PostItCreateRequest request = PostItCreateRequest.builder()
             .danger(Danger.DANGER)
@@ -200,7 +200,7 @@ public class PostItControllerTest extends ControllerTest {
     @Test
     @DisplayName("포스트잇 수정")
     @WithMockCustomUser
-    public void updatePostIt() throws Exception {
+    void updatePostIt() throws Exception {
 
         PostItRequest request = PostItRequest.builder()
             .danger(Danger.DANGER)
@@ -333,12 +333,7 @@ public class PostItControllerTest extends ControllerTest {
     @Test
     @DisplayName("포스트잇 삭제")
     @WithMockCustomUser
-    public void deletePostIt() throws Exception {
-
-        CustomUserDetails customUserDetails = new CustomUserDetails(1L, "user1@gmamil.com", "12345",
-            "url2.jpg", "user1", MemberRole.USER, MemberStatus.ACTIVITY);
-        CustomUser2Member user = new CustomUser2Member(customUserDetails);
-
+    void deletePostIt() throws Exception {
         doNothing().when(postItService).deletePostIt(anyLong(), any(CustomUser2Member.class));
 
         final ResultActions result = mockMvc.perform(
@@ -372,7 +367,7 @@ public class PostItControllerTest extends ControllerTest {
     @Test
     @DisplayName("포스트잇 해결")
     @WithMockCustomUser
-    public void completePostIt() throws Exception {
+    void completePostIt() throws Exception {
         PostItResponse postItResponse = createResponse(1L);
 
         given(postItService.completePostIt(anyLong())).willReturn(postItResponse);

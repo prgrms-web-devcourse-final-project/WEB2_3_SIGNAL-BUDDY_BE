@@ -22,7 +22,7 @@ import org.programmers.signalbuddyfinal.global.support.ControllerTest;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 @WebMvcTest(AirQualityController.class)
-public class AirQualityControllerTest extends ControllerTest {
+class AirQualityControllerTest extends ControllerTest {
 
     private final String tag = "AirQuality API";
 

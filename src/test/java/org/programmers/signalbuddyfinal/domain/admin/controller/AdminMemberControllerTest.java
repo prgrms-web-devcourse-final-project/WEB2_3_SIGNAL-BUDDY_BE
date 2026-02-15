@@ -97,7 +97,7 @@ class AdminMemberControllerTest extends ControllerTest {
 
     @DisplayName("회원 필터링 조회")
     @Test
-    public void FilteredMember() throws Exception {
+    void FilteredMember() throws Exception {
         final MemberFilterRequest filter = MemberFilterRequest.builder()
             .role(MemberRole.USER)
             .status(MemberStatus.ACTIVITY)

@@ -50,7 +50,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.ResultActions;
 
 @WebMvcTest(AdminPostItController.class)
-public class AdminPostItControllerTest extends ControllerTest {
+class AdminPostItControllerTest extends ControllerTest {
 
     private final String tag = "Admin API";
 
@@ -233,8 +233,8 @@ public class AdminPostItControllerTest extends ControllerTest {
                     .param("startDate", filter.getStartDate().toString())
                     .param("endDate", filter.getEndDate().toString())
                     .param("search", filter.getSearch())
-                    .param("danger", filter.getSearch().toString())
-                    .param("deleted", filter.getSearch().toString())
+                    .param("danger", filter.getSearch())
+                    .param("deleted", filter.getSearch())
                     .header("Accept", "application/json"))
             .andExpect(status().isOk())
             .andDo(print())
