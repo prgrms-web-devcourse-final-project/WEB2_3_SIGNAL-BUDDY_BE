@@ -25,6 +25,7 @@ public class EmailService {
     private final JavaMailSender javaMailSender;
     private final SpringTemplateEngine templateEngine;
 
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     static final String PREFIX = "auth:email:";
 
     @Async
@@ -46,8 +47,7 @@ public class EmailService {
 
     private String createCode() {
 
-        SecureRandom secureRandom = new SecureRandom();
-        int authenticationCode = secureRandom.nextInt((int) Math.pow(10, 6));
+        int authenticationCode = SECURE_RANDOM.nextInt((int) Math.pow(10, 6));
         log.info("authentication code: {}", authenticationCode);
         return String.format("%06d", authenticationCode);
     }
