@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.epages.restdocs.apispec.ResourceSnippetParameters;
+import org.apache.commons.lang3.ArrayUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.programmers.signalbuddyfinal.domain.air_quality.dto.AirQualityResponse;
@@ -20,7 +21,6 @@ import org.programmers.signalbuddyfinal.domain.air_quality.service.AirQualitySer
 import org.programmers.signalbuddyfinal.global.support.ControllerTest;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.testcontainers.shaded.org.apache.commons.lang3.ArrayUtils;
 @WebMvcTest(AirQualityController.class)
 public class AirQualityControllerTest extends ControllerTest {
 
