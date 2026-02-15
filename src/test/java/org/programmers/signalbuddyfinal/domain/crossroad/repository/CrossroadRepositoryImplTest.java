@@ -2,11 +2,14 @@ package org.programmers.signalbuddyfinal.domain.crossroad.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.Point;
 import org.programmers.signalbuddyfinal.domain.crossroad.entity.Crossroad;
 import org.programmers.signalbuddyfinal.global.support.RepositoryTest;
+import org.programmers.signalbuddyfinal.global.util.PointUtils;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 class CrossroadRepositoryImplTest extends RepositoryTest {
@@ -38,6 +41,26 @@ class CrossroadRepositoryImplTest extends RepositoryTest {
         // When & Then
         assertThat(crossroadRepository.findNearestCrossroads(centerLat, centerLng, radius))
             .hasSize(3);
+    }
+
+    @DisplayName("특정 좌표들의 반경 5m 내 교차로 데이터를 가져온다. (MBRContains 함수 확인)")
+    @Test
+    void findByCoordinateInWithRadius() {
+        // Given
+        List<Point> points = List.of(
+            // 포함 O
+            PointUtils.toPoint(centerLat, centerLng + 0.01004),
+            PointUtils.toPoint(centerLat + 0.00004, centerLng),
+
+            // 포함 X
+            PointUtils.toPoint(centerLat + 0.0101, centerLng),
+            PointUtils.toPoint(centerLat, centerLng - 0.05007),
+            PointUtils.toPoint(centerLat - 0.04008, centerLng)
+        );
+
+        // When & Then
+        assertThat(crossroadRepository.findByCoordinateInWithRadius(points, 5))
+            .hasSize(2);
     }
 
     private void saveCrossroad(String apiId, String name, double lat, double lng) {
