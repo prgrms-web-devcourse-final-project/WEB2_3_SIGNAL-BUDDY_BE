@@ -8,6 +8,8 @@ on:
 
     paths-ignore:
       - 'README.md'
+      - '.github/workflows/deploy-swagger.yaml'
+      - '.github/workflows/docker-build-develop.yaml'
 
 jobs:
   test:
