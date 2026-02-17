@@ -9,7 +9,7 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
+      - name: 리포지토리 체크아웃
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GIT_TOKEN }}
@@ -40,6 +40,7 @@ jobs:
         with:
           output: swagger-ui
           spec-file: build/api-spec/openapi3.yaml
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Cloudflare Pages에 배포
         uses: cloudflare/wrangler-action@v3
