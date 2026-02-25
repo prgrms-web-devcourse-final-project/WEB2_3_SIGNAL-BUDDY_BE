@@ -2,8 +2,6 @@ package org.programmers.signalbuddyfinal.domain.social.entity;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import lombok.Getter;
-import org.programmers.signalbuddyfinal.global.exception.BusinessException;
-import org.springframework.http.converter.HttpMessageNotReadableException;
 
 @Getter
 public enum Provider {

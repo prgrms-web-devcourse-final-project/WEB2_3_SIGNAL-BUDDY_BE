@@ -1,19 +1,16 @@
 package org.programmers.signalbuddyfinal.domain.trafficSignal.controller;
 
+import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.service.TrafficCsvService;
-import org.programmers.signalbuddyfinal.global.annotation.CurrentUser;
-import org.programmers.signalbuddyfinal.global.dto.CustomUser2Member;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.regex.Pattern;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @Validated
 @RestController

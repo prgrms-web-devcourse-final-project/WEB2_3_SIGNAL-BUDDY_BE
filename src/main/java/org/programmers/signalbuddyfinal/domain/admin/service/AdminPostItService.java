@@ -1,18 +1,14 @@
 package org.programmers.signalbuddyfinal.domain.admin.service;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.admin.dto.AdminPostItResponse;
 import org.programmers.signalbuddyfinal.domain.admin.dto.PostItFilterRequest;
 import org.programmers.signalbuddyfinal.domain.admin.exception.AdminErrorCode;
-import org.programmers.signalbuddyfinal.domain.member.entity.Member;
-import org.programmers.signalbuddyfinal.domain.member.repository.MemberRepository;
 import org.programmers.signalbuddyfinal.domain.postit.dto.PostItResponse;
 import org.programmers.signalbuddyfinal.domain.postit.entity.Postit;
 import org.programmers.signalbuddyfinal.domain.postit.mapper.PostItMapper;
 import org.programmers.signalbuddyfinal.domain.postit.repository.PostItRepository;
-import org.programmers.signalbuddyfinal.domain.postit.service.PostItComplete;
 import org.programmers.signalbuddyfinal.domain.postitsolve.entity.PostitSolve;
 import org.programmers.signalbuddyfinal.domain.postitsolve.repository.PostitSolveRepository;
 import org.programmers.signalbuddyfinal.global.dto.PageResponse;
@@ -26,7 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminPostItService {
     // TODO : 만료일만 변경하는 기능 추가,,,
     private final PostItRepository postItRepository;
-    private final MemberRepository memberRepository;
     private final PostitSolveRepository postitSolveRepository;
 
     public PageResponse<AdminPostItResponse> getAllPostIt(Pageable pageable) {
