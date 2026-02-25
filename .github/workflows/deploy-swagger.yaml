@@ -8,6 +8,11 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+
+    concurrency:
+      group: swagger-deploy
+      cancel-in-progress: true
+
     steps:
       - name: 리포지토리 체크아웃
         uses: actions/checkout@v4
