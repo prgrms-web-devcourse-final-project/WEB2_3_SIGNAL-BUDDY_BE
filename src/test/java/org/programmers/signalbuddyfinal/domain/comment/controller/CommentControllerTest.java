@@ -162,7 +162,7 @@ class CommentControllerTest extends ControllerTest {
                             )
                             .queryParameters(
                                 parameterWithName("page").type(SimpleType.NUMBER)
-                                    .description("페이지 번호 (기본값 : 0, 0부터 시작)").optional(),
+                                    .description("페이지 번호 (기본값 : 0, 0번부터 시작)").optional(),
                                 parameterWithName("size").type(SimpleType.NUMBER)
                                     .description("페이지 크기 (기본값 : 7)").optional()
                             )

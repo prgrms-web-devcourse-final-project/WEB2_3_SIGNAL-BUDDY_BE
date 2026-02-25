@@ -5,9 +5,17 @@ on:
     branches:
       - develop
 
+    paths:
+      - 'src/test/**/*Controller*.java'
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+
+    concurrency:
+      group: swagger-deploy
+      cancel-in-progress: true
+
     steps:
       - name: 리포지토리 체크아웃
         uses: actions/checkout@v4
@@ -35,17 +43,11 @@ jobs:
       - name: Gradle build
         run: ./gradlew build
 
-      - name: Swagger UI 생성
-        uses: Legion2/swagger-ui-action@v1
+      - name: Cloudflare Pages에 Swagger 배포
+        uses: DongminL/swagger-to-cloudflare-pages@v1
         with:
-          output: swagger-ui
-          spec-file: build/api-spec/openapi3.yaml
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Cloudflare Pages에 배포
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy swagger-ui --project-name="signal-buddy-api-docs"
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          spec-file-path: build/api-spec/openapi3.yaml
+          cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          project-name: signal-buddy-api-docs
+          github-token: ${{ secrets.GITHUB_TOKEN }}

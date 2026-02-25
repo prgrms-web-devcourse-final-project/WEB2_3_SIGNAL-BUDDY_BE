@@ -1,7 +1,6 @@
 package org.programmers.signalbuddyfinal.domain.admin.controller;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.admin.dto.AdminPostItResponse;
 import org.programmers.signalbuddyfinal.domain.admin.dto.PostItFilterRequest;

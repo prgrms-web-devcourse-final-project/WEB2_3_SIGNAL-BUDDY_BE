@@ -7,7 +7,6 @@ import org.programmers.signalbuddyfinal.domain.term.entity.enums.TermCategory;
 import org.programmers.signalbuddyfinal.domain.term.exception.TermErrorCode;
 import org.programmers.signalbuddyfinal.domain.term_version.entity.TermVersion;
 import org.programmers.signalbuddyfinal.domain.term_version.repository.CustomTermVersionRepositoryImpl;
-import org.programmers.signalbuddyfinal.domain.term_version.repository.TermVersionRepository;
 import org.programmers.signalbuddyfinal.global.exception.BusinessException;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +17,6 @@ import org.springframework.stereotype.Service;
 public class TermService {
 
     private final CustomTermVersionRepositoryImpl customTermVersionRepository;
-    private final TermVersionRepository termVersionRepository;
 
     public ResponseEntity<ApiResponse<TermResponse>> getTerm(TermCategory termCategory) {
 
