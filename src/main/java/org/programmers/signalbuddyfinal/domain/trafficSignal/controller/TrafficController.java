@@ -4,7 +4,6 @@ import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.programmers.signalbuddyfinal.domain.trafficSignal.service.TrafficCsvService;
 import org.programmers.signalbuddyfinal.global.response.ApiResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,8 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class TrafficController {
 
-    @Autowired
-    private TrafficCsvService trafficCsvService;
+    private final TrafficCsvService trafficCsvService;
 
     @PostMapping("/save")
     public ResponseEntity<ApiResponse<Object>> saveTrafficData(
@@ -30,6 +28,4 @@ public class TrafficController {
 
         return ResponseEntity.ok(ApiResponse.createSuccess("파일이 성공적으로 저장되었습니다."));
     }
-
-
 }
